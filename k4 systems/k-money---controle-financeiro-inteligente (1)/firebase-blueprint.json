@@ -1,0 +1,138 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction (expense, income, or transfer)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "type": { "type": "string", "enum": ["expense", "income", "transfer"] },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "subcategory": { "type": "string" },
+        "accountId": { "type": "string" },
+        "accountType": { "type": "string", "enum": ["credit", "debit", "cash", "voucher"] },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "toAccount": { "type": "string", "description": "For transfers" },
+        "isRecurring": { "type": "boolean" },
+        "recurringType": { "type": "string", "enum": ["fixed", "installment"] },
+        "installmentsCount": { "type": "number" },
+        "installmentNumber": { "type": "number" },
+        "parentId": { "type": "string" },
+        "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly", "yearly"] }
+      },
+      "required": ["uid", "type", "amount", "date", "accountId", "accountType"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Expense/Income category",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "subcategories": { "type": "array", "items": { "type": "string" } },
+        "isDefault": { "type": "boolean" }
+      },
+      "required": ["uid", "name"]
+    },
+    "Investment": {
+      "title": "Investment",
+      "description": "Investment record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "currentValuation": { "type": "number" }
+      },
+      "required": ["uid", "name", "amount", "date"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Financial goal",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "currentAmount": { "type": "number" },
+        "targetDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "targetAmount", "currentAmount", "targetDate"]
+    },
+    "BankAccount": {
+      "title": "BankAccount",
+      "description": "Bank account or wallet information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["checking", "savings", "investment", "credit_card", "cash", "meal_voucher", "food_voucher"] },
+        "balance": { "type": "number" },
+        "institution": { "type": "string" },
+        "color": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "type", "balance"]
+    },
+    "PaymentMethod": {
+      "title": "PaymentMethod",
+      "description": "Payment method (e.g., Pix, Credit Card, Cash)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "isDefault": { "type": "boolean" }
+      },
+      "required": ["uid", "name"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial transactions"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Custom and default categories"
+    },
+    "/investments/{investmentId}": {
+      "schema": "Investment",
+      "description": "Investment records"
+    },
+    "/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "Financial goals"
+    },
+    "/bankAccounts/{bankAccountId}": {
+      "schema": "BankAccount",
+      "description": "User bank accounts"
+    },
+    "/paymentMethods/{paymentMethodId}": {
+      "schema": "PaymentMethod",
+      "description": "User payment methods"
+    }
+  }
+}

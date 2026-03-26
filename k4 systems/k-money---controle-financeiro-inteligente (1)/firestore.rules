@@ -1,0 +1,239 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: userId (matches auth.uid)
+// Fields:
+//   - uid: string (required)
+//   - email: string (required, email format)
+//   - displayName: string (optional)
+//   - photoURL: string (optional)
+//   - createdAt: timestamp (required)
+//
+// Collection: transactions
+// Document ID: transactionId
+// Fields:
+//   - uid: string (required, matches owner)
+//   - type: string (required, expense/income/transfer)
+//   - amount: number (required, positive)
+//   - category: string (optional)
+//   - subcategory: string (optional)
+//   - accountType: string (required, credit/debit/cash/voucher)
+//   - date: timestamp (required)
+//   - description: string (optional)
+//   - toAccount: string (optional, for transfers)
+//
+// Collection: categories
+// Document ID: categoryId
+// Fields:
+//   - uid: string (required, matches owner)
+//   - name: string (required)
+//   - subcategories: list (required)
+//   - isDefault: boolean (optional)
+//
+// Collection: investments
+// Document ID: investmentId
+// Fields:
+//   - uid: string (required, matches owner)
+//   - name: string (required)
+//   - type: string (required)
+//   - amount: number (required)
+//   - date: timestamp (required)
+//   - currentValuation: number (optional)
+//
+// Collection: goals
+// Document ID: goalId
+// Fields:
+//   - uid: string (required, matches owner)
+//   - name: string (required)
+//   - targetAmount: number (required)
+//   - currentAmount: number (required)
+//   - targetDate: timestamp (required)
+//   - createdAt: timestamp (required)
+//
+// Collection: bankAccounts
+// Document ID: bankAccountId
+// Fields:
+//   - uid: string (required, matches owner)
+//   - name: string (required)
+//   - type: string (required, checking/savings/investment/credit_card/cash/meal_voucher/food_voucher)
+//   - balance: number (required)
+//   - institution: string (optional)
+//   - color: string (optional)
+//   - createdAt: timestamp (optional)
+//
+// Collection: paymentMethods
+// Document ID: paymentMethodId
+// Fields:
+//   - uid: string (required, matches owner)
+//   - name: string (required)
+//   - icon: string (optional)
+//   - isDefault: boolean (optional)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidString(val, min, max) {
+      return val is string && val.size() >= min && val.size() <= max;
+    }
+
+    function isValidNumber(val, min) {
+      return val is number && val >= min;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "fernandobbellini@gmail.com" && request.auth.token.email_verified == true ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin'));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['uid', 'type', 'amount', 'date', 'accountType', 'accountId']) &&
+             data.uid == request.auth.uid &&
+             data.type in ['expense', 'income', 'transfer'] &&
+             isValidNumber(data.amount, 0) &&
+             data.date is timestamp &&
+             data.accountType in ['credit', 'debit', 'cash', 'voucher'];
+    }
+
+    function isValidPaymentMethod(data) {
+      return data.keys().hasAll(['uid', 'name']) &&
+             data.uid == request.auth.uid &&
+             isValidString(data.name, 1, 50);
+    }
+
+    function isValidCategory(data) {
+      return data.keys().hasAll(['uid', 'name', 'subcategories']) &&
+             data.uid == request.auth.uid &&
+             isValidString(data.name, 1, 50) &&
+             data.subcategories is list;
+    }
+
+    function isValidInvestment(data) {
+      return data.keys().hasAll(['uid', 'name', 'type', 'amount', 'date']) &&
+             data.uid == request.auth.uid &&
+             isValidString(data.name, 1, 100) &&
+             isValidNumber(data.amount, 0) &&
+             data.date is timestamp;
+    }
+
+    function isValidGoal(data) {
+      return data.keys().hasAll(['uid', 'name', 'targetAmount', 'currentAmount', 'targetDate', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             isValidString(data.name, 1, 100) &&
+             isValidNumber(data.targetAmount, 0) &&
+             isValidNumber(data.currentAmount, 0) &&
+             data.targetDate is timestamp &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidBankAccount(data) {
+      return data.keys().hasAll(['uid', 'name', 'type', 'balance']) &&
+             data.uid == request.auth.uid &&
+             isValidString(data.name, 1, 50) &&
+             data.type in ['checking', 'savings', 'investment', 'credit_card', 'cash', 'meal_voucher', 'food_voucher'] &&
+             data.balance is number;
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if isDocOwner() && isValidTransaction(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidCategory(request.resource.data);
+      allow update: if isDocOwner() && isValidCategory(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /investments/{investmentId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidInvestment(request.resource.data);
+      allow update: if isDocOwner() && isValidInvestment(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /goals/{goalId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidGoal(request.resource.data);
+      allow update: if isDocOwner() && isValidGoal(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /bankAccounts/{bankAccountId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidBankAccount(request.resource.data);
+      allow update: if isDocOwner() && isValidBankAccount(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /paymentMethods/{paymentMethodId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidPaymentMethod(request.resource.data);
+      allow update: if isDocOwner() && isValidPaymentMethod(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vai de Pantufa | Mini Mercado para Condomínios</title>
+    <meta name="description"
+        content="A conveniência e tecnologia de um mercado completo dentro do seu condomínio. Aberto 24h por dia, 7 dias por semana.">
+
+    <link rel="icon" href="favicon.png" type="image/png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+    <!-- Banner Promocional Flutuante -->
+    <div id="promo-banner" class="promo-banner">
+        <button id="close-promo" class="close-promo-btn" aria-label="Fechar Promoção"><i class="ph ph-x"></i></button>
+        <div class="promo-content">
+            <div class="promo-icon pulse-btn"><i class="ph ph-gift"></i></div>
+            <div class="promo-text">
+                <span class="promo-title">Promoção de Abril!</span>
+                <p>Feche a implantação de um minimercado conosco este mês e leve <strong>DE GRAÇA</strong> um Software
+                    de Gestão de Condomínio!</p>
+            </div>
+            <a href="#contato" class="btn btn-primary promo-btn" id="promo-cta">Garantir Promoção</a>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-content">
+            <div class="logo">
+                <div class="logo-icon" style="flex-shrink: 0;">VP</div>
+                <div class="logo-text">Vai de <span>Pantufa</span></div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#inicio">Início</a></li>
+                <li><a href="#proposta">Nossa Proposta</a></li>
+                <li><a href="#vantagens">Vantagens</a></li>
+                <li><a href="#operacao">Operação</a></li>
+                <li><a href="#contato" class="btn btn-primary">Fale Conosco</a></li>
+            </ul>
+            <div class="mobile-menu-btn">
+                <i class="ph ph-list"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section (Page 1) -->
+    <header id="inicio" class="hero">
+        <div class="hero-bg"></div>
+        <div class="container hero-content text-center">
+            <div class="hero-text-box" style="margin: 0 auto;">
+                <span class="badge fade-in">Conveniência no seu Condomínio</span>
+                <h1 class="slide-up">O mercado no <span>seu condomínio</span> a um elevador de distância.</h1>
+                <p class="fade-in-delay">Descubra a facilidade de ter um Vai de Pantufa no seu prédio. Segurança,
+                    comodidade e reposição constante.</p>
+                <div class="hero-actions fade-in-delay-2" style="justify-content: center;">
+                    <a href="#proposta" class="btn btn-primary">Conhecer o Projeto</a>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-down">
+            <a href="#proposta"><i class="ph ph-caret-down"></i></a>
+        </div>
+    </header>
+
+    <!-- Quem Somos (Page 2) & O Mercado (Page 3) -->
+    <section id="proposta" class="showcase">
+        <div class="container">
+            <div class="section-header text-center observe">
+                <h2>O Seu Vizinho de Confiança</h2>
+                <p>Levamos uma loja completa, segura e tecnológica para dentro do seu condomínio.</p>
+            </div>
+
+            <div class="image-grid hover-zoom">
+                <div class="image-card observe stagger-1">
+                    <img src="page_2.png" alt="Quem Somos">
+                </div>
+                <div class="image-card observe stagger-2">
+                    <img src="page_3.png" alt="O Mercado no Seu Condomínio">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Como Funciona (Page 4) & Estrutura (Page 8) -->
+    <section id="funciona" class="showcase bg-light">
+        <div class="container">
+            <div class="section-header text-center observe">
+                <h2>Como Funciona & Estrutura</h2>
+                <p>Simples, prático e totalmente adaptável ao espaço do seu condomínio.</p>
+            </div>
+
+            <div class="image-grid hover-zoom">
+                <div class="image-card observe stagger-1">
+                    <img src="page_4.png" alt="Como Funciona: Simples e Prático">
+                </div>
+                <div class="image-card observe stagger-2">
+                    <img src="page_8.png" alt="Estrutura e Mix de Produtos">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vantagens (Page 5 & Page 6) -->
+    <section id="vantagens" class="showcase">
+        <div class="container">
+            <div class="section-header text-center observe">
+                <h2>Vantagens Incríveis</h2>
+                <p>Benefícios tanto para o condomínio quanto para os moradores.</p>
+            </div>
+
+            <div class="image-grid hover-zoom">
+                <div class="image-card observe stagger-1">
+                    <img src="page_5.png" alt="Vantagens para o Condomínio">
+                </div>
+                <div class="image-card observe stagger-2">
+                    <img src="page_6.png" alt="Vantagens para os Moradores">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Operacao e Parceiros (Page 7 & Page 9) -->
+    <section id="operacao" class="showcase bg-light">
+        <div class="container">
+            <div class="section-header text-center observe">
+                <h2>Operação Completa & Parceiros</h2>
+                <p>Trabalhamos com as melhores marcas com uma gestão de loja impecável.</p>
+            </div>
+
+            <div class="image-grid hover-zoom">
+                <div class="image-card observe stagger-1">
+                    <img src="page_9.png" alt="Operação Completa">
+                </div>
+                <div class="image-card observe stagger-2">
+                    <img src="page_7.png" alt="Parceiros e Fornecedores">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section (Page 10) -->
+    <section id="contato" class="cta" style="background: url('page_10.png') center/cover fixed; position: relative;">
+        <!-- Overlay for text readability over Page 10 -->
+        <div
+            style="position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(135deg, rgba(10, 37, 66, 0.95), rgba(173, 36, 38, 0.90));">
+        </div>
+        <div class="container cta-content observe text-center" style="position: relative; z-index: 2;">
+            <h2>Vamos Conversar?</h2>
+            <p>Leve o Vai de Pantufa para o seu condomínio. Agende uma visita técnica gratuita.</p>
+
+            <div class="contact-card"
+                style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 2rem; border-radius: 20px; max-width: 400px; margin: 0 auto; margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.5rem;">Fale com nossa equipe</h3>
+                <div
+                    style="font-size: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 0.5rem;">
+                    <i class="ph ph-whatsapp-logo" style="color: #25D366; font-size: 1.8rem;"></i>
+                    <a href="https://wa.me/5511945998213" style="color: white; font-weight: bold;">(11) 94599-8213</a>
+                </div>
+                <div
+                    style="display: flex; align-items: center; justify-content: center; gap: 10px; color: rgba(255,255,255,0.8);">
+                    <i class="ph ph-map-pin"></i> Guarulhos - SP
+                </div>
+            </div>
+
+            <a href="https://wa.me/5511945998213" target="_blank" class="btn btn-primary pulse-btn"
+                style="padding: 1rem 2rem; font-size: 1.1rem;">
+                <i class="ph ph-whatsapp-logo" style="margin-right: 8px; font-size: 1.4rem;"></i>
+                Enviar Mensagem no WhatsApp
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <div class="footer-bottom" style="border: none; padding-top: 0;">
+                <p>&copy; <span id="current-year"></span> Vai de Pantufa Mini Mercado. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
