@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>K4 Monitor — Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #020617;
+  --surface: rgba(15,23,42,0.8);
+  --border: rgba(255,255,255,0.07);
+  --indigo: #6366f1;
+  --indigo-dim: rgba(99,102,241,0.15);
+  --emerald: #10b981;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: #f1f5f9;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* ── SIDEBAR ── */
+aside {
+  width: 220px;
+  flex-shrink: 0;
+  background: rgba(9,15,29,0.95);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.logo {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--indigo-dim);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.logo h1 { font-size: 13px; font-weight: 700; color: #fff; }
+.logo p { font-size: 9px; color: var(--slate-500); text-transform: uppercase; letter-spacing: .08em; }
+
+nav { flex: 1; padding: 10px 8px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--slate-400);
+  transition: all .15s;
+  font-size: 13px;
+  position: relative;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: #f1f5f9; }
+.nav-item.active { background: var(--indigo-dim); color: #a5b4fc; font-weight: 500; }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.ws-status {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--slate-500);
+}
+.ws-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--emerald);
+  animation: pulse 2s infinite;
+}
+
+/* ── MAIN ── */
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+
+.page { display: none; animation: fadeIn .2s; }
+.page.active { display: block; }
+
+@keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-size: 22px; font-weight: 700; color: #fff; }
+.page-header p { color: var(--slate-500); font-size: 12px; margin-top: 4px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.stat-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.stat-label { font-size: 10px; color: var(--slate-500); text-transform: uppercase; letter-spacing: .06em; }
+.stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-value.green { color: var(--emerald); }
+.stat-value.red { color: var(--red); }
+.stat-value.amber { color: var(--amber); }
+.stat-value.indigo { color: #a5b4fc; }
+
+/* ── PANELS ── */
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.panel { padding: 18px; }
+.panel-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--slate-400);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+/* ── STATUS BADGE ── */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.badge-up    { background: rgba(16,185,129,.1); color: #34d399; border-color: rgba(16,185,129,.25); }
+.badge-down  { background: rgba(239,68,68,.1);  color: #f87171; border-color: rgba(239,68,68,.25); }
+.badge-warn  { background: rgba(245,158,11,.1); color: #fbbf24; border-color: rgba(245,158,11,.25); }
+.badge-unk   { background: rgba(100,116,139,.1); color: #94a3b8; border-color: rgba(100,116,139,.25); }
+.dot { width: 6px; height: 6px; border-radius: 50%; }
+.dot.up { background: #34d399; }
+.dot.down { background: #f87171; animation: pulse 1.5s infinite; }
+.dot.warn { background: #fbbf24; }
+.dot.unk { background: #94a3b8; }
+
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+/* ── DEVICE ROW (overview) ── */
+.device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.device-row:last-child { border-bottom: none; }
+.device-info { display: flex; align-items: center; gap: 10px; }
+.device-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.device-icon.up   { background: rgba(16,185,129,.1); }
+.device-icon.down { background: rgba(239,68,68,.1); }
+.device-icon.unk  { background: rgba(100,116,139,.1); }
+.device-name { font-weight: 500; font-size: 13px; }
+.device-host { font-size: 11px; color: var(--slate-500); font-family: monospace; }
+.device-metric { font-family: monospace; font-size: 13px; color: var(--slate-300); text-align: right; }
+.device-time  { font-size: 10px; color: var(--slate-600); }
+
+/* ── INCIDENT ROW ── */
+.incident {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  margin-bottom: 8px;
+}
+.incident.critical { background: rgba(239,68,68,.05); border-color: rgba(239,68,68,.2); }
+.incident.warning  { background: rgba(245,158,11,.05); border-color: rgba(245,158,11,.2); }
+.incident.info     { background: rgba(99,102,241,.05); border-color: rgba(99,102,241,.2); }
+.inc-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; animation: pulse 2s infinite; }
+.incident.critical .inc-dot { background: var(--red); }
+.incident.warning  .inc-dot { background: var(--amber); }
+.incident.info     .inc-dot { background: var(--indigo); }
+.inc-msg { font-size: 13px; color: #f1f5f9; }
+.inc-time { font-size: 10px; color: var(--slate-500); margin-top: 2px; }
+
+/* ── DEVICES PAGE ── */
+.device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.dev-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.dev-card.down { border-color: rgba(239,68,68,.3); }
+.dev-card-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dev-card-left { display: flex; align-items: center; gap: 10px; }
+.dev-card-icon {
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.dev-card-body {
+  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.dev-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--slate-500);
+  margin-bottom: 10px;
+}
+.tag {
+  font-family: monospace;
+  font-size: 10px;
+  background: var(--slate-800);
+  color: var(--slate-300);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.chart-wrap { position: relative; height: 100px; }
+
+/* ── ALERTS PAGE ── */
+.tabs { display: flex; gap: 4px; background: rgba(30,41,59,.5); padding: 4px; border-radius: 10px; width: fit-content; margin-bottom: 20px; }
+.tab {
+  padding: 6px 16px; border-radius: 7px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none; background: none; color: var(--slate-400); transition: all .15s;
+}
+.tab.active { background: var(--indigo-dim); color: #a5b4fc; }
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.rule-row:last-child { border-bottom: none; }
+.sev-badge {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px;
+}
+.sev-badge.critical { background: rgba(239,68,68,.15); color: #f87171; }
+.sev-badge.warning  { background: rgba(245,158,11,.15); color: #fbbf24; }
+.sev-badge.info     { background: rgba(99,102,241,.15); color: #a5b4fc; }
+
+/* ── TOPOLOGY PAGE ── */
+#topology-canvas { width: 100%; height: 480px; border-radius: 12px; background: rgba(9,15,29,.9); border: 1px solid var(--border); }
+
+/* ── TOP BAR ── */
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  margin: -28px -32px 24px;
+  padding: 12px 32px;
+  background: rgba(2,6,23,.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.live-pill {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--slate-400);
+  background: rgba(16,185,129,.08);
+  border: 1px solid rgba(16,185,129,.2);
+  padding: 4px 10px; border-radius: 999px;
+}
+.live-pill .dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); animation: pulse 1.5s infinite; }
+.clock { font-family: monospace; font-size: 13px; color: var(--slate-400); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+
+/* ── SETTINGS ── */
+.info-block { padding: 18px 20px; display: flex; gap: 14px; align-items: flex-start; }
+.info-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.info-title { font-weight: 600; color: #fff; font-size: 14px; margin-bottom: 6px; }
+.info-desc { color: var(--slate-400); font-size: 13px; line-height: 1.6; }
+.tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.tech-item label { font-size: 10px; color: var(--slate-500); text-transform: uppercase; letter-spacing: .06em; }
+.tech-item p { font-family: monospace; font-size: 12px; color: var(--slate-200); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="logo">
+    <div class="logo-icon">📡</div>
+    <div>
+      <h1>K4 Monitor</h1>
+      <p>Sistema de Monitoramento</p>
+    </div>
+  </div>
+  <nav>
+    <button class="nav-item active" onclick="nav('overview',this)">🏠 &nbsp;Visão Geral</button>
+    <button class="nav-item" onclick="nav('devices',this)">🖥️ &nbsp;Dispositivos</button>
+    <button class="nav-item" onclick="nav('topology',this)">🗺️ &nbsp;Topologia</button>
+    <button class="nav-item" id="nav-alerts" onclick="nav('alerts',this)">🔔 &nbsp;Alertas <span class="badge" id="badge-count">3</span></button>
+    <button class="nav-item" onclick="nav('settings',this)">⚙️ &nbsp;Configurações</button>
+  </nav>
+  <div class="ws-status">
+    <div class="ws-dot"></div>
+    Tempo real ativo
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div style="font-size:13px;color:var(--slate-400)">Infraestrutura monitorada em tempo real</div>
+    <div class="topbar-right">
+      <div class="live-pill"><div class="dot-live"></div> AO VIVO</div>
+      <div class="clock" id="clock">00:00:00</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ OVERVIEW ═══════════ -->
+  <div id="page-overview" class="page active">
+    <div class="page-header">
+      <h2>Visão Geral</h2>
+      <p>Estado atual da infraestrutura</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div><div class="stat-label">Total</div><div class="stat-value indigo" id="s-total">8</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div><div class="stat-label">Online</div><div class="stat-value green" id="s-up">6</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">❌</div>
+        <div><div class="stat-label">Offline</div><div class="stat-value red" id="s-down">1</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚠️</div>
+        <div><div class="stat-label">Alertas</div><div class="stat-value amber" id="s-warn">1</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🚨</div>
+        <div><div class="stat-label">Incidentes</div><div class="stat-value red" id="s-inc">3</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div><div class="stat-label">Disponibilidade</div><div class="stat-value indigo" id="s-avail">75%</div></div>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="card panel">
+        <div class="panel-title">Últimas Verificações</div>
+        <div id="recent-checks"></div>
+      </div>
+      <div class="card panel">
+        <div class="panel-title">Incidentes Ativos</div>
+        <div id="active-incidents"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DEVICES ═══════════ -->
+  <div id="page-devices" class="page">
+    <div class="page-header">
+      <h2>Dispositivos</h2>
+      <p id="dev-count">8 dispositivos cadastrados</p>
+    </div>
+    <div class="device-grid" id="device-grid"></div>
+  </div>
+
+  <!-- ═══════════ TOPOLOGY ═══════════ -->
+  <div id="page-topology" class="page">
+    <div class="page-header">
+      <h2>Mapa de Topologia</h2>
+      <p>Visão da rede e conexões entre dispositivos</p>
+    </div>
+    <canvas id="topology-canvas"></canvas>
+  </div>
+
+  <!-- ═══════════ ALERTS ═══════════ -->
+  <div id="page-alerts" class="page">
+    <div class="page-header">
+      <h2>Alertas</h2>
+      <p id="alert-subtitle">3 incidentes ativos</p>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="alertTab('incidents',this)">Incidentes</button>
+      <button class="tab" onclick="alertTab('rules',this)">Regras</button>
+    </div>
+    <div id="tab-incidents">
+      <div id="incidents-list"></div>
+    </div>
+    <div id="tab-rules" style="display:none">
+      <div class="card">
+        <div id="rules-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SETTINGS ═══════════ -->
+  <div id="page-settings" class="page">
+    <div class="page-header"><h2>Configurações</h2><p>Sistema e informações técnicas</p></div>
+    <div style="display:grid;gap:14px">
+      <div class="card info-block">
+        <div class="info-icon">ℹ️</div>
+        <div>
+          <div class="info-title">K4 Monitor v1.0</div>
+          <div class="info-desc">Sistema de monitoramento de dispositivos em rede do ecossistema K4 Systems. Suporta ICMP, HTTP/HTTPS e SNMP com alertas configuráveis e dados em tempo real.</div>
+        </div>
+      </div>
+      <div class="card info-block">
+        <div class="info-icon">⚡</div>
+        <div>
+          <div class="info-title">Protocolos Suportados</div>
+          <div class="info-desc">
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              <div style="display:flex;gap:10px;align-items:flex-start"><span class="tag">ICMP</span><span>Latência e perda de pacotes via ping nativo</span></div>
+              <div style="display:flex;gap:10px;align-items:flex-start"><span class="tag">HTTP/S</span><span>Tempo de resposta e validação de status HTTP</span></div>
+              <div style="display:flex;gap:10px;align-items:flex-start"><span class="tag">SNMP</span><span>Uptime e sysDescr via OIDs padrão v2c</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card info-block">
+        <div class="info-icon">🧩</div>
+        <div>
+          <div class="info-title">Stack Técnica</div>
+          <div class="tech-grid">
+            <div class="tech-item"><label>Backend</label><p>Python + FastAPI + SQLAlchemy</p></div>
+            <div class="tech-item"><label>Banco de dados</label><p>SQLite / TimescaleDB</p></div>
+            <div class="tech-item"><label>Frontend</label><p>React + TypeScript + Vite</p></div>
+            <div class="tech-item"><label>Gráficos</label><p>Recharts</p></div>
+            <div class="tech-item"><label>Tempo real</label><p>WebSockets nativos</p></div>
+            <div class="tech-item"><label>Scheduler</label><p>AsyncIO tasks</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════
+//  DADOS SIMULADOS
+// ══════════════════════════════════════════════════
+const DEVICES = [
+  { id:1, name:'Gateway Principal',  host:'192.168.1.1',   type:'router',  check:'icmp',  status:'up',   icon:'🔀', interval:30  },
+  { id:2, name:'Switch Core',        host:'192.168.1.2',   type:'switch',  check:'snmp',  status:'up',   icon:'🌐', interval:60  },
+  { id:3, name:'Servidor Web Nginx', host:'10.0.0.10',     type:'host',    check:'https', status:'up',   icon:'🖥️', interval:45  },
+  { id:4, name:'Banco de Dados',     host:'10.0.0.20',     type:'host',    check:'icmp',  status:'warn', icon:'🗄️', interval:60  },
+  { id:5, name:'API Gateway',        host:'api.k4sys.io',  type:'service', check:'https', status:'up',   icon:'☁️', interval:30  },
+  { id:6, name:'Servidor Backup',    host:'10.0.0.30',     type:'host',    check:'icmp',  status:'down', icon:'💾', interval:120 },
+  { id:7, name:'DNS Primário',       host:'10.0.0.5',      type:'host',    check:'icmp',  status:'up',   icon:'📋', interval:60  },
+  { id:8, name:'Monitor de Logs',    host:'10.0.0.40',     type:'host',    check:'http',  status:'up',   icon:'📜', interval:90  },
+];
+
+const METRIC_KEY = { icmp:'latency_ms', https:'response_ms', http:'response_ms', snmp:'uptime_s' };
+const METRIC_UNIT = { icmp:' ms', https:' ms', http:' ms', snmp:' s' };
+const METRIC_COLOR = { icmp:'#6366f1', https:'#22d3ee', http:'#22d3ee', snmp:'#10b981' };
+
+const BASE_VALUES = {
+  1: 2.4, 2: 1.1, 3: 48, 4: 180, 5: 92, 6: null, 7: 3.1, 8: 55
+};
+
+// Histórico circular (últimos 20 pontos)
+const history = {};
+DEVICES.forEach(d => {
+  history[d.id] = { labels:[], values:[] };
+  for(let i=19;i>=0;i--) {
+    const t = new Date(Date.now() - i*15000);
+    history[d.id].labels.push(t.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+    history[d.id].values.push(d.status === 'down' ? null : jitter(BASE_VALUES[d.id], 15));
+  }
+});
+
+function jitter(base, pct) {
+  if(base === null) return null;
+  const r = 1 + (Math.random()-0.5)*2*(pct/100);
+  return Math.max(0.5, parseFloat((base * r).toFixed(2)));
+}
+
+const INCIDENTS = [
+  { id:1, device:'Banco de Dados',     msg:'Latência crítica: 312 ms (threshold: 200 ms)', severity:'critical', time:'14:32:11', ack:false },
+  { id:2, device:'Servidor Backup',    msg:'Host 10.0.0.30 está OFFLINE',                   severity:'critical', time:'14:28:05', ack:true  },
+  { id:3, device:'Gateway Principal',  msg:'Packet loss: 8% (threshold: 5%)',                severity:'warning',  time:'14:41:58', ack:false },
+];
+
+const RULES = [
+  { id:1, device:'Banco de Dados',    metric:'latency_ms',  op:'gt',  threshold:200, sev:'critical' },
+  { id:2, device:'Servidor Backup',   metric:'reachable',   op:'eq',  threshold:0,   sev:'critical' },
+  { id:3, device:'Gateway Principal', metric:'packet_loss', op:'gt',  threshold:5,   sev:'warning'  },
+  { id:4, device:'Servidor Web Nginx',metric:'response_ms', op:'gt',  threshold:500, sev:'warning'  },
+  { id:5, device:'API Gateway',       metric:'response_ms', op:'gt',  threshold:300, sev:'info'     },
+];
+
+// ══════════════════════════════════════════════════
+//  CHARTS (Chart.js)
+// ══════════════════════════════════════════════════
+const charts = {};
+
+function makeChart(canvasId, deviceId) {
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  const d = DEVICES.find(x=>x.id===deviceId);
+  const color = METRIC_COLOR[d.check];
+  const h = history[deviceId];
+
+  charts[deviceId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [...h.labels],
+      datasets: [{
+        data: [...h.values],
+        borderColor: color,
+        borderWidth: 2,
+        backgroundColor: color + '22',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        spanGaps: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: { legend:{ display:false }, tooltip:{
+        mode:'index', intersect:false,
+        backgroundColor:'#0f172a', borderColor:'#1e293b', borderWidth:1,
+        titleColor:'#94a3b8', bodyColor: color,
+        callbacks: { label: ctx => `${ctx.parsed.y?.toFixed(1)}${METRIC_UNIT[d.check]}` }
+      }},
+      scales: {
+        x:{ display:false },
+        y:{ display:false, min:0 }
+      }
+    }
+  });
+}
+
+function updateChart(deviceId) {
+  const ch = charts[deviceId];
+  if(!ch) return;
+  const h = history[deviceId];
+  ch.data.labels = [...h.labels];
+  ch.data.datasets[0].data = [...h.values];
+  ch.update('none');
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════
+function statusClass(s) { return s==='up'?'up':s==='down'?'down':s==='warn'?'warn':'unk'; }
+function statusLabel(s) { return s==='up'?'UP':s==='down'?'DOWN':s==='warn'?'AVISO':'—'; }
+function badgeHtml(s) {
+  const sc = statusClass(s);
+  return `<span class="badge-status badge-${sc}"><span class="dot ${sc}"></span>${statusLabel(s)}</span>`;
+}
+
+function renderOverview() {
+  const up   = DEVICES.filter(d=>d.status==='up').length;
+  const down = DEVICES.filter(d=>d.status==='down').length;
+  const warn = DEVICES.filter(d=>d.status==='warn').length;
+  const unk  = DEVICES.filter(d=>d.status==='unknown').length;
+  const total = DEVICES.length;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-up').textContent    = up;
+  document.getElementById('s-down').textContent  = down;
+  document.getElementById('s-warn').textContent  = warn;
+  document.getElementById('s-inc').textContent   = INCIDENTS.filter(i=>!i.resolved).length;
+  document.getElementById('s-avail').textContent = `${Math.round(up/total*100)}%`;
+  document.getElementById('badge-count').textContent = INCIDENTS.filter(i=>!i.ack).length;
+
+  // Recent checks
+  const rc = document.getElementById('recent-checks');
+  rc.innerHTML = DEVICES.slice().sort((a,b) => (b._lastMs||0)-(a._lastMs||0)).map(d => {
+    const val = d.status==='down' ? '—' : ((d._lastVal||BASE_VALUES[d.id])||0).toFixed(1) + (METRIC_UNIT[d.check]||' ms');
+    return `<div class="device-row">
+      <div class="device-info">
+        <div class="device-icon ${statusClass(d.status)}">${d.icon}</div>
+        <div><div class="device-name">${d.name}</div><div class="device-host">${d.host}</div></div>
+      </div>
+      <div style="text-align:right">
+        ${badgeHtml(d.status)}
+        <div class="device-metric">${val}</div>
+        <div class="device-time">${d._lastTime||'aguardando...'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Active incidents
+  const ai = document.getElementById('active-incidents');
+  ai.innerHTML = INCIDENTS.map(inc => `
+    <div class="incident ${inc.severity}">
+      <div class="inc-dot"></div>
+      <div>
+        <div class="inc-msg">${inc.msg}</div>
+        <div class="inc-time">${inc.device} · ${inc.time}${inc.ack?' · Reconhecido':''}</div>
+      </div>
+    </div>
+  `).join('') || '<p style="color:var(--slate-600);text-align:center;padding:20px">Nenhum incidente</p>';
+
+  document.getElementById('alert-subtitle').textContent = `${INCIDENTS.length} incidente${INCIDENTS.length!==1?'s':''} ativo${INCIDENTS.length!==1?'s':''}`;
+}
+
+function renderDevices() {
+  const grid = document.getElementById('device-grid');
+  grid.innerHTML = DEVICES.map(d => {
+    const sc = statusClass(d.status);
+    const val = d.status==='down' ? '—' : ((d._lastVal||BASE_VALUES[d.id])||0).toFixed(1) + (METRIC_UNIT[d.check]||' ms');
+    return `
+    <div class="dev-card ${sc==='down'?'down':''}">
+      <div class="dev-card-header">
+        <div class="dev-card-left">
+          <div class="dev-card-icon" style="background:${statusBg(d.status)}">${d.icon}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${d.name}</div>
+            <div style="font-size:11px;color:var(--slate-500);font-family:monospace">${d.host}</div>
+          </div>
+        </div>
+        ${badgeHtml(d.status)}
+      </div>
+      <div class="dev-card-body">
+        <div class="dev-card-meta">
+          <span class="tag">${d.check.toUpperCase()}</span>
+          <span style="font-family:monospace;font-size:12px;color:var(--slate-300)">${val}</span>
+          <span>${d._lastTime||'—'}</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart-${d.id}"></canvas>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Mount charts
+  DEVICES.forEach(d => makeChart(`chart-${d.id}`, d.id));
+}
+
+function statusBg(s) {
+  return s==='up'?'rgba(16,185,129,.1)':s==='down'?'rgba(239,68,68,.1)':s==='warn'?'rgba(245,158,11,.1)':'rgba(100,116,139,.1)';
+}
+
+function renderAlerts() {
+  document.getElementById('incidents-list').innerHTML = INCIDENTS.map(inc => `
+    <div class="incident ${inc.severity}" style="margin-bottom:8px">
+      <div class="inc-dot"></div>
+      <div style="flex:1">
+        <div class="inc-msg">${inc.msg}</div>
+        <div class="inc-time">${inc.device} · ${inc.time}${inc.ack?' · ✓ Reconhecido':''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${!inc.ack?`<button onclick="ackInc(${inc.id})" style="padding:4px 8px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#94a3b8;font-size:11px;cursor:pointer">Reconhecer</button>`:''}
+        <button onclick="resolveInc(${inc.id})" style="padding:4px 8px;border-radius:6px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:#34d399;font-size:11px;cursor:pointer">Resolver</button>
+      </div>
+    </div>
+  `).join('') || '<p style="color:var(--slate-600);text-align:center;padding:40px">Nenhum incidente ativo</p>';
+
+  document.getElementById('rules-list').innerHTML = RULES.map(r => `
+    <div class="rule-row">
+      <div>
+        <div style="font-size:13px;color:#f1f5f9;font-weight:500">${r.device} — <span style="font-family:monospace;color:var(--slate-400)">${r.metric}</span> ${r.op} ${r.threshold}</div>
+        <div style="font-size:11px;color:var(--slate-500);margin-top:2px">Intervalo de verificação automático</div>
+      </div>
+      <span class="sev-badge ${r.sev}">${r.sev}</span>
+    </div>
+  `).join('');
+}
+
+function ackInc(id) {
+  const inc = INCIDENTS.find(i=>i.id===id);
+  if(inc) { inc.ack = true; renderAlerts(); renderOverview(); }
+}
+function resolveInc(id) {
+  const idx = INCIDENTS.findIndex(i=>i.id===id);
+  if(idx>=0) { INCIDENTS.splice(idx,1); renderAlerts(); renderOverview(); }
+}
+
+// ══════════════════════════════════════════════════
+//  TOPOLOGY (Canvas 2D)
+// ══════════════════════════════════════════════════
+const TOPO_NODES = [
+  { id:1, label:'Gateway',     x:.5,  y:.12, icon:'🔀', color:'#6366f1', connects:[2] },
+  { id:2, label:'Switch Core', x:.5,  y:.32, icon:'🌐', color:'#22d3ee', connects:[3,4,5,6,7,8] },
+  { id:3, label:'Web Nginx',   x:.15, y:.58, icon:'🖥️', color:'#10b981', connects:[] },
+  { id:4, label:'Banco DB',    x:.32, y:.72, icon:'🗄️', color:'#f59e0b', connects:[] },
+  { id:5, label:'API GW',      x:.5,  y:.62, icon:'☁️', color:'#10b981', connects:[] },
+  { id:6, label:'Backup',      x:.68, y:.72, icon:'💾', color:'#ef4444', connects:[] },
+  { id:7, label:'DNS',         x:.82, y:.55, icon:'📋', color:'#10b981', connects:[] },
+  { id:8, label:'Logs',        x:.5,  y:.85, icon:'📜', color:'#10b981', connects:[] },
+];
+
+const TOPO_STATUS = { 1:'up',2:'up',3:'up',4:'warn',5:'up',6:'down',7:'up',8:'up' };
+const STATUS_RING = { up:'#10b981', warn:'#f59e0b', down:'#ef4444', unknown:'#64748b' };
+
+let topoInited = false;
+function renderTopology() {
+  if(topoInited) return;
+  topoInited = true;
+  const canvas = document.getElementById('topology-canvas');
+  const ctx2 = canvas.getContext('2d');
+
+  function draw() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const W = canvas.width, H = canvas.height;
+    ctx2.clearRect(0,0,W,H);
+
+    // Grid background
+    ctx2.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx2.lineWidth = 1;
+    for(let x=0;x<W;x+=40) { ctx2.beginPath(); ctx2.moveTo(x,0); ctx2.lineTo(x,H); ctx2.stroke(); }
+    for(let y=0;y<H;y+=40) { ctx2.beginPath(); ctx2.moveTo(0,y); ctx2.lineTo(W,y); ctx2.stroke(); }
+
+    const px = n => n.x * W;
+    const py = n => n.y * H;
+
+    // Connections
+    TOPO_NODES.forEach(n => {
+      n.connects.forEach(tid => {
+        const t = TOPO_NODES.find(x=>x.id===tid);
+        if(!t) return;
+        const s = TOPO_STATUS[n.id];
+        const st = TOPO_STATUS[t.id];
+        const ok = s!=='down' && st!=='down';
+        const grad = ctx2.createLinearGradient(px(n),py(n),px(t),py(t));
+        grad.addColorStop(0, ok ? 'rgba(99,102,241,0.4)' : 'rgba(239,68,68,0.3)');
+        grad.addColorStop(1, ok ? 'rgba(34,211,238,0.4)' : 'rgba(239,68,68,0.1)');
+        ctx2.beginPath();
+        ctx2.moveTo(px(n), py(n));
+        ctx2.lineTo(px(t), py(t));
+        ctx2.strokeStyle = grad;
+        ctx2.lineWidth = ok ? 2 : 1.5;
+        if(!ok) { ctx2.setLineDash([6,4]); }
+        ctx2.stroke();
+        ctx2.setLineDash([]);
+      });
+    });
+
+    // Nodes
+    TOPO_NODES.forEach(n => {
+      const x = px(n), y = py(n);
+      const st = TOPO_STATUS[n.id];
+
+      // Outer ring
+      ctx2.beginPath();
+      ctx2.arc(x,y,26,0,Math.PI*2);
+      ctx2.fillStyle = 'rgba(9,15,29,0.95)';
+      ctx2.fill();
+      ctx2.strokeStyle = STATUS_RING[st]||'#64748b';
+      ctx2.lineWidth = 2.5;
+      ctx2.stroke();
+
+      // Inner fill
+      ctx2.beginPath();
+      ctx2.arc(x,y,22,0,Math.PI*2);
+      ctx2.fillStyle = (STATUS_RING[st]||'#64748b') + '18';
+      ctx2.fill();
+
+      // Icon
+      ctx2.font = '18px serif';
+      ctx2.textAlign = 'center';
+      ctx2.textBaseline = 'middle';
+      ctx2.fillText(n.icon, x, y);
+
+      // Label
+      ctx2.font = '11px Segoe UI, system-ui, sans-serif';
+      ctx2.fillStyle = '#cbd5e1';
+      ctx2.textAlign = 'center';
+      ctx2.textBaseline = 'top';
+      ctx2.fillText(n.label, x, y+30);
+
+      // Status dot
+      ctx2.beginPath();
+      ctx2.arc(x+19, y-19, 5, 0, Math.PI*2);
+      ctx2.fillStyle = STATUS_RING[st]||'#64748b';
+      ctx2.fill();
+    });
+  }
+
+  draw();
+  window.addEventListener('resize', draw);
+}
+
+// ══════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════
+function nav(pageId, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  btn.classList.add('active');
+
+  if(pageId==='devices') renderDevices();
+  if(pageId==='alerts')  renderAlerts();
+  if(pageId==='topology') renderTopology();
+}
+
+function alertTab(tab, btn) {
+  document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-incidents').style.display = tab==='incidents'?'':'none';
+  document.getElementById('tab-rules').style.display     = tab==='rules'?'':'none';
+}
+
+// ══════════════════════════════════════════════════
+//  CLOCK
+// ══════════════════════════════════════════════════
+function tick() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+}
+tick();
+setInterval(tick, 1000);
+
+// ══════════════════════════════════════════════════
+//  SIMULATION LOOP
+// ══════════════════════════════════════════════════
+let tick_n = 0;
+function simulate() {
+  tick_n++;
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  DEVICES.forEach(d => {
+    // Occasional status flip for drama
+    if(d.id===6) { d.status='down'; return; } // always down
+    if(d.id===4 && tick_n % 20 < 3) { d.status='warn'; }
+    else if(d.id===4) { d.status = Math.random()<.3?'warn':'up'; }
+    else { d.status='up'; }
+
+    const newVal = jitter(BASE_VALUES[d.id], 20);
+    d._lastVal = newVal;
+    d._lastMs  = now.getTime();
+    d._lastTime = timeStr;
+
+    // Push to history
+    const h = history[d.id];
+    h.labels.push(timeStr);
+    h.values.push(d.status==='down' ? null : newVal);
+    if(h.labels.length > 40) { h.labels.shift(); h.values.shift(); }
+
+    // Update chart if rendered
+    updateChart(d.id);
+  });
+
+  renderOverview();
+
+  // If device page is open, update badges only (avoid full re-render which destroys charts)
+  if(document.getElementById('page-devices').classList.contains('active')) {
+    DEVICES.forEach(d => {
+      const sc = statusClass(d.status);
+      const card = document.querySelector(`#chart-${d.id}`)?.closest('.dev-card');
+      if(!card) return;
+      // Update badge
+      const badge = card.querySelector('.badge-status');
+      if(badge) badge.outerHTML; // just let chart update handle it
+    });
+  }
+}
+
+// Initial render
+renderOverview();
+
+// Simulate polls at varying cadences
+setInterval(simulate, 3000);
+
+// Fake new incident occasionally
+setInterval(() => {
+  if(Math.random() < 0.15 && INCIDENTS.length < 6) {
+    const msgs = [
+      { device:'DNS Primário',      msg:'DNS query timeout > 500ms detectado',      severity:'warning',  ack:false },
+      { device:'Monitor de Logs',   msg:'Resposta HTTP 502 recebida de 10.0.0.40',  severity:'critical', ack:false },
+      { device:'Gateway Principal', msg:'Spike de latência: 48ms (normal: 2ms)',    severity:'warning',  ack:false },
+    ];
+    const pick = msgs[Math.floor(Math.random()*msgs.length)];
+    const id = Date.now();
+    INCIDENTS.unshift({ id, ...pick, time: new Date().toLocaleTimeString('pt-BR') });
+    renderOverview();
+    if(document.getElementById('page-alerts').classList.contains('active')) renderAlerts();
+  }
+}, 12000);
+</script>
+</body>
+</html>
