@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>K4 Monitor — AIOps Engine</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#020617;--s0:rgba(9,15,29,.98);--s1:rgba(15,23,42,.85);--s2:rgba(30,41,59,.6);
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.04);
+  --indigo:#6366f1;--indigo2:rgba(99,102,241,.15);--indigo3:rgba(99,102,241,.08);
+  --emerald:#10b981;--red:#ef4444;--amber:#f59e0b;--cyan:#22d3ee;--purple:#a855f7;
+  --t0:#f8fafc;--t1:#cbd5e1;--t2:#94a3b8;--t3:#64748b;--t4:#475569;
+  --font:'Segoe UI',system-ui,sans-serif;--mono:'Consolas','JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--t0);display:flex;font-size:13px}
+
+/* SIDEBAR */
+aside{width:210px;flex-shrink:0;background:var(--s0);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh}
+.logo{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:34px;height:34px;border-radius:9px;background:var(--indigo2);border:1px solid rgba(99,102,241,.3);display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo h1{font-size:13px;font-weight:700;color:var(--t0)}
+.logo p{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.09em}
+nav{flex:1;padding:8px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--t3);transition:all .15s;font-size:12.5px;border:none;background:none;width:100%;text-align:left;margin-bottom:2px}
+.ni:hover{background:rgba(255,255,255,.04);color:var(--t1)}
+.ni.active{background:var(--indigo2);color:#a5b4fc;font-weight:500}
+.ni .icon{font-size:14px;width:18px;text-align:center}
+.nb{margin-left:auto;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700}
+.nb.red{background:rgba(239,68,68,.25);color:#f87171}
+.nb.amber{background:rgba(245,158,11,.2);color:#fbbf24}
+.nb.green{background:rgba(16,185,129,.15);color:#34d399}
+.ai-status{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t3)}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--purple);box-shadow:0 0 8px var(--purple);animation:glow 2s infinite}
+@keyframes glow{0%,100%{opacity:1;box-shadow:0 0 6px var(--purple)}50%{opacity:.5;box-shadow:0 0 2px var(--purple)}}
+
+/* MAIN */
+main{flex:1;overflow:hidden;display:flex;flex-direction:column;height:100vh}
+.topbar{padding:10px 24px;background:rgba(2,6,23,.9);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-left{font-size:13px;color:var(--t2)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.pill{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;border:1px solid}
+.pill.live{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.2);color:#34d399}
+.pill.ai{background:rgba(168,85,247,.07);border-color:rgba(168,85,247,.2);color:#c084fc}
+.pdot{width:6px;height:6px;border-radius:50%;animation:pulse 2s infinite}
+.pdot.g{background:var(--emerald)}.pdot.p{background:var(--purple)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.clock{font-family:var(--mono);font-size:12px;color:var(--t3)}
+
+.content{flex:1;overflow:hidden;display:flex}
+.page{display:none;flex:1;overflow-y:auto;padding:22px 26px;animation:fi .2s}
+.page.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* CARDS / PANELS */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:11px;backdrop-filter:blur(10px)}
+.ph{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600;margin-bottom:12px}
+.row{display:flex;gap:16px;margin-bottom:16px}
+.row>.card{flex:1}
+.p14{padding:14px 16px}
+.p18{padding:18px 20px}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{padding:14px 16px;background:var(--s1);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:12px}
+.sicon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.slabel{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.sval{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.sval.g{color:var(--emerald)}.sval.r{color:var(--red)}.sval.a{color:var(--amber)}.sval.p{color:#c084fc}.sval.c{color:var(--cyan)}
+
+/* BADGES */
+.b{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid;white-space:nowrap}
+.b.up{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.25)}
+.b.down{background:rgba(239,68,68,.1);color:#f87171;border-color:rgba(239,68,68,.25)}
+.b.warn{background:rgba(245,158,11,.1);color:#fbbf24;border-color:rgba(245,158,11,.25)}
+.b.crit{background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.35)}
+.b.ai{background:rgba(168,85,247,.1);color:#c084fc;border-color:rgba(168,85,247,.25)}
+.b.act{background:rgba(34,211,238,.1);color:#67e8f9;border-color:rgba(34,211,238,.25)}
+.b.done{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.25)}
+.bdot{width:5px;height:5px;border-radius:50%}
+.bdot.up{background:#34d399}.bdot.down{background:#f87171;animation:pulse 1.5s infinite}.bdot.warn{background:#fbbf24}.bdot.crit{background:#f87171;animation:pulse 1s infinite}.bdot.ai{background:#c084fc;animation:pulse 2s infinite}.bdot.act{background:#67e8f9;animation:pulse 1s infinite}
+
+/* AI DECISION PANEL */
+.ai-panel{background:rgba(9,15,29,.97);border:1px solid rgba(168,85,247,.2);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.ai-header{padding:12px 16px;background:rgba(168,85,247,.08);border-bottom:1px solid rgba(168,85,247,.15);display:flex;align-items:center;gap:10px}
+.ai-brain{font-size:18px;animation:spin 3s linear infinite}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.ai-title{font-weight:600;color:#c084fc;font-size:13px}
+.ai-sub{font-size:11px;color:var(--t3);margin-left:auto}
+.ai-body{padding:14px 16px}
+.ai-think{font-family:var(--mono);font-size:12px;color:#e2d9f3;line-height:1.7;min-height:80px}
+.ai-think .cursor{display:inline-block;width:7px;height:13px;background:#c084fc;animation:blink .8s steps(1) infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.ai-steps{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.ai-step{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-radius:7px;border:1px solid var(--border2);background:rgba(255,255,255,.02);font-size:12px}
+.ai-step.pending{opacity:.4}
+.ai-step.running{border-color:rgba(34,211,238,.25);background:rgba(34,211,238,.04)}
+.ai-step.done{border-color:rgba(16,185,129,.2);background:rgba(16,185,129,.04)}
+.ai-step.error{border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.04)}
+.step-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.step-icon.pending{background:rgba(100,116,139,.15)}
+.step-icon.running{background:rgba(34,211,238,.15);animation:glow2 1s infinite}
+.step-icon.done{background:rgba(16,185,129,.15)}
+.step-icon.error{background:rgba(239,68,68,.15)}
+@keyframes glow2{0%,100%{box-shadow:0 0 0 rgba(34,211,238,0)}50%{box-shadow:0 0 8px rgba(34,211,238,.4)}}
+.step-label{color:var(--t1);flex:1}
+.step-detail{color:var(--t3);font-size:11px;margin-top:2px}
+.step-result{font-family:var(--mono);color:#67e8f9;font-size:11px;margin-top:3px}
+.step-error{color:#f87171;font-size:11px;margin-top:3px}
+
+/* TERMINAL */
+.terminal{background:#010810;border:1px solid rgba(99,102,241,.2);border-radius:8px;overflow:hidden;margin-top:10px}
+.term-bar{background:rgba(15,23,42,.8);padding:6px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(255,255,255,.06)}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-title{font-size:11px;color:var(--t3);margin-left:4px;font-family:var(--mono)}
+.term-body{padding:12px 14px;font-family:var(--mono);font-size:11.5px;line-height:1.8;max-height:200px;overflow-y:auto;color:#a3e635}
+.term-body .cmd{color:#67e8f9}
+.term-body .warn{color:#fbbf24}
+.term-body .err{color:#f87171}
+.term-body .dim{color:#475569}
+.term-body .hi{color:#c084fc}
+
+/* INCIDENT FEED */
+.inc-item{padding:12px 14px;border-bottom:1px solid var(--border2);display:flex;gap:12px;align-items:flex-start;transition:background .15s}
+.inc-item:last-child{border-bottom:none}
+.inc-item:hover{background:rgba(255,255,255,.02)}
+.inc-sev{width:3px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:36px}
+.inc-sev.crit{background:var(--red)}.inc-sev.warn{background:var(--amber)}.inc-sev.info{background:var(--indigo)}
+.inc-body{flex:1;min-width:0}
+.inc-title{font-size:13px;font-weight:500;color:var(--t0);margin-bottom:3px}
+.inc-meta{font-size:11px;color:var(--t3);display:flex;gap:10px;flex-wrap:wrap}
+.inc-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.btn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;font-family:var(--font)}
+.btn.ai-btn{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:#c084fc}
+.btn.ai-btn:hover{background:rgba(168,85,247,.2)}
+.btn.ghost{background:rgba(255,255,255,.04);border-color:var(--border);color:var(--t2)}
+.btn.ghost:hover{background:rgba(255,255,255,.08);color:var(--t1)}
+.btn.danger{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#f87171}
+.btn.success{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);color:#34d399}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.inc-status-row{display:flex;align-items:center;justify-content:space-between}
+
+/* PLAYBOOK */
+.pb-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
+.pb-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pb-name{font-weight:600;font-size:13px;color:var(--t0);margin-bottom:3px}
+.pb-desc{font-size:12px;color:var(--t3);line-height:1.5}
+.pb-tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--t2);padding:2px 7px;border-radius:4px}
+.pb-toggle{margin-left:auto;flex-shrink:0}
+.toggle{width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);cursor:pointer;position:relative;transition:background .2s}
+.toggle.on{background:rgba(99,102,241,.5);border-color:rgba(99,102,241,.6)}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.9);top:2px;left:2px;transition:left .2s}
+.toggle.on::after{left:18px}
+
+/* AUDIT */
+.audit-row{padding:10px 16px;border-bottom:1px solid var(--border2);display:flex;gap:12px;font-size:12px}
+.audit-row:last-child{border-bottom:none}
+.audit-time{font-family:var(--mono);color:var(--t3);flex-shrink:0;width:65px}
+.audit-dev{color:var(--cyan);flex-shrink:0;width:130px;font-family:var(--mono);font-size:11px}
+.audit-action{flex:1;color:var(--t1)}
+.audit-result{flex-shrink:0}
+
+/* METRIC MINI CHART */
+.mini-chart{height:50px;position:relative}
+
+/* DEVICE STATUS GRID */
+.dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:18px}
+.dev-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color .3s}
+.dev-card.alert{border-color:rgba(239,68,68,.35);animation:alertPulse 2s infinite}
+.dev-card.warn{border-color:rgba(245,158,11,.25)}
+@keyframes alertPulse{0%,100%{border-color:rgba(239,68,68,.35)}50%{border-color:rgba(239,68,68,.6)}}
+.dev-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dev-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.dev-name{font-weight:600;font-size:13px}
+.dev-host{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.metrics-row{display:flex;gap:10px}
+.metric-box{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:7px;padding:7px 9px}
+.metric-name{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em}
+.metric-val{font-size:15px;font-weight:700;font-family:var(--mono);margin-top:1px}
+.metric-val.ok{color:var(--emerald)}.metric-val.warn{color:var(--amber)}.metric-val.crit{color:var(--red)}
+.metric-bar{height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}
+.metric-fill{height:100%;border-radius:2px;transition:width .8s}
+.metric-fill.ok{background:var(--emerald)}.metric-fill.warn{background:var(--amber)}.metric-fill.crit{background:var(--red)}
+
+/* RISK BADGE */
+.risk{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px}
+.risk.low{background:rgba(16,185,129,.12);color:#34d399}
+.risk.med{background:rgba(245,158,11,.12);color:#fbbf24}
+.risk.hi{background:rgba(239,68,68,.12);color:#f87171}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#1e293b;border-radius:2px}
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="logo">
+    <div class="logo-mark">🧠</div>
+    <div><h1>K4 AIOps</h1><p>Monitoramento Inteligente</p></div>
+  </div>
+  <nav>
+    <button class="ni active" onclick="nav('dashboard',this)"><span class="icon">🏠</span>Dashboard</button>
+    <button class="ni" onclick="nav('incidents',this)"><span class="icon">🚨</span>Incidentes <span class="nb red" id="nb-inc">0</span></button>
+    <button class="ni" onclick="nav('playbooks',this)"><span class="icon">📋</span>Playbooks <span class="nb green">5</span></button>
+    <button class="ni" onclick="nav('devices',this)"><span class="icon">🖥️</span>Dispositivos</button>
+    <button class="ni" onclick="nav('audit',this)"><span class="icon">📜</span>Auditoria <span class="nb amber" id="nb-audit">0</span></button>
+  </nav>
+  <div class="ai-status">
+    <div class="ai-dot"></div>
+    Motor de IA ativo
+  </div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div class="topbar-left">Infraestrutura gerenciada com inteligência artificial</div>
+    <div class="topbar-right">
+      <div class="pill live"><div class="pdot g"></div>AO VIVO</div>
+      <div class="pill ai"><div class="pdot p"></div>IA DECIDINDO</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-row">
+        <div class="stat"><div class="sicon" style="background:rgba(99,102,241,.1)">📡</div><div><div class="slabel">Dispositivos</div><div class="sval c" id="st-total">6</div></div></div>
+        <div class="stat"><div class="sicon" style="background:rgba(16,185,129,.1)">✅</div><div><div class="slabel">Online</div><div class="sval g" id="st-up">4</div></div></div>
+        <div class="stat"><div class="sicon" style="background:rgba(239,68,68,.1)">🚨</div><div><div class="slabel">Incidentes</div><div class="sval r" id="st-inc">0</div></div></div>
+        <div class="stat"><div class="sicon" style="background:rgba(168,85,247,.1)">🤖</div><div><div class="slabel">Ações IA</div><div class="sval p" id="st-actions">0</div></div></div>
+      </div>
+
+      <div class="row">
+        <div class="card p14" style="flex:1.4">
+          <div class="ph">Atividade do Motor de IA — tempo real</div>
+          <div id="ai-activity-panel">
+            <div style="text-align:center;padding:40px 0;color:var(--t4)">
+              <div style="font-size:32px;margin-bottom:8px">🧠</div>
+              <div style="font-size:13px">Aguardando alertas...</div>
+              <div style="font-size:11px;color:var(--t4);margin-top:4px">O motor analisará automaticamente cada incidente</div>
+            </div>
+          </div>
+        </div>
+        <div class="card p14" style="flex:1">
+          <div class="ph">Últimas ações executadas</div>
+          <div id="action-log" style="display:flex;flex-direction:column;gap:6px">
+            <div style="text-align:center;padding:30px 0;color:var(--t4);font-size:12px">Nenhuma ação registrada</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ph" style="margin-top:4px;margin-bottom:10px">Status dos dispositivos monitorados</div>
+      <div class="dev-grid" id="dash-devices"></div>
+    </div>
+
+    <!-- ═══ INCIDENTS ═══ -->
+    <div id="page-incidents" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div>
+          <h2 style="font-size:18px;font-weight:700">Incidentes</h2>
+          <p style="color:var(--t3);font-size:12px;margin-top:3px" id="inc-subtitle">Gerenciados pela IA automaticamente</p>
+        </div>
+        <button class="btn ai-btn" onclick="triggerScenario()">🎲 Simular Incidente</button>
+      </div>
+      <div class="card" id="incidents-list">
+        <div style="text-align:center;padding:50px;color:var(--t4)">
+          <div style="font-size:28px;margin-bottom:8px">🎉</div>
+          Nenhum incidente ativo. Clique em "Simular Incidente" para ver a IA em ação.
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PLAYBOOKS ═══ -->
+    <div id="page-playbooks" class="page">
+      <div style="margin-bottom:18px">
+        <h2 style="font-size:18px;font-weight:700">Playbooks de Automação</h2>
+        <p style="color:var(--t3);font-size:12px;margin-top:3px">Regras que a IA executa automaticamente ao detectar anomalias</p>
+      </div>
+      <div id="playbooks-list"></div>
+    </div>
+
+    <!-- ═══ DEVICES ═══ -->
+    <div id="page-devices" class="page">
+      <div style="margin-bottom:18px">
+        <h2 style="font-size:18px;font-weight:700">Dispositivos</h2>
+        <p style="color:var(--t3);font-size:12px;margin-top:3px">Inventário completo com métricas em tempo real</p>
+      </div>
+      <div class="dev-grid" id="devices-full"></div>
+    </div>
+
+    <!-- ═══ AUDIT ═══ -->
+    <div id="page-audit" class="page">
+      <div style="margin-bottom:18px">
+        <h2 style="font-size:18px;font-weight:700">Trilha de Auditoria</h2>
+        <p style="color:var(--t3);font-size:12px;margin-top:3px">Todas as decisões e ações executadas pela IA, rastreáveis e auditáveis</p>
+      </div>
+      <div class="card">
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3)">
+          <span style="width:65px">Hora</span>
+          <span style="width:130px">Dispositivo</span>
+          <span style="flex:1">Ação executada</span>
+          <span>Resultado</span>
+        </div>
+        <div id="audit-list">
+          <div style="text-align:center;padding:40px;color:var(--t4);font-size:12px">Nenhuma ação auditada ainda.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ══════════════════════════════════════════════
+// DADOS DO SISTEMA
+// ══════════════════════════════════════════════
+const DEVICES = [
+  {
+    id:'fw01', name:'FW-EDGE-01', host:'10.0.0.1', type:'FortiGate 100F', icon:'🔥',
+    status:'up', color:'rgba(99,102,241,.12)',
+    metrics:{ mem:55, cpu:22, sessions:4200 },
+    limits:{ mem:85, cpu:90 },
+  },
+  {
+    id:'sw01', name:'SW-CORE-01', host:'10.0.0.2', type:'Cisco Catalyst 9300', icon:'🌐',
+    status:'up', color:'rgba(34,211,238,.1)',
+    metrics:{ cpu:31, temp:44, ports_up:22 },
+    limits:{ cpu:85, temp:75 },
+  },
+  {
+    id:'ap01', name:'AP-ROOF-01', host:'10.0.0.50', type:'Ubiquiti AirFiber 5XHD', icon:'📡',
+    status:'up', color:'rgba(16,185,129,.1)',
+    metrics:{ signal:-58, snr:28, throughput:420 },
+    limits:{ signal:-75, snr:15 },
+  },
+  {
+    id:'srv01', name:'SRV-APP-01', host:'10.0.0.10', type:'Linux Server', icon:'🖥️',
+    status:'up', color:'rgba(168,85,247,.1)',
+    metrics:{ mem:68, cpu:45, disk:72 },
+    limits:{ mem:90, cpu:95, disk:90 },
+  },
+  {
+    id:'ap02', name:'AP-FLOOR-02', host:'10.0.0.51', type:'Ubiquiti UAP-AC-Pro', icon:'📶',
+    status:'up', color:'rgba(16,185,129,.1)',
+    metrics:{ signal:-62, snr:22, clients:14 },
+    limits:{ signal:-80, snr:10 },
+  },
+  {
+    id:'sw02', name:'SW-DIST-02', host:'10.0.0.3', type:'HP Aruba 2930F', icon:'🔀',
+    status:'up', color:'rgba(34,211,238,.1)',
+    metrics:{ cpu:18, temp:38, ports_up:16 },
+    limits:{ cpu:85, temp:70 },
+  },
+];
+
+// ── PLAYBOOKS ──────────────────────────────────
+const PLAYBOOKS = [
+  {
+    id:'pb1', icon:'🔥', name:'FortiGate: Memória Crítica',
+    desc:'Quando a memória do FortiGate superar 85%, a IA conecta via SSH, lista os processos em execução, identifica os não-vitais com maior consumo e os encerra com segurança.',
+    device_type:'FortiGate', trigger:'mem > 85%',
+    steps:['Conectar via SSH', 'diagnose sys top', 'Analisar processos', 'Identificar não-vitais', 'Encerrar processos', 'Verificar memória'],
+    tags:['fortigate','memory','ssh','auto-kill'], enabled:true, risk:'med', executions:7
+  },
+  {
+    id:'pb2', icon:'🌐', name:'Switch: CPU Alta — Stormagem',
+    desc:'Detecta CPU > 85% em switches. A IA analisa tabelas MAC, identifica portas com broadcast storm e aplica rate-limiting ou block temporário via SSH/SNMP.',
+    device_type:'Switch', trigger:'cpu > 85%',
+    steps:['SSH/SNMP connect', 'show processes cpu', 'show storm-control', 'Aplicar rate-limit', 'Monitorar 60s', 'Confirmar normalização'],
+    tags:['switch','cpu','broadcast','storm-control'], enabled:true, risk:'med', executions:3
+  },
+  {
+    id:'pb3', icon:'📡', name:'Antena: Sinal Degradado',
+    desc:'Quando o SNR cair abaixo de 15dB ou sinal < -75dBm, a IA verifica interferências no canal atual, busca canal alternativo com menor ocupação e realiza o switch automático.',
+    device_type:'Ubiquiti', trigger:'snr < 15 ou signal < -75',
+    steps:['SNMP: ler canal atual', 'Scan de interferências', 'Selecionar canal ótimo', 'Aplicar via SNMP SET', 'Aguardar associação', 'Verificar SNR'],
+    tags:['antenna','rf','channel','snmp-set'], enabled:true, risk:'low', executions:12
+  },
+  {
+    id:'pb4', icon:'🖥️', name:'Servidor: Memory Leak Detection',
+    desc:'Detecta padrão de memory leak em processos. A IA analisa crescimento de memória ao longo do tempo, identifica o processo ofensor e decide entre restart seguro ou kill.',
+    device_type:'Linux Server', trigger:'mem > 90%',
+    steps:['SSH: ps aux --sort=-%mem', 'Analisar histórico de crescimento', 'Identificar leak pattern', 'Verificar se é reiniciável', 'Executar restart/kill', 'Checar saúde do serviço'],
+    tags:['linux','memory-leak','process','restart'], enabled:true, risk:'med', executions:5
+  },
+  {
+    id:'pb5', icon:'🔐', name:'FortiGate: Sessões Anômalas',
+    desc:'Detecta crescimento anormal de sessões. A IA analisa as top sessions por IP origem, identifica possível flood/DDoS e cria policy de bloqueio temporário automático.',
+    device_type:'FortiGate', trigger:'sessions > 50000',
+    steps:['diagnose sys session stat', 'Identificar IPs top-talkers', 'Análise de padrão (DDoS/legítimo)', 'Criar policy de bloqueio', 'Notificar equipe', 'Monitorar 5 min'],
+    tags:['fortigate','sessions','ddos','policy'], enabled:false, risk:'hi', executions:1
+  },
+];
+
+// ── CENÁRIOS DE INCIDENTES ─────────────────────
+const SCENARIOS = [
+  {
+    device:'fw01',
+    title:'Memória crítica detectada: 91%',
+    severity:'crit',
+    playbook:'pb1',
+    aiReasoning:`Analisando: FortiGate FW-EDGE-01 (10.0.0.1) reportou memória em 91%.
+Threshold configurado: 85%. Desvio: +6 pontos percentuais.
+
+Iniciando diagnóstico remoto via SSH para identificar processos consumidores...
+
+Processo de análise:
+  1. Conectar ao dispositivo via SSH (porta 22, usuário admin)
+  2. Executar "diagnose sys top 1 20" para listar top processos
+  3. Filtrar processos com consumo > 100MB
+  4. Verificar lista de processos VITAIS do FortiGate (não matar)
+  5. Selecionar candidatos seguros para encerramento
+
+Lista de processos VITAIS (protegidos):
+  - cmdbsvr (gerenciamento de config)
+  - httpsd   (GUI — opcional)
+  - ipsengine (IPS — MANTER)
+  - forticron (cron do sistema)
+  - miglogd   (logging — MANTER)
+
+Processos candidatos para kill:
+  → fnbamd PID 3812: 180MB — autenticação (pode reiniciar)
+  → httpsd  PID 3847: 210MB — GUI web (NÃO é tráfego de dados)
+  → reportd PID 4102: 145MB — geração de relatórios (seguro matar)
+
+Decisão: Encerrar httpsd e reportd. Economia estimada: ~355MB.
+Risco: Baixo. GUI ficará temporariamente indisponível (< 30s).`,
+    steps:[
+      { label:'Conectar SSH ao FW-EDGE-01', detail:'ssh admin@10.0.0.1', result:'✓ Conectado em 1.2s', status:'done' },
+      { label:'Listar processos (diagnose sys top)', detail:'Analisando top 20 processos', result:'23 processos encontrados, 3 candidatos', status:'done' },
+      { label:'Filtrar processos não-vitais', detail:'Cruzando com lista de processos protegidos', result:'httpsd (PID 3847, 210MB) e reportd (PID 4102, 145MB)', status:'done' },
+      { label:'Encerrar httpsd (GUI daemon)', detail:'diagnose sys kill 11 3847', result:'✓ Processo encerrado. Memória liberada: ~210MB', status:'done' },
+      { label:'Encerrar reportd (relatórios)', detail:'diagnose sys kill 11 4102', result:'✓ Processo encerrado. Memória liberada: ~145MB', status:'done' },
+      { label:'Verificar memória pós-ação', detail:'diagnose hardware sysinfo mem', result:'✓ Memória normalizada: 91% → 64%', status:'done' },
+    ],
+    termLines:[
+      {t:'cmd', v:'admin@FW-EDGE-01 # diagnose sys top 1 20'},
+      {t:'dim', v:'Run Time:  5 days, 3 hours, 14 minutes'},
+      {t:'dim', v:'User:     36%   System: 12%   Idle: 52%'},
+      {t:'dim', v:'Total memory: 4096MB  Free: 374MB  Used: 3722MB (91%)'},
+      {t:'', v:''},
+      {t:'dim', v:'           PID   RSS MINFLT MAJFLT %CPU %MEM NAME'},
+      {t:'warn', v:'         3847 214204  44322    1210 12.0  5.2 httpsd'},
+      {t:'warn', v:'         4102 148832  31024     892  4.0  3.6 reportd'},
+      {t:'hi',   v:'         3812 184512  55213    1020  8.0  4.5 fnbamd'},
+      {t:'dim', v:'         1021  48200   9820     212  1.0  1.1 ipsengine'},
+      {t:'dim', v:'         1102  31200   7210     108  0.5  0.7 miglogd'},
+      {t:'', v:''},
+      {t:'cmd', v:'admin@FW-EDGE-01 # diagnose sys kill 11 3847'},
+      {t:'', v:'admin@FW-EDGE-01 #'},
+      {t:'cmd', v:'admin@FW-EDGE-01 # diagnose sys kill 11 4102'},
+      {t:'', v:'admin@FW-EDGE-01 #'},
+      {t:'cmd', v:'admin@FW-EDGE-01 # diagnose hardware sysinfo mem'},
+      {t:'', v:'Mem: total=4096MB, used=2621MB, free=1475MB (64%)'},
+      {t:'', v:''},
+      {t:'hi', v:'✓ Memória reduzida: 91% → 64%. Ação concluída com sucesso.'},
+    ],
+    metricBefore: 91, metricAfter: 64, metricLabel:'MEM %', device_metric:'mem',
+    resolution:'Memória normalizada. Processos não-vitais encerrados com segurança.',
+  },
+  {
+    device:'sw01',
+    title:'CPU do switch em 93% — Possível broadcast storm',
+    severity:'crit',
+    playbook:'pb2',
+    aiReasoning:`Analisando: SW-CORE-01 (Cisco Catalyst 9300, 10.0.0.2) CPU em 93%.
+Threshold configurado: 85%. Spike iniciou há ~4 minutos.
+
+Padrão identificado: crescimento súbito e sustentado — característico de
+broadcast storm ou STP instability. Processos internos do switch não
+justificariam este nível sem evento externo.
+
+Hipóteses avaliadas:
+  ✗ Alta utilização de tabela MAC (excluído — apenas 2847/8192 entradas)
+  ✗ Roteamento OSPF em convergência (excluído — neighbors estáveis)
+  ✓ Broadcast storm: 847.000 frames/s em Gi0/21 (anômalo)
+  ✓ Porta Gi0/21 sem storm-control configurado
+
+Dispositivo conectado à Gi0/21: servidor de impressão (não crítico)
+Interface pode receber rate-limit de 20% sem impacto operacional.
+
+Decisão: Aplicar storm-control broadcast level 20 na Gi0/21.
+Risco: Baixo. Impressoras podem ter pequena latência por até 60s.`,
+    steps:[
+      { label:'SSH para SW-CORE-01', detail:'ssh admin@10.0.0.2', result:'✓ Conectado', status:'done' },
+      { label:'Analisar CPU por processo', detail:'show processes cpu sorted', result:'Cat-STP: 87% do load', status:'done' },
+      { label:'Inspecionar traffic counters', detail:'show interfaces counters errors', result:'Gi0/21: 847K broadcast frames/s', status:'done' },
+      { label:'Identificar porta ofensora', detail:'show mac address-table interface Gi0/21', result:'Servidor de impressão 192.168.10.45', status:'done' },
+      { label:'Aplicar storm-control', detail:'interface Gi0/21 → storm-control broadcast level 20', result:'✓ Rate-limit aplicado', status:'done' },
+      { label:'Verificar CPU', detail:'show processes cpu | include CPU', result:'✓ CPU normalizada: 93% → 28%', status:'done' },
+    ],
+    termLines:[
+      {t:'cmd', v:'SW-CORE-01# show processes cpu sorted | head -6'},
+      {t:'dim', v:'CPU utilization for five seconds: 93%/12%; one minute: 89%; five minutes: 72%'},
+      {t:'', v:''},
+      {t:'warn', v:'PID Runtime(ms)  Invoked  uSecs    5Sec   1Min  5Min TTY Process'},
+      {t:'warn', v:'168   1829980    48203   37962   87.28  82.45 66.23   0 Cat STP'},
+      {t:'dim', v:' 11    120304    12049    9988    1.02   0.98  0.87   0 ARP Input'},
+      {t:'', v:''},
+      {t:'cmd', v:'SW-CORE-01# show interfaces Gi0/21 counters'},
+      {t:'warn', v:'  InBroadcasts: 847,231/s   ← ANÔMALO'},
+      {t:'', v:''},
+      {t:'cmd', v:'SW-CORE-01# configure terminal'},
+      {t:'cmd', v:'SW-CORE-01(config)# interface GigabitEthernet0/21'},
+      {t:'cmd', v:'SW-CORE-01(config-if)# storm-control broadcast level 20'},
+      {t:'cmd', v:'SW-CORE-01(config-if)# storm-control action shutdown'},
+      {t:'cmd', v:'SW-CORE-01(config-if)# end'},
+      {t:'', v:''},
+      {t:'cmd', v:'SW-CORE-01# show processes cpu | include CPU utilization'},
+      {t:'hi', v:'CPU utilization for five seconds: 28%/4%; one minute: 61%'},
+      {t:'', v:''},
+      {t:'hi', v:'✓ Storm-control ativo. CPU normalizada de 93% → 28%.'},
+    ],
+    metricBefore: 93, metricAfter: 28, metricLabel:'CPU %', device_metric:'cpu',
+    resolution:'Broadcast storm contido via storm-control na Gi0/21.',
+  },
+  {
+    device:'ap01',
+    title:'SNR degradado: 8dB — Sinal inoperante',
+    severity:'crit',
+    playbook:'pb3',
+    aiReasoning:`Analisando: AP-ROOF-01 (Ubiquiti AirFiber 5XHD, 10.0.0.50).
+SNR atual: 8dB. Threshold mínimo: 15dB. Degradação: -20dB nos últimos 8min.
+
+Sinal em 5GHz demonstra padrão típico de interferência de co-canal.
+Throughput caiu de 420Mbps para 47Mbps.
+
+Realizando scan de espectro via SNMP e SSH...
+
+Canais disponíveis em 5GHz (DFS + non-DFS):
+  Canal 36  (5.180 GHz): ocupação 87% ← ATUAL
+  Canal 40  (5.200 GHz): ocupação 92% — saturado
+  Canal 100 (5.500 GHz): ocupação 12% ← ÓTIMO (DFS disponível)
+  Canal 149 (5.745 GHz): ocupação 34% — viável
+
+Canal 100 selecionado: menor interferência, mesma potência TX.
+Largura: 80MHz (compatível com link atual).
+
+Ação: SNMP SET → mudar canal para 100 (5.500 GHz).
+Risco: Baixo. Link terá interrupção de ~8-15s durante re-associação.`,
+    steps:[
+      { label:'SNMP GET: métricas atuais', detail:'OID: ubnt.airFiber.RxPower', result:'Signal: -78dBm, SNR: 8dB, Canal: 36', status:'done' },
+      { label:'Scan de espectro via SSH', detail:'ubntbox spectrumAnalyzer', result:'Canal 100: 12% ocupação — ÓTIMO', status:'done' },
+      { label:'Verificar disponibilidade DFS', detail:'iw list | grep DFS', result:'Canal 100: DFS disponível, sem restrições', status:'done' },
+      { label:'Aplicar novo canal via SNMP', detail:'SNMP SET: ieee80211Channel = 100', result:'✓ Comando aceito, re-associando...', status:'done' },
+      { label:'Aguardar re-associação (12s)', detail:'Monitorando link...', result:'✓ Link re-estabelecido em 11s', status:'done' },
+      { label:'Confirmar melhora de sinal', detail:'SNMP GET: rxSignal, txSignal, snr', result:'✓ SNR: 8dB → 31dB | Signal: -78 → -55dBm', status:'done' },
+    ],
+    termLines:[
+      {t:'cmd', v:'root@AP-ROOF-01:~# ubntbox spectrumAnalyzer --scan 5GHz --duration 30'},
+      {t:'dim', v:'Scanning 5GHz spectrum...'},
+      {t:'', v:''},
+      {t:'warn', v:'CH  36 [5180 MHz]: ████████▓░ 87% utilization  ← ATUAL'},
+      {t:'warn', v:'CH  40 [5200 MHz]: █████████░ 92% utilization  ← SATURADO'},
+      {t:'dim', v:'CH  44 [5220 MHz]: ███████░░░ 71% utilization'},
+      {t:'dim', v:'CH  48 [5240 MHz]: ████████░░ 78% utilization'},
+      {t:'hi', v:'CH 100 [5500 MHz]: ██░░░░░░░░ 12% utilization  ← MELHOR'},
+      {t:'dim', v:'CH 149 [5745 MHz]: ████░░░░░░ 34% utilization'},
+      {t:'', v:''},
+      {t:'cmd', v:'root@AP-ROOF-01:~# snmpset -v2c -c private 10.0.0.50 \\'},
+      {t:'cmd', v:'  1.3.6.1.4.1.41112.1.4.1.1.3.1 i 100'},
+      {t:'dim', v:'Re-associating... (11s)'},
+      {t:'', v:''},
+      {t:'cmd', v:'root@AP-ROOF-01:~# ubntbox linkstatus'},
+      {t:'hi', v:'  RX Signal:  -55 dBm  (era -78)'},
+      {t:'hi', v:'  TX Signal:  -54 dBm'},
+      {t:'hi', v:'  SNR:         31 dB   (era 8)'},
+      {t:'hi', v:'  Throughput:  387 Mbps (era 47)'},
+      {t:'', v:''},
+      {t:'hi', v:'✓ Canal alterado 36→100. Sinal restaurado.'},
+    ],
+    metricBefore: 8, metricAfter: 31, metricLabel:'SNR dB', device_metric:'snr',
+    resolution:'Canal alterado para 100 (5.5GHz). SNR restaurado para 31dB.',
+  },
+  {
+    device:'srv01',
+    title:'Memory leak detectado: uso em 96%',
+    severity:'crit',
+    playbook:'pb4',
+    aiReasoning:`Analisando: SRV-APP-01 (10.0.0.10) — memória em 96%.
+Histórico dos últimos 30min: 68% → 74% → 81% → 89% → 96%.
+
+Crescimento linear de ~9.3% por hora — padrão característico de memory leak.
+Não é pico de uso; é vazamento progressivo.
+
+Conectando via SSH para identificar o processo...
+
+Processo identificado: java -jar /opt/app/myapp-2.1.jar (PID 5521)
+  - Memória atual: 3.8GB de 4GB total
+  - Crescimento: +1.2GB nas últimas 3 horas
+  - Heap Java: 3.6GB (99.3% do heap máximo de 3.6GB)
+  - GC: 847 Full GC calls/min — swap thrashing severo
+
+Diagnóstico: Heap Java esgotado. O processo está em GC contínuo
+e não conseguirá liberar memória por si só.
+
+Verificando se é reiniciável com segurança:
+  ✓ Serviço tem systemd unit: myapp.service
+  ✓ Tem health check endpoint: /health
+  ✓ Dados em banco PostgreSQL (persistentes)
+  ✓ Não há transação ativa há 2+ minutos
+
+Decisão: RESTART seguro via systemctl (não kill -9).
+O systemd garantirá graceful shutdown e reinício automático.`,
+    steps:[
+      { label:'SSH: analisar memória', detail:'free -h && vmstat 1 3', result:'96% usado, swap ativo (2.1GB/2GB)', status:'done' },
+      { label:'Identificar processo ofensor', detail:'ps aux --sort=-%mem | head -5', result:'java PID 5521: 3.8GB (96%)', status:'done' },
+      { label:'Verificar padrão de memory leak', detail:'Analisando histórico 30min + heap stats', result:'Crescimento linear: +1.2GB/3h — leak confirmado', status:'done' },
+      { label:'Checar se reinício é seguro', detail:'Verificar transações ativas, health check', result:'✓ Sem transações. Reinício seguro.', status:'done' },
+      { label:'Restart graceful via systemctl', detail:'systemctl restart myapp.service', result:'✓ Serviço reiniciado em 8s', status:'done' },
+      { label:'Verificar saúde pós-restart', detail:'curl /health && free -h', result:'✓ HTTP 200. Memória: 96% → 41%', status:'done' },
+    ],
+    termLines:[
+      {t:'cmd', v:'root@SRV-APP-01:~# ps aux --sort=-%mem | head -6'},
+      {t:'dim', v:'USER       PID %CPU %MEM    VSZ   RSS COMMAND'},
+      {t:'warn', v:'app       5521 98.2 95.8 4194304 3923456 java -jar /opt/app/myapp-2.1.jar'},
+      {t:'dim', v:'root         1  0.0  0.1  168952  10240 /sbin/init'},
+      {t:'dim', v:'postgres  2821  2.1  1.2  342016  49152 postgres: app appdb'},
+      {t:'', v:''},
+      {t:'cmd', v:'root@SRV-APP-01:~# jcmd 5521 VM.native_memory summary'},
+      {t:'warn', v:'Total: reserved=4096MB, committed=3891MB'},
+      {t:'warn', v:'  Java Heap: reserved=3686MB, committed=3684MB (99.9%)'},
+      {t:'warn', v:'  GC: 847 Full GC/min — SWAP THRASHING'},
+      {t:'', v:''},
+      {t:'cmd', v:'root@SRV-APP-01:~# systemctl status myapp.service | grep Active'},
+      {t:'dim', v:'Active: active (running) since Mon 2026-05-22 14:23:11 UTC'},
+      {t:'', v:''},
+      {t:'cmd', v:'root@SRV-APP-01:~# systemctl restart myapp.service'},
+      {t:'dim', v:'[  3.2s] Stopping myapp.service...'},
+      {t:'dim', v:'[  8.1s] Started myapp.service'},
+      {t:'', v:''},
+      {t:'cmd', v:'root@SRV-APP-01:~# curl -s http://localhost:8080/health | jq .'},
+      {t:'hi', v:'{"status": "UP", "memory": "1680MB/4096MB (41%)"}'},
+      {t:'', v:''},
+      {t:'hi', v:'✓ Memory leak corrigido. Serviço saudável.'},
+    ],
+    metricBefore: 96, metricAfter: 41, metricLabel:'MEM %', device_metric:'mem',
+    resolution:'Memory leak corrigido via restart graceful. Memória: 96% → 41%.',
+  },
+];
+
+// ══════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════
+let incidents = [];
+let auditLog  = [];
+let actionLog = [];
+let actionCount = 0;
+let scenarioIdx = 0;
+
+// ══════════════════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════════════════
+function nav(pageId, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  btn.classList.add('active');
+  if(pageId==='devices')   renderDevicesFull();
+  if(pageId==='playbooks') renderPlaybooks();
+}
+
+// ══════════════════════════════════════════════
+// RELÓGIO
+// ══════════════════════════════════════════════
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ══════════════════════════════════════════════
+// MÉTRICAS SIMULADAS (jitter)
+// ══════════════════════════════════════════════
+function jitter(v, pct=8) {
+  return Math.max(0, parseFloat((v*(1+(Math.random()-.5)*2*(pct/100))).toFixed(1)));
+}
+setInterval(() => {
+  DEVICES.forEach(d => {
+    if(d.id==='fw01')  { d.metrics.mem  = jitter(d.metrics.mem,  3); d.metrics.cpu = jitter(d.metrics.cpu, 8); }
+    if(d.id==='sw01')  { d.metrics.cpu  = jitter(d.metrics.cpu,  6); d.metrics.temp= jitter(d.metrics.temp,2); }
+    if(d.id==='ap01')  { d.metrics.snr  = jitter(d.metrics.snr,  5); d.metrics.signal=jitter(d.metrics.signal,3); }
+    if(d.id==='srv01') { d.metrics.mem  = jitter(d.metrics.mem,  4); }
+    if(d.id==='ap02')  { d.metrics.snr  = jitter(d.metrics.snr,  6); }
+    if(d.id==='sw02')  { d.metrics.cpu  = jitter(d.metrics.cpu, 10); }
+  });
+  renderDashDevices();
+}, 3000);
+
+// ══════════════════════════════════════════════
+// DEVICE CARDS
+// ══════════════════════════════════════════════
+function metricClass(v, limit, invert=false) {
+  const ratio = invert ? (v / limit) : (v / limit);
+  if(invert) {
+    if(v < limit*0.6) return 'crit';
+    if(v < limit*0.8) return 'warn';
+    return 'ok';
+  }
+  if(v >= limit) return 'crit';
+  if(v >= limit*0.8) return 'warn';
+  return 'ok';
+}
+function metricBar(v, limit, invert=false) {
+  const pct = invert ? Math.min(100,(v/60)*100) : Math.min(100,(v/limit)*100);
+  const cls = metricClass(v, limit, invert);
+  return `<div class="metric-bar"><div class="metric-fill ${cls}" style="width:${pct}%"></div></div>`;
+}
+
+function deviceCardHtml(d, compact=false) {
+  let metricsHtml = '';
+  const inc = incidents.find(i=>i.deviceId===d.id && !i.resolved);
+
+  if(d.id==='fw01') {
+    const mc = metricClass(d.metrics.mem, d.limits.mem);
+    const cc = metricClass(d.metrics.cpu, d.limits.cpu);
+    metricsHtml = `
+      <div class="metric-box"><div class="metric-name">Memória</div>
+        <div class="metric-val ${mc}">${d.metrics.mem.toFixed(0)}%</div>${metricBar(d.metrics.mem,d.limits.mem)}</div>
+      <div class="metric-box"><div class="metric-name">CPU</div>
+        <div class="metric-val ${cc}">${d.metrics.cpu.toFixed(0)}%</div>${metricBar(d.metrics.cpu,d.limits.cpu)}</div>
+      <div class="metric-box"><div class="metric-name">Sessões</div>
+        <div class="metric-val ok">${d.metrics.sessions.toLocaleString()}</div></div>`;
+  } else if(d.id==='sw01'||d.id==='sw02') {
+    const cc = metricClass(d.metrics.cpu, d.limits.cpu);
+    const tc = metricClass(d.metrics.temp, d.limits.temp);
+    metricsHtml = `
+      <div class="metric-box"><div class="metric-name">CPU</div>
+        <div class="metric-val ${cc}">${d.metrics.cpu.toFixed(0)}%</div>${metricBar(d.metrics.cpu,d.limits.cpu)}</div>
+      <div class="metric-box"><div class="metric-name">Temp</div>
+        <div class="metric-val ${tc}">${d.metrics.temp.toFixed(0)}°C</div>${metricBar(d.metrics.temp,d.limits.temp)}</div>
+      <div class="metric-box"><div class="metric-name">Portas</div>
+        <div class="metric-val ok">${d.metrics.ports_up}</div></div>`;
+  } else if(d.id==='ap01'||d.id==='ap02') {
+    const sc = metricClass(Math.abs(d.metrics.signal), 75);
+    const snrc = metricClass(d.metrics.snr, 15, true);
+    metricsHtml = `
+      <div class="metric-box"><div class="metric-name">Sinal</div>
+        <div class="metric-val ${snrc}">${d.metrics.signal.toFixed(0)}dBm</div></div>
+      <div class="metric-box"><div class="metric-name">SNR</div>
+        <div class="metric-val ${snrc}">${d.metrics.snr.toFixed(0)}dB</div>${metricBar(d.metrics.snr,40)}</div>
+      <div class="metric-box"><div class="metric-name">${d.id==='ap02'?'Clientes':'Throughput'}</div>
+        <div class="metric-val ok">${d.id==='ap02'?d.metrics.clients:(d.metrics.throughput+'M')}</div></div>`;
+  } else {
+    const mc = metricClass(d.metrics.mem, d.limits.mem);
+    const cc = metricClass(d.metrics.cpu, d.limits.cpu);
+    metricsHtml = `
+      <div class="metric-box"><div class="metric-name">Memória</div>
+        <div class="metric-val ${mc}">${d.metrics.mem.toFixed(0)}%</div>${metricBar(d.metrics.mem,d.limits.mem)}</div>
+      <div class="metric-box"><div class="metric-name">CPU</div>
+        <div class="metric-val ${cc}">${d.metrics.cpu.toFixed(0)}%</div>${metricBar(d.metrics.cpu,d.limits.cpu)}</div>
+      <div class="metric-box"><div class="metric-name">Disco</div>
+        <div class="metric-val ok">${d.metrics.disk}%</div>${metricBar(d.metrics.disk,d.limits.disk)}</div>`;
+  }
+
+  const alertClass = inc ? 'alert' : '';
+  return `<div class="dev-card ${alertClass}">
+    <div class="dev-top">
+      <div class="dev-icon" style="background:${d.color}">${d.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="dev-name">${d.name}</div>
+        <div class="dev-host">${d.host} · ${d.type}</div>
+      </div>
+      <span class="b up"><span class="bdot up"></span>UP</span>
+    </div>
+    <div class="metrics-row">${metricsHtml}</div>
+    ${inc?`<div style="margin-top:8px"><span class="b ai"><span class="bdot ai"></span>IA analisando...</span></div>`:''}
+  </div>`;
+}
+
+function renderDashDevices() {
+  const el = document.getElementById('dash-devices');
+  if(el) el.innerHTML = DEVICES.map(d=>deviceCardHtml(d)).join('');
+}
+function renderDevicesFull() {
+  const el = document.getElementById('devices-full');
+  if(el) el.innerHTML = DEVICES.map(d=>deviceCardHtml(d)).join('');
+}
+
+// ══════════════════════════════════════════════
+// PLAYBOOKS
+// ══════════════════════════════════════════════
+function renderPlaybooks() {
+  const el = document.getElementById('playbooks-list');
+  if(!el) return;
+  const riskLabel = {low:'Baixo',med:'Médio',hi:'Alto'};
+  el.innerHTML = PLAYBOOKS.map(pb => `
+    <div class="pb-card">
+      <div class="pb-icon" style="background:rgba(99,102,241,.1)">${pb.icon}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div class="pb-name">${pb.name}</div>
+          <span class="risk ${pb.risk}">Risco ${riskLabel[pb.risk]}</span>
+          <span style="font-size:11px;color:var(--t3);margin-left:auto">${pb.executions}x executado</span>
+        </div>
+        <div class="pb-desc">${pb.desc}</div>
+        <div class="pb-tags">
+          <span class="tag">trigger: ${pb.trigger}</span>
+          <span class="tag">device: ${pb.device_type}</span>
+          ${pb.tags.map(t=>`<span class="tag">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="pb-toggle">
+        <div class="toggle ${pb.enabled?'on':''}" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// TRILHA DE AUDITORIA
+// ══════════════════════════════════════════════
+function addAudit(device, action, result, ok=true) {
+  const entry = {
+    time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    device, action, result, ok
+  };
+  auditLog.unshift(entry);
+  const el = document.getElementById('audit-list');
+  if(!el) return;
+  el.innerHTML = auditLog.map(a => `
+    <div class="audit-row">
+      <div class="audit-time">${a.time}</div>
+      <div class="audit-dev">${a.device}</div>
+      <div class="audit-action">${a.action}</div>
+      <div class="audit-result">
+        <span class="b ${a.ok?'done':'down'}">${a.ok?'✓ OK':'✗ ERRO'}</span>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('nb-audit').textContent = auditLog.length;
+}
+
+// ══════════════════════════════════════════════
+// LOG DE AÇÕES (dashboard)
+// ══════════════════════════════════════════════
+function addActionLog(icon, text, color='var(--emerald)') {
+  actionLog.unshift({icon,text,color,time:new Date().toLocaleTimeString('pt-BR')});
+  if(actionLog.length > 8) actionLog.pop();
+  actionCount++;
+  document.getElementById('st-actions').textContent = actionCount;
+  renderActionLog();
+}
+function renderActionLog() {
+  const el = document.getElementById('action-log');
+  if(!el) return;
+  el.innerHTML = actionLog.map(a => `
+    <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border2)">
+      <span style="font-size:13px">${a.icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:${a.color};line-height:1.3">${a.text}</div>
+        <div style="font-size:10px;color:var(--t4);margin-top:1px;font-family:var(--mono)">${a.time}</div>
+      </div>
+    </div>
+  `).join('') || '<div style="color:var(--t4);font-size:12px;text-align:center;padding:20px">Nenhuma ação</div>';
+}
+
+// ══════════════════════════════════════════════
+// MOTOR PRINCIPAL: SIMULAÇÃO DE INCIDENTE
+// ══════════════════════════════════════════════
+function triggerScenario() {
+  const sc = SCENARIOS[scenarioIdx % SCENARIOS.length];
+  scenarioIdx++;
+  const dev = DEVICES.find(d=>d.id===sc.device);
+  fireIncident(sc, dev);
+}
+
+function fireIncident(sc, dev) {
+  const id = Date.now();
+  const inc = {
+    id, deviceId:dev.id, deviceName:dev.name, title:sc.title,
+    severity:sc.severity, playbook:sc.playbook, scenario:sc,
+    status:'analyzing', resolved:false,
+    time: new Date().toLocaleTimeString('pt-BR'),
+  };
+  incidents.unshift(inc);
+  updateStats();
+  renderIncidents();
+  renderDashDevices();
+
+  // Atualizar métrica do device para mostrar o problema
+  if(sc.device_metric && dev.metrics[sc.device_metric] !== undefined) {
+    dev.metrics[sc.device_metric] = sc.metricBefore;
+  }
+
+  // Mostrar painel AI no dashboard
+  showAIPanel(inc, sc, dev);
+
+  // Depois executa ações
+  setTimeout(() => executeActions(inc, sc, dev), 100);
+}
+
+function showAIPanel(inc, sc, dev) {
+  const panel = document.getElementById('ai-activity-panel');
+  if(!panel) return;
+
+  panel.innerHTML = `
+    <div class="ai-panel">
+      <div class="ai-header">
+        <span class="ai-brain">🧠</span>
+        <div>
+          <div class="ai-title">IA analisando: ${inc.title}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:1px">${dev.name} · ${dev.host}</div>
+        </div>
+        <div class="ai-sub"><span class="b ai"><span class="bdot ai"></span>Processando</span></div>
+      </div>
+      <div class="ai-body">
+        <div class="ph">Raciocínio da IA</div>
+        <div class="ai-think" id="ai-think-text"><span class="cursor"></span></div>
+        <div class="terminal" style="margin-top:12px;display:none" id="ai-terminal">
+          <div class="term-bar">
+            <div class="term-dot" style="background:#ff5f57"></div>
+            <div class="term-dot" style="background:#ffbd2e;margin-left:4px"></div>
+            <div class="term-dot" style="background:#28ca41;margin-left:4px"></div>
+            <div class="term-title">SSH — ${dev.host}</div>
+          </div>
+          <div class="term-body" id="terminal-body"></div>
+        </div>
+        <div class="ai-steps" id="ai-steps" style="margin-top:14px;display:none"></div>
+      </div>
+    </div>
+  `;
+
+  typeText('ai-think-text', sc.aiReasoning, 12);
+}
+
+// Typewriter effect
+function typeText(elId, text, speed=15) {
+  const el = document.getElementById(elId);
+  if(!el) return;
+  let i=0;
+  el.innerHTML = '<span class="cursor"></span>';
+  const interval = setInterval(() => {
+    if(i >= text.length) { clearInterval(interval); el.innerHTML = text.replace(/\n/g,'<br>'); return; }
+    el.innerHTML = text.slice(0,i).replace(/\n/g,'<br>') + '<span class="cursor"></span>';
+    i += 3;
+  }, speed);
+}
+
+async function executeActions(inc, sc, dev) {
+  // Aguardar o typing do raciocínio (aprox)
+  await sleep(sc.aiReasoning.length/3*12 + 800);
+
+  // Mostrar steps e terminal
+  const stepsEl = document.getElementById('ai-steps');
+  const termEl  = document.getElementById('ai-terminal');
+  const termBody= document.getElementById('terminal-body');
+  if(stepsEl) stepsEl.style.display='flex';
+  if(termEl)  termEl.style.display='block';
+
+  // Render steps inicialmente pending
+  renderSteps(sc.steps.map((s,i)=>({...sc.steps[i], status:'pending', label:sc.steps[i]})));
+
+  const stepsData = sc.steps.map((label,i) => ({
+    label, detail:sc.scenario?.steps[i]?.detail||'',
+    result:sc.scenario?.steps[i]?.result||'', status:'pending'
+  }));
+
+  // Usar os steps detalhados do cenário
+  const detailedSteps = sc.steps; // array of strings (labels)
+  const scenarioSteps = sc.scenario.steps; // array of {label,detail,result}
+
+  // Executar cada step
+  for(let i=0;i<scenarioSteps.length;i++) {
+    const step = scenarioSteps[i];
+    // Update: running
+    step.status = 'running';
+    renderDetailedSteps(scenarioSteps, i);
+    await sleep(900 + Math.random()*400);
+
+    // Update: done
+    step.status = 'done';
+    renderDetailedSteps(scenarioSteps, i);
+
+    addAudit(dev.name, step.label, step.result, true);
+    addActionLog(
+      i===scenarioSteps.length-1?'✅':'⚡',
+      `${dev.name}: ${step.label}`,
+      i===scenarioSteps.length-1?'var(--emerald)':'var(--cyan)'
+    );
+
+    // Adicionar linha de terminal
+    if(termBody && sc.termLines[i*2] !== undefined) {
+      const lineIdx = Math.floor(i * sc.termLines.length/scenarioSteps.length);
+      const line = sc.termLines[lineIdx];
+      if(line) appendTermLine(termBody, line);
+    }
+  }
+
+  // Adicionar todas as linhas do terminal
+  if(termBody) {
+    termBody.innerHTML = '';
+    for(const line of sc.termLines) {
+      appendTermLine(termBody, line);
+    }
+  }
+
+  // Atualizar métrica do device
+  if(sc.device_metric && dev.metrics[sc.device_metric] !== undefined) {
+    dev.metrics[sc.device_metric] = sc.metricAfter;
+  }
+
+  // Marcar incidente como resolvido
+  inc.status = 'resolved';
+  inc.resolved = true;
+  inc.resolution = sc.resolution;
+  updateStats();
+  renderIncidents();
+  renderDashDevices();
+
+  // Atualizar painel AI
+  const sub = document.querySelector('#ai-activity-panel .ai-sub');
+  if(sub) sub.innerHTML = `<span class="b done"><span class="bdot up"></span>Concluído</span>`;
+
+  addActionLog('🎯', `Incidente resolvido: ${inc.title}`, 'var(--emerald)');
+}
+
+function appendTermLine(container, line) {
+  const div = document.createElement('div');
+  div.className = line.t || '';
+  div.textContent = line.v;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderDetailedSteps(steps, currentIdx) {
+  const el = document.getElementById('ai-steps');
+  if(!el) return;
+  const icons = { pending:'⏸', running:'⚡', done:'✓', error:'✗' };
+  el.innerHTML = steps.map((s,i) => `
+    <div class="ai-step ${s.status}">
+      <div class="step-icon ${s.status}">${icons[s.status]||'○'}</div>
+      <div>
+        <div class="step-label">${s.label}</div>
+        ${s.status!=='pending'?`<div class="step-detail">${s.detail}</div>`:''}
+        ${s.status==='done'?`<div class="step-result">${s.result}</div>`:''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// RENDER INCIDENTS
+// ══════════════════════════════════════════════
+function renderIncidents() {
+  const el = document.getElementById('incidents-list');
+  if(!el) return;
+  const active = incidents.filter(i=>!i.resolved);
+  const resolved = incidents.filter(i=>i.resolved);
+  document.getElementById('nb-inc').textContent = active.length;
+
+  if(incidents.length===0) {
+    el.innerHTML = `<div style="text-align:center;padding:50px;color:var(--t4)">
+      <div style="font-size:28px;margin-bottom:8px">🎉</div>
+      Nenhum incidente. Clique em "Simular Incidente" para ver a IA em ação.</div>`;
+    return;
+  }
+
+  const sevLabel = {crit:'CRÍTICO',warn:'AVISO',info:'INFO'};
+  el.innerHTML = [...active,...resolved].map(inc => `
+    <div class="inc-item">
+      <div class="inc-sev ${inc.severity}"></div>
+      <div class="inc-body">
+        <div class="inc-status-row">
+          <div class="inc-title">${inc.title}</div>
+          <span class="b ${inc.resolved?'done':inc.status==='analyzing'?'ai':'crit'}">
+            <span class="bdot ${inc.resolved?'up':inc.status==='analyzing'?'ai':'crit'}"></span>
+            ${inc.resolved?'Resolvido pela IA':inc.status==='analyzing'?'IA analisando...':'Ativo'}
+          </span>
+        </div>
+        <div class="inc-meta">
+          <span>📍 ${inc.deviceName}</span>
+          <span>🕐 ${inc.time}</span>
+          <span>🤖 Playbook: ${PLAYBOOKS.find(p=>p.id===inc.playbook)?.name||'-'}</span>
+        </div>
+        ${inc.resolved && inc.resolution?`
+          <div style="margin-top:7px;padding:7px 10px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15);border-radius:6px;font-size:12px;color:#34d399">
+            ✓ ${inc.resolution}
+          </div>
+        `:''}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('inc-subtitle').textContent =
+    `${active.length} ativo${active.length!==1?'s':''} · ${resolved.length} resolvido${resolved.length!==1?'s':''}`;
+}
+
+function updateStats() {
+  const active = incidents.filter(i=>!i.resolved).length;
+  document.getElementById('st-inc').textContent  = active;
+  document.getElementById('nb-inc').textContent  = active;
+  document.getElementById('st-up').textContent   = DEVICES.length - (active>0?1:0);
+}
+
+// ══════════════════════════════════════════════
+// AUTO-SIMULATE (incidente a cada ~25s)
+// ══════════════════════════════════════════════
+setTimeout(() => {
+  triggerScenario();
+  setInterval(() => {
+    if(incidents.filter(i=>!i.resolved).length < 2) triggerScenario();
+  }, 28000);
+}, 6000);
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+renderDashDevices();
+renderPlaybooks();
+
+// Hint
+setTimeout(()=> {
+  const hint = document.createElement('div');
+  hint.style.cssText='position:fixed;bottom:20px;right:20px;background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;padding:10px 16px;border-radius:10px;font-size:12px;animation:fi .3s';
+  hint.innerHTML='🧠 IA analisando primeiro incidente em instantes...';
+  document.body.appendChild(hint);
+  setTimeout(()=>hint.remove(),4000);
+},500);
+</script>
+</body>
+</html>
