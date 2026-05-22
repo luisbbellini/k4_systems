@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>K4 Monitor — SSH Terminal</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#020617;--s0:rgba(9,15,29,.98);--s1:rgba(15,23,42,.88);--s2:rgba(30,41,59,.5);
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.04);
+  --indigo:#6366f1;--ind2:rgba(99,102,241,.15);--ind3:rgba(99,102,241,.08);
+  --em:#10b981;--red:#ef4444;--am:#f59e0b;--cy:#22d3ee;--pu:#a855f7;
+  --t0:#f8fafc;--t1:#cbd5e1;--t2:#94a3b8;--t3:#64748b;--t4:#334155;
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--t0);display:flex;flex-direction:column;font-size:13px}
+
+/* TOP BAR */
+.topbar{height:48px;flex-shrink:0;background:var(--s0);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px}
+.logo{display:flex;align-items:center;gap:9px;margin-right:10px}
+.logo-icon{width:30px;height:30px;border-radius:7px;background:var(--ind2);border:1px solid rgba(99,102,241,.3);display:flex;align-items:center;justify-content:center;font-size:14px}
+.logo h1{font-size:13px;font-weight:700;color:var(--t0)}
+.logo span{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+.pill{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;border:1px solid;cursor:default}
+.pill.green{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.2);color:#34d399}
+.pill.amber{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.2);color:#fbbf24}
+.pdot{width:6px;height:6px;border-radius:50%}
+.pdot.g{background:var(--em);animation:pulse 2s infinite}.pdot.a{background:var(--am);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.clock{font-family:var(--mono);font-size:12px;color:var(--t3)}
+.btn{padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;font-family:var(--font)}
+.btn.primary{background:var(--ind2);border-color:rgba(99,102,241,.4);color:#a5b4fc}
+.btn.primary:hover{background:rgba(99,102,241,.25)}
+.btn.ghost{background:rgba(255,255,255,.04);border-color:var(--border);color:var(--t2)}
+.btn.ghost:hover{background:rgba(255,255,255,.08);color:var(--t1)}
+.btn.danger{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#f87171}
+.btn.success{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);color:#34d399}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* LAYOUT */
+.workspace{flex:1;display:flex;overflow:hidden}
+
+/* SIDEBAR — DEVICES */
+.sidebar{width:240px;flex-shrink:0;background:var(--s0);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-title{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600}
+.device-list{flex:1;overflow-y:auto;padding:8px}
+.dev-item{padding:10px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent;transition:all .15s;display:flex;align-items:center;gap:9px}
+.dev-item:hover{background:rgba(255,255,255,.04);border-color:var(--border)}
+.dev-item.connected{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.2)}
+.dev-item.connecting{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.2)}
+.dev-item.active-tab{background:var(--ind2);border-color:rgba(99,102,241,.3)}
+.dev-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.dev-name{font-size:12.5px;font-weight:500;line-height:1.2}
+.dev-sub{font-size:10.5px;color:var(--t3);font-family:var(--mono);margin-top:1px}
+.dev-ssh-badge{margin-left:auto;font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;flex-shrink:0}
+.dev-ssh-badge.on{background:rgba(16,185,129,.15);color:#34d399}
+.dev-ssh-badge.off{background:rgba(100,116,139,.12);color:var(--t3)}
+.conn-status{font-size:10px;margin-top:4px;display:flex;align-items:center;gap:4px}
+.conn-dot{width:5px;height:5px;border-radius:50%}
+
+/* QUICK CMDS */
+.quick-cmds{padding:10px 10px;border-top:1px solid var(--border)}
+.quick-title{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600;margin-bottom:7px}
+.qcmd{display:block;width:100%;text-align:left;padding:6px 9px;border-radius:6px;background:var(--s2);border:1px solid var(--border2);color:var(--t2);font-size:11px;font-family:var(--mono);cursor:pointer;margin-bottom:4px;transition:all .15s}
+.qcmd:hover{background:rgba(255,255,255,.06);color:var(--t1);border-color:var(--border)}
+
+/* AI SUGGEST */
+.ai-section{padding:10px;border-top:1px solid var(--border)}
+.ai-input-row{display:flex;gap:6px}
+.ai-input{flex:1;background:rgba(9,15,29,.9);border:1px solid var(--border);border-radius:6px;color:var(--t1);padding:6px 9px;font-size:12px;font-family:var(--font);outline:none}
+.ai-input:focus{border-color:rgba(168,85,247,.4)}
+.ai-output{margin-top:8px;font-size:11.5px;color:#c084fc;font-family:var(--mono);background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.15);border-radius:6px;padding:8px 10px;display:none;line-height:1.7;white-space:pre-wrap;max-height:140px;overflow-y:auto}
+
+/* TERMINAL AREA */
+.terminal-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TAB BAR */
+.tab-bar{height:38px;flex-shrink:0;background:rgba(9,15,29,.9);border-bottom:1px solid var(--border);display:flex;align-items:flex-end;padding:0 4px;gap:2px;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:7px;padding:0 12px;height:32px;border-radius:7px 7px 0 0;cursor:pointer;font-size:12px;border:1px solid transparent;border-bottom:none;flex-shrink:0;transition:all .15s;max-width:180px}
+.tab.active{background:var(--s1);border-color:var(--border);color:var(--t0)}
+.tab:not(.active){color:var(--t3);background:rgba(255,255,255,.02)}
+.tab:not(.active):hover{background:rgba(255,255,255,.05);color:var(--t2)}
+.tab-icon{font-size:13px}
+.tab-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab-close{width:16px;height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:auto;opacity:.4;transition:opacity .15s;flex-shrink:0}
+.tab-close:hover{opacity:1;background:rgba(239,68,68,.2);color:#f87171}
+.tab-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tab-dot.connected{background:var(--em);box-shadow:0 0 4px var(--em)}
+.tab-dot.connecting{background:var(--am);animation:pulse 1s infinite}
+.tab-dot.disconnected{background:var(--t4)}
+.tab-dot.error{background:var(--red)}
+.new-tab-btn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);font-size:16px;margin-left:4px;transition:all .15s;flex-shrink:0}
+.new-tab-btn:hover{background:rgba(255,255,255,.06);color:var(--t1)}
+
+/* TERMINAL PANELS */
+.term-panels{flex:1;overflow:hidden;position:relative}
+.term-panel{position:absolute;inset:0;display:none;flex-direction:column}
+.term-panel.active{display:flex}
+
+/* CONNECT SCREEN */
+.connect-screen{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.connect-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:28px 32px;width:380px;display:flex;flex-direction:column;gap:14px}
+.connect-card h3{font-size:16px;font-weight:700;text-align:center;color:var(--t0);margin-bottom:4px}
+.field label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
+.field input,.field select{width:100%;background:rgba(9,15,29,.9);border:1px solid var(--border);border-radius:7px;color:var(--t1);padding:7px 10px;font-size:13px;font-family:var(--font);outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:rgba(99,102,241,.45)}
+.field input::placeholder{color:var(--t4)}
+.field select option{background:#0f172a}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.connect-btn{width:100%;padding:9px;border-radius:8px;background:var(--ind2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px}
+.connect-btn:hover{background:rgba(99,102,241,.25)}
+.connect-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* CONNECTED: xterm wrapper */
+.xterm-wrapper{flex:1;overflow:hidden;padding:8px}
+.xterm-wrapper .xterm{height:100%}
+.xterm .xterm-viewport{scrollbar-width:thin;scrollbar-color:#1e293b transparent}
+
+/* STATUS BAR */
+.status-bar{height:24px;flex-shrink:0;background:rgba(9,15,29,.95);border-top:1px solid var(--border2);display:flex;align-items:center;padding:0 12px;gap:16px;font-size:11px;color:var(--t3);font-family:var(--mono)}
+.status-item{display:flex;align-items:center;gap:5px}
+.status-dot{width:5px;height:5px;border-radius:50%}
+
+/* EMPTY STATE */
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--t4)}
+.empty-icon{font-size:48px;opacity:.3}
+.empty-title{font-size:15px;font-weight:600;color:var(--t3)}
+.empty-sub{font-size:12px;text-align:center;max-width:300px;line-height:1.6}
+
+/* CONNECTING OVERLAY */
+.conn-overlay{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--indigo);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.conn-log{font-family:var(--mono);font-size:12px;color:var(--em);background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;padding:14px 18px;width:380px;min-height:100px;max-height:200px;overflow-y:auto;line-height:1.9}
+.conn-log .step{color:var(--cy)}.conn-log .ok{color:var(--em)}.conn-log .err{color:var(--red)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#1e293b;border-radius:2px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px;width:440px;display:flex;flex-direction:column;gap:14px}
+.modal h3{font-size:15px;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">💻</div>
+    <div><h1>K4 Monitor</h1><span>SSH Terminal</span></div>
+  </div>
+  <div class="pill green" id="ws-status"><div class="pdot g"></div>Pronto</div>
+  <div class="pill amber" id="session-count" style="display:none"><div class="pdot a"></div><span id="sc-text">0 sessões</span></div>
+  <div class="topbar-right">
+    <button class="btn ghost" onclick="openNewTab()">＋ Nova Sessão</button>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Dispositivos</span>
+      <button class="btn ghost" style="padding:3px 8px;font-size:11px" onclick="openAddDevice()">＋</button>
+    </div>
+    <div class="device-list" id="device-list"></div>
+
+    <!-- QUICK COMMANDS -->
+    <div class="quick-cmds" id="quick-cmds" style="display:none">
+      <div class="quick-title">Comandos Rápidos</div>
+      <div id="quick-cmds-list"></div>
+    </div>
+
+    <!-- AI SUGGEST -->
+    <div class="ai-section">
+      <div class="quick-title" style="display:flex;align-items:center;gap:5px">🧠 <span>Perguntar à IA</span></div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="ai-ask" placeholder="ex: listar processos pesados" onkeydown="if(event.key==='Enter')aiSuggest()"/>
+        <button class="btn primary" style="padding:5px 10px;font-size:12px" onclick="aiSuggest()">→</button>
+      </div>
+      <div class="ai-output" id="ai-output"></div>
+    </div>
+  </div>
+
+  <!-- TERMINAL AREA -->
+  <div class="terminal-area">
+
+    <!-- TAB BAR -->
+    <div class="tab-bar" id="tab-bar">
+      <div class="new-tab-btn" onclick="openNewTab()" title="Nova sessão">＋</div>
+    </div>
+
+    <!-- TERMINAL PANELS -->
+    <div class="term-panels" id="term-panels">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">🔌</div>
+        <div class="empty-title">Nenhuma sessão aberta</div>
+        <div class="empty-sub">Selecione um dispositivo na lista ao lado ou clique em "＋ Nova Sessão" para conectar.</div>
+        <button class="btn primary" onclick="openNewTab()">＋ Nova Sessão SSH</button>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar" id="status-bar" style="display:none">
+      <div class="status-item"><div class="status-dot" id="sb-dot" style="background:var(--em)"></div><span id="sb-host">—</span></div>
+      <div class="status-item">👤 <span id="sb-user">—</span></div>
+      <div class="status-item">⏱ <span id="sb-uptime">—</span></div>
+      <div class="status-item" style="margin-left:auto">🖥 <span id="sb-size">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD DEVICE MODAL -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <h3>Adicionar Dispositivo SSH</h3>
+    <div class="field"><label>Nome</label><input id="f-name" placeholder="FortiGate Edge"/></div>
+    <div class="grid2">
+      <div class="field"><label>Host / IP</label><input id="f-host" placeholder="192.168.1.1" class="font-mono"/></div>
+      <div class="field"><label>Porta SSH</label><input id="f-port" value="22" type="number"/></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Usuário</label><input id="f-user" placeholder="admin"/></div>
+      <div class="field"><label>Senha</label><input id="f-pass" type="password" placeholder="••••••••"/></div>
+    </div>
+    <div class="field"><label>Tipo de dispositivo</label>
+      <select id="f-type">
+        <option value="linux">Linux / Unix</option>
+        <option value="fortios">FortiGate (FortiOS)</option>
+        <option value="cisco_ios">Cisco IOS / IOS-XE</option>
+        <option value="ubnt">Ubiquiti (AirOS / UniFi)</option>
+        <option value="mikrotik">MikroTik RouterOS</option>
+        <option value="junos">Juniper JunOS</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" style="flex:1" onclick="addDevice()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DEVICE DATABASE (demo)
+// ══════════════════════════════════════════
+const DEVICE_TYPES = {
+  linux:     { icon:'🖥️', color:'rgba(168,85,247,.12)',  prompt: u => `${u}@server:~$ `,     motd: linuxMotd },
+  fortios:   { icon:'🔥', color:'rgba(99,102,241,.12)',  prompt: u => `FW-EDGE-01 # `,       motd: fortiosMotd },
+  cisco_ios: { icon:'🌐', color:'rgba(34,211,238,.12)',  prompt: u => `SW-CORE-01#`,          motd: ciscoMotd },
+  ubnt:      { icon:'📡', color:'rgba(16,185,129,.12)',  prompt: u => `${u}@ubnt:~$ `,        motd: ubntMotd },
+  mikrotik:  { icon:'🔀', color:'rgba(245,158,11,.12)',  prompt: u => `[${u}@MikroTik] > `,   motd: mikrotikMotd },
+  junos:     { icon:'🟠', color:'rgba(239,68,68,.12)',   prompt: u => `${u}@router> `,        motd: junosMotd },
+};
+
+let DEVICES = [
+  { id:1, name:'FW-EDGE-01',   host:'10.0.0.1',  port:22, user:'admin',   pass:'admin123', type:'fortios',   icon:'🔥', color:'rgba(99,102,241,.12)' },
+  { id:2, name:'SW-CORE-01',   host:'10.0.0.2',  port:22, user:'cisco',   pass:'cisco123', type:'cisco_ios', icon:'🌐', color:'rgba(34,211,238,.12)' },
+  { id:3, name:'AP-ROOF-01',   host:'10.0.0.50', port:22, user:'ubnt',    pass:'ubnt123',  type:'ubnt',      icon:'📡', color:'rgba(16,185,129,.12)' },
+  { id:4, name:'SRV-APP-01',   host:'10.0.0.10', port:22, user:'root',    pass:'root123',  type:'linux',     icon:'🖥️', color:'rgba(168,85,247,.12)' },
+  { id:5, name:'MK-ROUTER-01', host:'10.0.0.5',  port:22, user:'admin',   pass:'',         type:'mikrotik',  icon:'🔀', color:'rgba(245,158,11,.12)' },
+];
+
+// ══════════════════════════════════════════
+// SESSIONS
+// ══════════════════════════════════════════
+let sessions = {};   // tabId → {term, fitAddon, device, state, history, historyIdx, currentInput}
+let activeTab = null;
+let tabCounter = 0;
+
+// ══════════════════════════════════════════
+// QUICK COMMANDS per device type
+// ══════════════════════════════════════════
+const QUICK_CMDS = {
+  fortios:   ['get system status','diagnose sys top 1 20','diagnose sys session stat','get system interface physical','diagnose debug crashlog read'],
+  cisco_ios: ['show version','show processes cpu sorted','show interfaces status','show ip route','show logging | tail 20'],
+  linux:     ['uptime && free -h','ps aux --sort=-%mem | head -10','df -h','ss -tlnp','journalctl -n 30 --no-pager'],
+  ubnt:      ['ubntbox ver','cat /proc/loadavg','iwconfig ath0','ubntbox linkstatus','dmesg | tail -20'],
+  mikrotik:  ['/system resource print','/interface print','/ip route print','/log print count=20','/system health print'],
+  junos:     ['show system uptime','show chassis hardware','show route summary','show interfaces terse','show log messages | last 20'],
+};
+
+// ══════════════════════════════════════════
+// SIMULATED CLI RESPONSES
+// ══════════════════════════════════════════
+const CLI = {
+  fortios: {
+    'get system status': () => `\r\nVersion: FortiGate-100F v7.4.3,build2573,240308\r\nVirus-DB: 90.08902(2024-03-08 07:25)\r\nExtended DB: 90.08902(2024-03-08 07:25)\r\nIPS-DB: 6.00741(2018-09-12 18:12)\r\nSerial-Number: FGT100FTK22012345\r\nBIOS version: 04000015\r\nSystem time: Fri May 22 14:32:11 2026\r\nUptime: 12 days, 3 hours, 44 minutes\r\nHostname: FW-EDGE-01\r\nOperation Mode: NAT\r\nVirtual domain configuration: disable\r\nCurrent virtual domain: root\r\n`,
+    'diagnose sys top 1 20': () => `\r\nRun Time:  12 days, 3 hours, 44 minutes\r\nUser:    22%   System: 8%    Idle: 70%\r\nTotal memory: 4096MB  Free: 1475MB  Used: 2621MB (64%)\r\n\r\n           PID   RSS MINFLT MAJFLT %CPU %MEM NAME\r\n         1021  48200   9820    212  6.0  1.1 ipsengine\r\n         1102  31200   7210    108  4.0  0.7 miglogd\r\n         3812 120000  40000    800  3.0  2.9 fnbamd\r\n         2901  28400   6100     98  1.0  0.6 cmdbsvr\r\n         2134  22400   5300     82  0.5  0.5 forticron\r\n`,
+    'diagnose sys session stat': () => `\r\nsession table: total=14823, v4=14020, v6=803\r\nmisc info:     session_count=14823 setup_rate=42 exp_count=182\r\npolicy lookup: hit=29847 miss=12 hit_rate=99.96%\r\ntcp session: 12402  udp session: 1987  icmp session: 434\r\n`,
+    'get system interface physical': () => `\r\n== [port1] ==\r\n\tmode: static\r\n\tip: 200.10.10.1/29\r\n\tstatus: up\r\n\tspeed: 1000Mbps (Duplex: full)\r\n== [port2] ==\r\n\tmode: static\r\n\tip: 10.0.0.1/24\r\n\tstatus: up\r\n\tspeed: 1000Mbps (Duplex: full)\r\n== [port3] ==\r\n\tstatus: down\r\n`,
+    'diagnose debug crashlog read': () => `\r\n2026-05-20 03:12:44 No crashlog found.\r\n`,
+    default: cmd => `\r\nCommand parse error before 'unknown command'.\r\nType '?' for a list of available commands.\r\n`,
+  },
+  cisco_ios: {
+    'show version': () => `\r\nCisco IOS XE Software, Version 17.09.04a\r\nCisco Catalyst 9300 Series\r\nProcessor board ID FCW2247G00Z\r\nUptime: 18 days, 7 hours, 22 minutes\r\nSystem image: cat9k_iosxe.17.09.04a.SPA.bin\r\nProcessor type: X86\r\nDRAM: 4096MB  FLASH: 16384MB\r\n`,
+    'show processes cpu sorted': () => `\r\nCPU utilization for five seconds: 28%/4%; one minute: 31%; five minutes: 29%\r\n PID Runtime(ms)  Invoked  uSecs  5Sec 1Min 5Min TTY Process\r\n  11    120304    12049    9988  12.0  9.8  9.0   0 ARP Input\r\n 168     82003    20000    4100   5.0  4.2  4.1   0 Cat STP\r\n  42     48000    15000    3200   3.0  2.8  2.6   0 IP Input\r\n   5     12000     8000    1500   1.0  0.9  0.8   0 Check heaps\r\n`,
+    'show interfaces status': () => `\r\nPort      Name     Status       Vlan       Duplex  Speed Type\r\nGi1/0/1            connected    10         a-full  a-100 10/100/1000BaseTX\r\nGi1/0/2            connected    10         a-full  a-1G  10/100/1000BaseTX\r\nGi1/0/3            notconnect   1          auto    auto  10/100/1000BaseTX\r\nGi1/0/21           connected    20         a-full  a-100 10/100/1000BaseTX\r\nGi1/0/24  uplink   connected    trunk      a-full  a-1G  10/100/1000BaseTX\r\n`,
+    'show ip route': () => `\r\nCodes: C - connected, S - static, R - RIP, O - OSPF\r\n\r\nO    0.0.0.0/0 [110/2] via 10.0.0.1, 18d07h, GigabitEthernet1/0/24\r\nC    10.0.0.0/24 is directly connected, Vlan1\r\nC    192.168.10.0/24 is directly connected, Vlan10\r\nC    192.168.20.0/24 is directly connected, Vlan20\r\n`,
+    'show logging | tail 20': () => `\r\n*May 22 14:30:12.843: %LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet1/0/3, changed state to down\r\n*May 22 14:28:05.110: %SYS-5-CONFIG_I: Configured from console by k4monitor\r\n*May 22 14:15:33.221: %OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.1 on Gi1/0/24 from LOADING to FULL\r\n`,
+    default: cmd => `\r\n% Invalid input detected at '^' marker.\r\nSW-CORE-01#\r\n`,
+  },
+  linux: {
+    'uptime && free -h': () => `\r\n 14:32:11 up 5 days, 3:44,  2 users,  load average: 0.42, 0.58, 0.61\r\n              total        used        free      shared  buff/cache   available\r\nMem:          3.9Gi       1.7Gi       890Mi        98Mi       1.3Gi       1.9Gi\r\nSwap:         2.0Gi          0B       2.0Gi\r\n`,
+    'ps aux --sort=-%mem | head -10': () => `\r\nUSER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\r\napp         5521  2.1 23.4 1048576 956416 ?    Sl   May20  18:22 java -jar /opt/app/myapp.jar\r\npostgres    2821  0.8  4.2  342016 172032 ?    Ss   May17   4:12 postgres: app appdb\r\nnginx       3014  0.1  0.3   48256  12288 ?    S    May20   0:42 nginx: worker process\r\nroot           1  0.0  0.1  168952  10240 ?    Ss   May17   0:14 /sbin/init\r\n`,
+    'df -h': () => `\r\nFilesystem      Size  Used Avail Use% Mounted on\r\n/dev/sda1        50G   34G   14G  72% /\r\n/dev/sda2       200G   98G   92G  52% /data\r\ntmpfs           2.0G  128M  1.9G   7% /run\r\n`,
+    'ss -tlnp': () => `\r\nState    Recv-Q  Send-Q  Local Address:Port  Peer Address:Port  Process\r\nLISTEN   0       128     0.0.0.0:22         0.0.0.0:*          users:(("sshd",pid=892))\r\nLISTEN   0       128     0.0.0.0:80         0.0.0.0:*          users:(("nginx",pid=3014))\r\nLISTEN   0       128     0.0.0.0:8080       0.0.0.0:*          users:(("java",pid=5521))\r\nLISTEN   0       128     0.0.0.0:5432       0.0.0.0:*          users:(("postgres",pid=2821))\r\n`,
+    'journalctl -n 30 --no-pager': () => `\r\nMay 22 14:30:11 server systemd[1]: Started Session 142 of user app.\r\nMay 22 14:28:05 server nginx[3014]: 10.0.0.10 - - [22/May/2026:14:28:05] "GET /api/health HTTP/1.1" 200 24\r\nMay 22 14:15:33 server sshd[892]: Accepted publickey for app from 10.0.0.50\r\n`,
+    default: cmd => {
+      if(cmd.startsWith('cd ')) return `\r\n`;
+      if(cmd.startsWith('ls')) return `\r\napp.log  config/  data/  logs/  scripts/  tmp/\r\n`;
+      if(cmd==='pwd') return `\r\n/home/root\r\n`;
+      if(cmd==='whoami') return `\r\nroot\r\n`;
+      if(cmd==='date') return `\r\n${new Date().toString()}\r\n`;
+      if(cmd==='clear'||cmd==='\x0c') return '\x1b[H\x1b[2J';
+      return `\r\nbash: ${cmd}: command not found\r\n`;
+    },
+  },
+  ubnt: {
+    'ubntbox ver': () => `\r\nModel: AirFiber 5XHD\r\nVersion: XW.v8.7.11\r\nBuild: 42940.220103.1220\r\nBoard: 0xe037\r\n`,
+    'cat /proc/loadavg': () => `\r\n0.12 0.18 0.22 1/84 4021\r\n`,
+    'iwconfig ath0': () => `\r\nath0   IEEE 802.11  ESSID:"K4-Link-ROOF"\r\n       Mode:Master  Frequency:5.5 GHz  Tx-Power=23 dBm\r\n       RTS thr:off  Fragment thr:off\r\n       Link Quality=71/94  Signal level=-55 dBm  Noise level=-90 dBm\r\n       Rx invalid nwid:0  Rx invalid crypt:0  Rx invalid frag:0\r\n`,
+    'ubntbox linkstatus': () => `\r\nRX Signal:     -55 dBm\r\nTX Signal:     -54 dBm\r\nSNR:            31 dB\r\nThroughput RX: 187 Mbps\r\nThroughput TX: 198 Mbps\r\nLink Uptime:   12:03:44\r\nChannel:       100 (5500 MHz)\r\n`,
+    'dmesg | tail -20': () => `\r\n[458234.112] ath10k_pci 0000:00:00.0: could not fetch firmware file\r\n[458301.445] ath0: station added (MAC 00:11:22:33:44:55)\r\n[459012.883] ath0: link quality improved: -55 dBm\r\n`,
+    default: cmd => `\r\n-sh: ${cmd}: not found\r\n`,
+  },
+  mikrotik: {
+    '/system resource print': () => `\r\n                   uptime: 5d3h44m12s\r\n                  version: 7.13.2 (stable)\r\n               build-time: Feb/16/2024 09:41:55\r\n              free-memory: 1034.8MiB\r\n             total-memory: 2048.0MiB\r\n                      cpu: ARMv7\r\n             cpu-count: 4\r\n         cpu-load: 12%\r\n    free-hdd-space: 28.3MiB\r\n   total-hdd-space: 128.0MiB\r\n`,
+    '/interface print': () => `\r\n  #  NAME         TYPE    ACTUAL-MTU  L2MTU   MAC-ADDRESS        STATUS\r\n  0  ether1       ether        1500   1600  E4:8D:8C:10:00:01  running\r\n  1  ether2       ether        1500   1600  E4:8D:8C:10:00:02  running\r\n  2  ether3       ether        1500   1600  E4:8D:8C:10:00:03\r\n  3  wlan1        wlan         1500          E4:8D:8C:10:00:04  running\r\n`,
+    '/ip route print': () => `\r\n  #   DST-ADDRESS       PREF-SRC        GATEWAY      DISTANCE\r\n  0 A S 0.0.0.0/0                       200.10.10.1         1\r\n  1 A C 10.0.0.0/24     10.0.0.5        ether1              0\r\n  2 A C 192.168.1.0/24  192.168.1.1     ether2              0\r\n`,
+    '/log print count=20': () => `\r\n14:30:11 system,info router changed by admin\r\n14:28:05 interface,info ether3 link down\r\n14:15:33 dhcp,info assigned 192.168.1.100 to 00:50:56:AB:CD:EF\r\n`,
+    '/system health print': () => `\r\n  NAME         VALUE UNIT\r\n  temperature: 42    C\r\n  voltage:     24.0  V\r\n  cpu-temperature: 44 C\r\n`,
+    default: cmd => `\r\nbad command name ${cmd.split(' ')[0]} (line 1 column 1)\r\n`,
+  },
+  junos: {
+    'show system uptime': () => `\r\nCurrent time: 2026-05-22 14:32:11 UTC\r\nSystem booted: 2026-05-04 10:48:03 UTC (2w6d 03:44 ago)\r\nProtocols started: 2026-05-04 10:49:12 UTC\r\nLast configured: 2026-05-22 09:12:04 UTC (5:20:07 ago)\r\n`,
+    'show chassis hardware': () => `\r\nHardware inventory:\r\nItem             Version  Part number  Serial number     Description\r\nChassis                                JN2190AB1234      MX80\r\nRouting Engine 0 REV 08  750-028467   CAMS1234          RE-MX80\r\nFPC 0            REV 11  750-031089   CAMF5678          MPC Type 3\r\n`,
+    'show route summary': () => `\r\nRouter ID: 10.0.0.254\r\n\r\ninet.0: 24 destinations, 24 routes (24 active, 0 holddown, 0 hidden)\r\n  Direct:      4 routes,       4 active\r\n  Local:       4 routes,       4 active\r\n  OSPF:       16 routes,      16 active\r\n`,
+    'show interfaces terse': () => `\r\nInterface               Admin Link Proto    Local                 Remote\r\nge-0/0/0                up    up\r\nge-0/0/0.0              up    up   inet     200.10.10.2/29\r\nge-0/0/1                up    up\r\nge-0/0/1.0              up    up   inet     10.0.0.254/24\r\nlo0                     up    up\r\nlo0.0                   up    up   inet     127.0.0.1\r\n`,
+    'show log messages | last 20': () => `\r\nMay 22 14:30:11  router rpd[1842]: RPD_OSPF_NBRDOWN: OSPF neighbor 10.0.0.1 down\r\nMay 22 14:28:05  router sshd[4212]: Accepted publickey for admin\r\n`,
+    default: cmd => `\r\nunknown command.\r\nType 'help' or '?' for a list of available commands.\r\n`,
+  },
+};
+
+// ══════════════════════════════════════════
+// MOTDs (Message of the Day)
+// ══════════════════════════════════════════
+function fortiosMotd()  { return '\x1b[1;32mFortiGate-100F (FW-EDGE-01)\x1b[0m\r\nFortiOS v7.4.3 Build 2573\r\n\x1b[33mWelcome!\x1b[0m\r\n\r\nFW-EDGE-01 # '; }
+function ciscoMotd()    { return '\x1b[1;36m\r\n  Cisco Catalyst 9300 — SW-CORE-01\x1b[0m\r\n\x1b[2m  Authorized access only.\x1b[0m\r\n\r\nSW-CORE-01#'; }
+function linuxMotd()    { return `\x1b[1;35m\r\nSRV-APP-01 — Ubuntu 22.04 LTS\x1b[0m\r\n\x1b[2mSystem load: 0.42   Users: 2   Processes: 184\x1b[0m\r\n\x1b[33m * Packages can be updated.\x1b[0m\r\n\r\nroot@server:~$ `; }
+function ubntMotd()     { return '\x1b[1;32m\r\nUbiquiti AirFiber 5XHD — AP-ROOF-01\x1b[0m\r\nAirOS v8.7.11\r\n\r\nubnt@ubnt:~$ '; }
+function mikrotikMotd() { return '\x1b[1;33m\r\n  MMM      MMM       KKK                  TTTTTTTTTTT      KKK\r\n  MMMM    MMMM       KKK                  TTTTTTTTTTT      KKK\r\n  MMM MMMM MMM  III  KKK  KKK  RRRRRR     TTT     III  KKK  KKK\r\n  MMM  MM  MMM  III  KKKKK     RRR  RRR   TTT     III  KKKKK\r\n  MMM      MMM  III  KKK KKK   RRRRRR     TTT     III  KKK KKK\r\n  MMM      MMM  III  KKK  KKK  RRR  RRR   TTT     III  KKK  KKK\r\x1b[0m\r\n                       MikroTik RouterOS 7.13.2\r\n\r\n[admin@MikroTik] > '; }
+function junosMotd()    { return '\x1b[1;31m\r\nJuniper Networks — MX80 (router)\x1b[0m\r\nJUNOS 23.2R1.14 Built 2024-01-15\r\n\r\nadmin@router> '; }
+
+// ══════════════════════════════════════════
+// AI COMMAND SUGGESTION
+// ══════════════════════════════════════════
+const AI_SUGGESTIONS = {
+  'memória': { fortios:'diagnose sys top 1 20\ndiagnose hardware sysinfo mem', linux:'free -h\nps aux --sort=-%mem | head -10', cisco_ios:'show processes memory sorted', ubnt:'cat /proc/meminfo', mikrotik:'/system resource print', junos:'show system memory' },
+  'cpu':     { fortios:'diagnose sys top 1 20\nget system performance status', linux:'top -bn1 | head -20\nsar -u 1 3', cisco_ios:'show processes cpu sorted', ubnt:'cat /proc/loadavg\ntop', mikrotik:'/system resource print', junos:'show chassis routing-engine' },
+  'rota':    { fortios:'get router info routing-table all', linux:'ip route\nnetstat -rn', cisco_ios:'show ip route\nshow ip ospf neighbor', ubnt:'ip route', mikrotik:'/ip route print', junos:'show route summary' },
+  'interface': { fortios:'get system interface physical', linux:'ip a\nip link show', cisco_ios:'show interfaces status\nshow interfaces trunk', ubnt:'ifconfig\nbrctl show', mikrotik:'/interface print', junos:'show interfaces terse' },
+  'log':     { fortios:'diagnose debug crashlog read\nexecute log filter category 0', linux:'journalctl -n 50 --no-pager\ntail -f /var/log/syslog', cisco_ios:'show logging | last 30', ubnt:'dmesg | tail -30', mikrotik:'/log print count=30', junos:'show log messages | last 30' },
+  'processos': { fortios:'diagnose sys top 1 20', linux:'ps aux --sort=-%mem | head -15\npgrep -a java', cisco_ios:'show processes cpu sorted', ubnt:'ps aux | head -15', mikrotik:'/system resource print', junos:'show system processes summary' },
+  'sessão':  { fortios:'diagnose sys session stat\ndiagnose sys session list | head -20', linux:'ss -antp\nnetstat -tnp', cisco_ios:'show ip nat translations', ubnt:'cat /proc/net/ip_conntrack | head -20', mikrotik:'/ip firewall connection print count-only', junos:'show security flow session summary' },
+  'sinal':   { ubnt:'iwconfig ath0\nubntbox linkstatus\nubntbox spectrumScan', fortios:'get wireless-controller wtp', linux:'nmcli device wifi', mikrotik:'/interface wireless monitor wlan1 once', cisco_ios:'show dot11 associations', junos:'show interfaces ae0 detail' },
+  'temperatura': { fortios:'diagnose sys top 1 5\nexecute factoryreset2', linux:'sensors\ncat /sys/class/thermal/thermal_zone0/temp', cisco_ios:'show environment temperature', ubnt:'cat /sys/class/thermal/thermal_zone0/temp', mikrotik:'/system health print', junos:'show chassis environment' },
+  'default': { fortios:'get system status', linux:'uptime && free -h', cisco_ios:'show version', ubnt:'ubntbox ver', mikrotik:'/system identity print', junos:'show system uptime' },
+};
+
+function aiSuggest() {
+  const ask = document.getElementById('ai-ask').value.trim().toLowerCase();
+  const out = document.getElementById('ai-output');
+  if(!ask) return;
+  const sess = activeTab ? sessions[activeTab] : null;
+  const dtype = sess ? sess.device.type : 'linux';
+
+  let key = 'default';
+  for(const k of Object.keys(AI_SUGGESTIONS)) {
+    if(ask.includes(k) || k.includes(ask.split(' ')[0])) { key = k; break; }
+  }
+  const cmds = AI_SUGGESTIONS[key]?.[dtype] || AI_SUGGESTIONS.default[dtype] || '';
+  out.style.display = 'block';
+  out.innerHTML = '';
+
+  const lines = [`🧠 Para "${ask}" em ${dtype}:\n\n${cmds}\n\n💡 Clique no comando para executar`];
+  typeInEl(out, lines[0], 18, () => {
+    // Make commands clickable
+    out.innerHTML = out.innerHTML.replace(/\n/g, '<br>');
+    cmds.split('\n').forEach(cmd => {
+      const span = out.querySelector(`[data-cmd="${cmd}"]`);
+    });
+    // Rebuild with clickable spans
+    out.innerHTML = `🧠 Para "<em>${ask}</em>" em <strong>${dtype}</strong>:<br><br>` +
+      cmds.split('\n').map(c => `<span style="cursor:pointer;color:#67e8f9;text-decoration:underline dotted" onclick="sendCmdToActive('${c.replace(/'/g,"\\'")}')">$ ${c}</span>`).join('<br>') +
+      `<br><br><span style="color:var(--t3);font-size:10px">💡 Clique para executar</span>`;
+  });
+}
+
+function typeInEl(el, text, speed, cb) {
+  let i=0;
+  const t = setInterval(() => {
+    el.textContent = text.slice(0,i);
+    i+=4;
+    if(i>text.length) { clearInterval(t); el.textContent=text; cb&&cb(); }
+  }, speed);
+}
+
+function sendCmdToActive(cmd) {
+  if(!activeTab || !sessions[activeTab]) return;
+  const sess = sessions[activeTab];
+  if(sess.state !== 'connected') return;
+  sess.term.focus();
+  simulateCommand(activeTab, cmd);
+}
+
+// ══════════════════════════════════════════
+// RENDER DEVICE LIST
+// ══════════════════════════════════════════
+function renderDevices() {
+  const el = document.getElementById('device-list');
+  el.innerHTML = DEVICES.map(d => {
+    const tab = Object.values(sessions).find(s=>s.device.id===d.id);
+    const state = tab?.state || 'idle';
+    const stateClass = state==='connected'?'connected':state==='connecting'?'connecting':state==='active-tab'?'active-tab':'';
+    const dotColor = state==='connected'?'var(--em)':state==='connecting'?'var(--am)':'var(--t4)';
+    const typeInfo = DEVICE_TYPES[d.type] || DEVICE_TYPES.linux;
+    return `
+    <div class="dev-item ${stateClass}" onclick="connectDevice(${d.id})" id="dev-item-${d.id}">
+      <div class="dev-icon" style="background:${d.color}">${d.icon}</div>
+      <div style="min-width:0">
+        <div class="dev-name">${d.name}</div>
+        <div class="dev-sub">${d.host}:${d.port}</div>
+        ${state!=='idle'?`<div class="conn-status"><div class="conn-dot" style="background:${dotColor}"></div><span style="color:${dotColor}">${state==='connected'?'conectado':state==='connecting'?'conectando...':'—'}</span></div>`:''}
+      </div>
+      <span class="dev-ssh-badge on">SSH</span>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// CONNECT DEVICE
+// ══════════════════════════════════════════
+function connectDevice(deviceId) {
+  const device = DEVICES.find(d=>d.id===deviceId);
+  if(!device) return;
+  // Check existing session
+  const existing = Object.entries(sessions).find(([id, s]) => s.device.id===deviceId);
+  if(existing) { activateTab(existing[0]); return; }
+  openTerminalTab(device);
+}
+
+function openNewTab() {
+  // Show new connection modal with device select
+  openAddDevice(true);
+}
+
+// ══════════════════════════════════════════
+// TAB MANAGEMENT
+// ══════════════════════════════════════════
+function openTerminalTab(device) {
+  const tabId = `tab-${++tabCounter}`;
+  const typeInfo = DEVICE_TYPES[device.type] || DEVICE_TYPES.linux;
+
+  // Create tab element
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.id = `tab-el-${tabId}`;
+  tab.innerHTML = `
+    <div class="tab-dot connecting" id="tdot-${tabId}"></div>
+    <span class="tab-icon">${device.icon}</span>
+    <span class="tab-name">${device.name}</span>
+    <div class="tab-close" onclick="closeTab('${tabId}',event)">✕</div>
+  `;
+  tab.onclick = (e) => { if(!e.target.classList.contains('tab-close')) activateTab(tabId); };
+  document.getElementById('tab-bar').insertBefore(tab, document.querySelector('.new-tab-btn'));
+
+  // Create panel
+  const panel = document.createElement('div');
+  panel.className = 'term-panel';
+  panel.id = `panel-${tabId}`;
+
+  // Connecting overlay first
+  panel.innerHTML = `
+    <div class="conn-overlay" id="conn-overlay-${tabId}">
+      <div class="spinner"></div>
+      <div style="text-align:center">
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Conectando a ${device.name}</div>
+        <div style="font-size:12px;color:var(--t3)">${device.user}@${device.host}:${device.port}</div>
+      </div>
+      <div class="conn-log" id="conn-log-${tabId}"></div>
+    </div>
+    <div class="xterm-wrapper" id="xterm-${tabId}" style="display:none;background:#0a0e1a"></div>
+  `;
+  document.getElementById('term-panels').appendChild(panel);
+
+  // Session state
+  sessions[tabId] = { device, state:'connecting', term:null, fitAddon:null, history:[], historyIdx:-1, currentInput:'' };
+
+  activateTab(tabId);
+  simulateConnect(tabId, device);
+}
+
+function activateTab(tabId) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.term-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tab-el-${tabId}`)?.classList.add('active');
+  document.getElementById(`panel-${tabId}`)?.classList.add('active');
+  document.getElementById('empty-state').style.display='none';
+
+  const sess = sessions[tabId];
+  if(sess) {
+    updateStatusBar(sess);
+    updateQuickCmds(sess.device.type);
+    sess.term?.focus();
+  }
+  renderDevices();
+}
+
+function closeTab(tabId, e) {
+  e?.stopPropagation();
+  const sess = sessions[tabId];
+  if(sess?.term) sess.term.dispose();
+  delete sessions[tabId];
+  document.getElementById(`tab-el-${tabId}`)?.remove();
+  document.getElementById(`panel-${tabId}`)?.remove();
+
+  const remaining = Object.keys(sessions);
+  if(remaining.length > 0) activateTab(remaining[remaining.length-1]);
+  else {
+    activeTab = null;
+    document.getElementById('empty-state').style.display='flex';
+    document.getElementById('status-bar').style.display='none';
+    document.getElementById('quick-cmds').style.display='none';
+  }
+  updateSessionCount();
+  renderDevices();
+}
+
+// ══════════════════════════════════════════
+// SIMULATE SSH CONNECTION
+// ══════════════════════════════════════════
+async function simulateConnect(tabId, device) {
+  const log = document.getElementById(`conn-log-${tabId}`);
+  const typeInfo = DEVICE_TYPES[device.type] || DEVICE_TYPES.linux;
+
+  const steps = [
+    { t:200,  msg:`Resolvendo ${device.host}...` },
+    { t:400,  msg:`Iniciando handshake TCP para ${device.host}:${device.port}...` },
+    { t:700,  msg:`Negociando protocolo SSH-2.0...` },
+    { t:1000, msg:`Autenticando como ${device.user}...` },
+    { t:1400, msg:`Abrindo canal PTY (xterm-256color)...` },
+    { t:1700, msg:'<ok>Sessão SSH estabelecida com sucesso!</ok>' },
+  ];
+
+  for(const step of steps) {
+    await sleep(step.t);
+    if(!sessions[tabId]) return;
+    const div = document.createElement('div');
+    div.innerHTML = step.msg.includes('<ok>') ? `<span class="ok">${step.msg.replace(/<\/?ok>/g,'')}</span>` : `<span class="step">> ${step.msg}</span>`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  await sleep(300);
+  if(!sessions[tabId]) return;
+
+  // Hide overlay, show xterm
+  document.getElementById(`conn-overlay-${tabId}`)?.remove();
+  const xtermEl = document.getElementById(`xterm-${tabId}`);
+  if(xtermEl) xtermEl.style.display='block';
+
+  // Create xterm.js terminal
+  const term = new Terminal({
+    theme: {
+      background: '#0a0e1a',
+      foreground: '#cbd5e1',
+      cursor: '#6366f1',
+      selectionBackground: 'rgba(99,102,241,0.3)',
+      black: '#0f172a', brightBlack: '#334155',
+      red: '#ef4444', brightRed: '#f87171',
+      green: '#10b981', brightGreen: '#34d399',
+      yellow: '#f59e0b', brightYellow: '#fbbf24',
+      blue: '#3b82f6', brightBlue: '#60a5fa',
+      magenta: '#a855f7', brightMagenta: '#c084fc',
+      cyan: '#22d3ee', brightCyan: '#67e8f9',
+      white: '#cbd5e1', brightWhite: '#f8fafc',
+    },
+    fontFamily: "'JetBrains Mono','Consolas','Courier New',monospace",
+    fontSize: 13,
+    lineHeight: 1.4,
+    cursorBlink: true,
+    cursorStyle: 'block',
+    scrollback: 5000,
+    allowTransparency: false,
+  });
+
+  const fitAddon = new FitAddon.FitAddon();
+  const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+  term.loadAddon(fitAddon);
+  term.loadAddon(webLinksAddon);
+  term.open(xtermEl);
+  fitAddon.fit();
+
+  sessions[tabId].term = term;
+  sessions[tabId].fitAddon = fitAddon;
+  sessions[tabId].state = 'connected';
+  sessions[tabId].currentInput = '';
+  sessions[tabId].history = [];
+  sessions[tabId].historyIdx = -1;
+
+  // Update tab dot
+  const dot = document.getElementById(`tdot-${tabId}`);
+  if(dot) { dot.className = 'tab-dot connected'; }
+
+  // Print MOTD
+  const motd = typeInfo.motd();
+  term.write(motd);
+
+  // Input handler
+  term.onData(data => handleTermInput(tabId, data));
+
+  // Resize observer
+  const ro = new ResizeObserver(() => { try { fitAddon.fit(); } catch{} });
+  ro.observe(xtermEl);
+
+  updateSessionCount();
+  updateStatusBar(sessions[tabId]);
+  updateQuickCmds(device.type);
+  term.focus();
+  renderDevices();
+}
+
+// ══════════════════════════════════════════
+// TERMINAL INPUT HANDLER
+// ══════════════════════════════════════════
+function handleTermInput(tabId, data) {
+  const sess = sessions[tabId];
+  if(!sess || sess.state !== 'connected') return;
+  const term = sess.term;
+
+  for(let i=0; i<data.length; i++) {
+    const ch = data[i];
+    const code = ch.charCodeAt(0);
+
+    if(ch === '\r') {
+      // Enter
+      const cmd = sess.currentInput.trim();
+      term.write('\r\n');
+      if(cmd) {
+        sess.history.unshift(cmd);
+        if(sess.history.length > 100) sess.history.pop();
+        sess.historyIdx = -1;
+        executeSimulatedCmd(tabId, cmd);
+      } else {
+        writePrompt(tabId);
+      }
+      sess.currentInput = '';
+
+    } else if(code === 127 || ch === '\x08') {
+      // Backspace
+      if(sess.currentInput.length > 0) {
+        sess.currentInput = sess.currentInput.slice(0,-1);
+        term.write('\b \b');
+      }
+
+    } else if(ch === '\x1b[A') {
+      // Arrow up — history
+      if(sess.history.length > 0) {
+        sess.historyIdx = Math.min(sess.historyIdx+1, sess.history.length-1);
+        const prev = sess.history[sess.historyIdx];
+        clearCurrentInput(tabId);
+        sess.currentInput = prev;
+        term.write(prev);
+      }
+
+    } else if(ch === '\x1b[B') {
+      // Arrow down
+      if(sess.historyIdx > 0) {
+        sess.historyIdx--;
+        const prev = sess.history[sess.historyIdx];
+        clearCurrentInput(tabId);
+        sess.currentInput = prev;
+        term.write(prev);
+      } else if(sess.historyIdx === 0) {
+        sess.historyIdx = -1;
+        clearCurrentInput(tabId);
+      }
+
+    } else if(ch === '\x03') {
+      // Ctrl+C
+      term.write('^C\r\n');
+      sess.currentInput = '';
+      writePrompt(tabId);
+
+    } else if(ch === '\x0c') {
+      // Ctrl+L — clear
+      term.write('\x1b[H\x1b[2J');
+      writePrompt(tabId);
+      sess.currentInput = '';
+
+    } else if(ch === '\t') {
+      // Tab — basic autocomplete hint
+      if(sess.currentInput) {
+        const suggestions = getCompletions(sess.device.type, sess.currentInput);
+        if(suggestions.length === 1) {
+          const rest = suggestions[0].slice(sess.currentInput.length);
+          sess.currentInput = suggestions[0];
+          term.write(rest);
+        } else if(suggestions.length > 1) {
+          term.write('\r\n' + suggestions.join('  ') + '\r\n');
+          writePrompt(tabId);
+          term.write(sess.currentInput);
+        }
+      }
+
+    } else if(code >= 32) {
+      // Printable character
+      sess.currentInput += ch;
+      term.write(ch);
+    }
+  }
+}
+
+function clearCurrentInput(tabId) {
+  const sess = sessions[tabId];
+  for(let i=0; i<sess.currentInput.length; i++) sess.term.write('\b \b');
+  sess.currentInput = '';
+}
+
+function writePrompt(tabId) {
+  const sess = sessions[tabId];
+  if(!sess) return;
+  const typeInfo = DEVICE_TYPES[sess.device.type] || DEVICE_TYPES.linux;
+  const prompt = typeInfo.prompt(sess.device.user);
+  sess.term.write('\x1b[1;32m' + prompt + '\x1b[0m');
+}
+
+// ══════════════════════════════════════════
+// SIMULATE COMMAND EXECUTION
+// ══════════════════════════════════════════
+function executeSimulatedCmd(tabId, cmd) {
+  const sess = sessions[tabId];
+  if(!sess) return;
+  simulateCommand(tabId, cmd);
+}
+
+function simulateCommand(tabId, cmd) {
+  const sess = sessions[tabId];
+  if(!sess) return;
+  const term = sess.term;
+  const cliMap = CLI[sess.device.type] || CLI.linux;
+  const norm = cmd.trim().toLowerCase();
+
+  // Update input if called externally
+  if(sess.currentInput !== cmd) {
+    clearCurrentInput(tabId);
+    sess.currentInput = cmd;
+    term.write(cmd + '\r\n');
+    sess.currentInput = '';
+  }
+
+  // Small delay to feel natural
+  const delay = 80 + Math.random() * 200;
+  setTimeout(() => {
+    if(!sessions[tabId]) return;
+    let output = '';
+    const exact = Object.keys(cliMap).find(k => k.toLowerCase() === norm);
+    if(exact) {
+      output = cliMap[exact]();
+    } else if(cliMap.default) {
+      output = cliMap.default(cmd);
+    }
+
+    if(output === '\x1b[H\x1b[2J') {
+      term.write(output);
+    } else {
+      // Colorize output based on keywords
+      const colored = colorizeOutput(output, sess.device.type);
+      term.write(colored);
+    }
+    writePrompt(tabId);
+  }, delay);
+}
+
+function colorizeOutput(text, dtype) {
+  // Highlight numbers, errors, warnings
+  return text
+    .replace(/\b(error|fail|down|FAIL|ERROR|DOWN)\b/gi, '\x1b[31m$1\x1b[0m')
+    .replace(/\b(up|ok|OK|running|connected|active)\b/g, '\x1b[32m$1\x1b[0m')
+    .replace(/\b(warning|warn|WARN|AVISO)\b/gi, '\x1b[33m$1\x1b[0m')
+    .replace(/(\d+\.\d+\.\d+\.\d+)/g, '\x1b[36m$1\x1b[0m')
+    .replace(/(✓)/g, '\x1b[32m$1\x1b[0m')
+    .replace(/(✗)/g, '\x1b[31m$1\x1b[0m');
+}
+
+function getCompletions(dtype, partial) {
+  const all = Object.keys(CLI[dtype]||{}).filter(k=>k!=='default');
+  return all.filter(c => c.toLowerCase().startsWith(partial.toLowerCase()));
+}
+
+// ══════════════════════════════════════════
+// STATUS BAR
+// ══════════════════════════════════════════
+function updateStatusBar(sess) {
+  const sb = document.getElementById('status-bar');
+  if(!sess || sess.state!=='connected') { sb.style.display='none'; return; }
+  sb.style.display='flex';
+  document.getElementById('sb-host').textContent = `${sess.device.host}:${sess.device.port}`;
+  document.getElementById('sb-user').textContent = sess.device.user;
+  document.getElementById('sb-uptime').textContent = 'conectado';
+  document.getElementById('sb-size').textContent = `${sess.device.type}`;
+}
+
+function updateSessionCount() {
+  const n = Object.values(sessions).filter(s=>s.state==='connected').length;
+  const el = document.getElementById('session-count');
+  document.getElementById('sc-text').textContent = `${n} sessão${n!==1?'s':''}`;
+  el.style.display = n>0 ? 'flex' : 'none';
+}
+
+// ══════════════════════════════════════════
+// QUICK COMMANDS
+// ══════════════════════════════════════════
+function updateQuickCmds(dtype) {
+  const cmds = QUICK_CMDS[dtype] || [];
+  const el = document.getElementById('quick-cmds');
+  const list = document.getElementById('quick-cmds-list');
+  if(cmds.length === 0) { el.style.display='none'; return; }
+  el.style.display='block';
+  list.innerHTML = cmds.map(c => `<button class="qcmd" onclick="sendCmdToActive('${c.replace(/'/g,"\\'")}')">$ ${c}</button>`).join('');
+}
+
+// ══════════════════════════════════════════
+// ADD DEVICE MODAL
+// ══════════════════════════════════════════
+let addingForConnect = false;
+function openAddDevice(forConnect=false) {
+  addingForConnect = forConnect;
+  document.getElementById('modal-add').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-add').classList.remove('open');
+}
+function addDevice() {
+  const name = document.getElementById('f-name').value.trim();
+  const host = document.getElementById('f-host').value.trim();
+  const port = parseInt(document.getElementById('f-port').value)||22;
+  const user = document.getElementById('f-user').value.trim();
+  const pass = document.getElementById('f-pass').value;
+  const type = document.getElementById('f-type').value;
+  if(!name||!host||!user) { alert('Preencha Nome, Host e Usuário'); return; }
+  const typeInfo = DEVICE_TYPES[type]||DEVICE_TYPES.linux;
+  const newDev = { id: Date.now(), name, host, port, user, pass, type, icon:typeInfo.icon, color:typeInfo.color };
+  DEVICES.push(newDev);
+  renderDevices();
+  closeModal();
+  if(addingForConnect) openTerminalTab(newDev);
+}
+
+// ══════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+setInterval(()=>{ document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+renderDevices();
+
+// Auto-connect to first device after 1.5s for demo feel
+setTimeout(() => connectDevice(1), 1500);
+</script>
+</body>
+</html>

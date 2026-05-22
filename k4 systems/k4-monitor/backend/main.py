@@ -4,7 +4,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import init_db
-from routers import devices, metrics, alerts, stats
+from routers import devices, metrics, alerts, stats, ssh_terminal
 import scheduler
 import ws_manager
 
@@ -31,6 +31,7 @@ app.include_router(devices.router)
 app.include_router(metrics.router)
 app.include_router(alerts.router)
 app.include_router(stats.router)
+app.include_router(ssh_terminal.router)
 
 
 @app.websocket("/ws")

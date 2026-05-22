@@ -12,6 +12,12 @@ class DeviceCreate(BaseModel):
     http_path: str = "/"
     http_expected_code: int = 200
     tags: str = ""
+    ssh_enabled: bool = False
+    ssh_port: int = 22
+    ssh_username: str = "admin"
+    ssh_password: str = ""
+    ssh_key_path: str = ""
+    ssh_device_type: str = "linux"
 
 
 class DeviceUpdate(BaseModel):
@@ -25,6 +31,12 @@ class DeviceUpdate(BaseModel):
     http_expected_code: int | None = None
     enabled: bool | None = None
     tags: str | None = None
+    ssh_enabled: bool | None = None
+    ssh_port: int | None = None
+    ssh_username: str | None = None
+    ssh_password: str | None = None
+    ssh_key_path: str | None = None
+    ssh_device_type: str | None = None
 
 
 class DeviceOut(BaseModel):
@@ -44,6 +56,10 @@ class DeviceOut(BaseModel):
     last_check: datetime | None
     last_value: float | None
     created_at: datetime
+    ssh_enabled: bool
+    ssh_port: int
+    ssh_username: str
+    ssh_device_type: str
 
 
 class MetricOut(BaseModel):

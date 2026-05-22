@@ -19,6 +19,14 @@ class Device(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     tags: Mapped[str] = mapped_column(Text, default="")
 
+    # SSH credentials
+    ssh_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    ssh_port: Mapped[int] = mapped_column(Integer, default=22)
+    ssh_username: Mapped[str] = mapped_column(String(128), default="admin")
+    ssh_password: Mapped[str] = mapped_column(String(256), default="")
+    ssh_key_path: Mapped[str] = mapped_column(String(512), default="")
+    ssh_device_type: Mapped[str] = mapped_column(String(64), default="linux")  # linux, fortios, cisco_ios, ubnt
+
     status: Mapped[str] = mapped_column(String(16), default="unknown")  # up, down, unknown, warning
     last_check: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     last_value: Mapped[float | None] = mapped_column(Float, nullable=True)
