@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KR4 Automations – Automação de Rede</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#hero" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity="0.4"/>
+            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+                  font-family="Rajdhani" font-weight="700" font-size="14" fill="url(#logoGrad)">KR4</text>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#a8b8d8"/>
+                <stop offset="100%" stop-color="#ffffff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">KR4 <span class="logo-sub">AUTOMATIONS</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#vantagens">Vantagens</a></li>
+        <li><a href="#servicos">Serviços</a></li>
+        <li><a href="#porque">Por Que Nós</a></li>
+        <li><a href="#numeros">Resultados</a></li>
+        <li><a href="#contato" class="nav-cta">Fale Conosco</a></li>
+      </ul>
+      <button class="nav-burger" id="navBurger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="hero">
+    <canvas id="networkCanvas"></canvas>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge reveal">
+        <span class="badge-dot"></span>
+        Automação de Rede Empresarial
+      </div>
+      <h1 class="hero-title reveal">
+        Sua Rede.<br/>
+        <span class="gradient-text">Automatizada.</span><br/>
+        Invencível.
+      </h1>
+      <p class="hero-desc reveal">
+        A KR4 Automations transforma infraestruturas de rede em sistemas inteligentes e autossuficientes —
+        eliminando falhas humanas, reduzindo custos e maximizando a disponibilidade do seu negócio.
+      </p>
+      <div class="hero-actions reveal">
+        <a href="#contato" class="btn btn-primary">
+          <span>Solicitar Proposta</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#vantagens" class="btn btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z" fill="currentColor" stroke="none"/></svg>
+          Conhecer Soluções
+        </a>
+      </div>
+      <div class="hero-stats reveal">
+        <div class="hstat">
+          <strong>99,9%</strong>
+          <span>de uptime</span>
+        </div>
+        <div class="hstat-divider"></div>
+        <div class="hstat">
+          <strong>70%</strong>
+          <span>menos falhas</span>
+        </div>
+        <div class="hstat-divider"></div>
+        <div class="hstat">
+          <strong>24/7</strong>
+          <span>monitoramento</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      <span>Role para descobrir</span>
+    </div>
+  </section>
+
+  <!-- ── CLIENTES STRIP ── -->
+  <section class="clients-strip">
+    <div class="clients-label">Soluções aplicadas em ambientes de missão crítica</div>
+    <div class="clients-track">
+      <div class="clients-inner">
+        <span>Indústria</span>
+        <span class="dot">●</span>
+        <span>Saúde</span>
+        <span class="dot">●</span>
+        <span>Financeiro</span>
+        <span class="dot">●</span>
+        <span>Varejo</span>
+        <span class="dot">●</span>
+        <span>Logística</span>
+        <span class="dot">●</span>
+        <span>Educação</span>
+        <span class="dot">●</span>
+        <span>Governo</span>
+        <span class="dot">●</span>
+        <span>Tecnologia</span>
+        <span class="dot">●</span>
+        <span>Indústria</span>
+        <span class="dot">●</span>
+        <span>Saúde</span>
+        <span class="dot">●</span>
+        <span>Financeiro</span>
+        <span class="dot">●</span>
+        <span>Varejo</span>
+        <span class="dot">●</span>
+        <span>Logística</span>
+        <span class="dot">●</span>
+        <span>Educação</span>
+        <span class="dot">●</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VANTAGENS ── -->
+  <section class="section vantagens" id="vantagens">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Vantagens</div>
+        <h2>Por que automatizar sua rede?</h2>
+        <p>A automação de redes não é tendência — é vantagem competitiva real. Veja o que sua empresa ganha.</p>
+      </div>
+      <div class="vantagens-grid">
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>Eliminação de Erros Humanos</h3>
+          <p>Configurações manuais são fontes de falhas. A automação garante que cada alteração seja executada com precisão absoluta, sem margem para erros de digitação ou configurações inconsistentes.</p>
+          <div class="vc-metric">
+            <span class="metric-value">85%</span>
+            <span class="metric-label">redução de incidentes</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <h3>Resposta em Tempo Real</h3>
+          <p>Enquanto equipes manuais levam horas para reagir a falhas, sistemas automatizados identificam e corrigem problemas em segundos — antes que seus usuários percebam.</p>
+          <div class="vc-metric">
+            <span class="metric-value">&lt;30s</span>
+            <span class="metric-label">tempo de resposta</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h3>Redução de Custos Operacionais</h3>
+          <p>Menos horas de equipe dedicadas a tarefas repetitivas, menos paradas não planejadas e menos desperdício de recursos. A automação paga por si mesma rapidamente.</p>
+          <div class="vc-metric">
+            <span class="metric-value">40%</span>
+            <span class="metric-label">redução de custos</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <h3>Visibilidade e Controle Total</h3>
+          <p>Dashboards em tempo real mostram exatamente o que está acontecendo na sua rede — tráfego, desempenho, alertas e tendências — tudo centralizado e acessível.</p>
+          <div class="vc-metric">
+            <span class="metric-value">100%</span>
+            <span class="metric-label">visibilidade da rede</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+          <h3>Escalabilidade Sem Atrito</h3>
+          <p>Cresceu a empresa? A rede cresce junto. Com automação, novos dispositivos e filiais são integrados rapidamente — sem necessidade de retrabalho ou grandes equipes.</p>
+          <div class="vc-metric">
+            <span class="metric-value">10x</span>
+            <span class="metric-label">mais rápido para escalar</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h3>Segurança Proativa</h3>
+          <p>Políticas de segurança aplicadas automaticamente em todos os dispositivos. Detecção de comportamentos anômalos e resposta a ameaças antes que causem danos.</p>
+          <div class="vc-metric">
+            <span class="metric-value">3x</span>
+            <span class="metric-label">mais seguro</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROBLEMA / SOLUÇÃO ── -->
+  <section class="section problem-solution">
+    <div class="container">
+      <div class="ps-wrapper reveal">
+        <div class="ps-side problem">
+          <div class="ps-icon problem-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3>Sem Automação</h3>
+          <ul>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Configurações manuais e propensas a erros
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Horas de inatividade não planejada
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Equipes sobrecarregadas com tarefas repetitivas
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Visibilidade limitada da infraestrutura
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Resposta lenta a incidentes e ameaças
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Expansão cara e demorada
+            </li>
+          </ul>
+        </div>
+        <div class="ps-arrow">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="url(#arrowGrad)" stroke-width="2">
+            <defs>
+              <linearGradient id="arrowGrad" x1="0" y1="0" x2="24" y2="0">
+                <stop offset="0%" stop-color="#ff4757"/>
+                <stop offset="100%" stop-color="#0077ff"/>
+              </linearGradient>
+            </defs>
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+        <div class="ps-side solution">
+          <div class="ps-icon solution-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <h3>Com KR4 Automations</h3>
+          <ul>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Configurações precisas e consistentes
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              99,9% de disponibilidade garantida
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Equipe focada em projetos estratégicos
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Dashboard completo em tempo real
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Alertas e correções automáticas instantâneas
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Escalabilidade ágil e econômica
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SERVIÇOS ── -->
+  <section class="section servicos" id="servicos">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Serviços</div>
+        <h2>Soluções KR4</h2>
+        <p>Um portfólio completo de automação para cada camada da sua infraestrutura de rede.</p>
+      </div>
+      <div class="servicos-grid">
+
+        <div class="servico-card reveal">
+          <div class="sc-number">01</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <h3>Automação de Configuração</h3>
+          <p>Provisionamento e configuração automática de switches, roteadores e firewalls via scripts Ansible, Python ou Terraform — com rollback automático em caso de falha.</p>
+          <div class="sc-tags">
+            <span>Ansible</span><span>NetConf</span><span>Python</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">02</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M18 20V10M12 20V4M6 20v-6"/>
+            </svg>
+          </div>
+          <h3>Monitoramento Inteligente</h3>
+          <p>Coleta e análise contínua de métricas de desempenho. Alertas preditivos que identificam gargalos antes que impactem usuários — com integração a plataformas como Zabbix, Grafana e Prometheus.</p>
+          <div class="sc-tags">
+            <span>Zabbix</span><span>Grafana</span><span>SNMP</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">03</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <h3>Segurança Automatizada</h3>
+          <p>Políticas de firewall, ACLs e segmentação de rede aplicadas automaticamente. Detecção e contenção de ameaças em tempo real, sem intervenção humana.</p>
+          <div class="sc-tags">
+            <span>Firewall</span><span>Zero Trust</span><span>IDS/IPS</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">04</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </div>
+          <h3>SD-WAN e SDN</h3>
+          <p>Implantação e gestão de redes definidas por software. Controle centralizado de toda a WAN, com otimização dinâmica de rotas e QoS automatizado por aplicação.</p>
+          <div class="sc-tags">
+            <span>SD-WAN</span><span>OpenFlow</span><span>BGP</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">05</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="1 4 1 10 7 10"/>
+              <polyline points="23 20 23 14 17 14"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+          </div>
+          <h3>Recuperação Automática</h3>
+          <p>Scripts de auto-healing que detectam falhas e executam recuperação sem intervenção humana. Failover automático de links, serviços e dispositivos críticos.</p>
+          <div class="sc-tags">
+            <span>Auto-healing</span><span>Failover</span><span>HA</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">06</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/>
+            </svg>
+          </div>
+          <h3>Network as Code</h3>
+          <p>Toda a infraestrutura de rede gerenciada como código. Versionamento, revisões e implantações controladas via Git — com rastreabilidade completa de cada mudança.</p>
+          <div class="sc-tags">
+            <span>GitOps</span><span>CI/CD</span><span>IaC</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── NÚMEROS ── -->
+  <section class="section numeros" id="numeros">
+    <div class="numeros-bg"></div>
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Resultados</div>
+        <h2>Números que comprovam</h2>
+        <p>Impacto real, mensurável e imediato nas operações de quem automatiza com a KR4.</p>
+      </div>
+      <div class="numeros-grid">
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="99" data-suffix=",9%">0%</div>
+          <div class="numero-label">Disponibilidade Garantida</div>
+          <div class="numero-desc">de uptime em ambientes críticos</div>
+        </div>
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="85" data-suffix="%">0%</div>
+          <div class="numero-label">Redução de Incidentes</div>
+          <div class="numero-desc">menos falhas após implantação</div>
+        </div>
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="40" data-suffix="%">0%</div>
+          <div class="numero-label">Economia Operacional</div>
+          <div class="numero-desc">de redução média nos custos de TI</div>
+        </div>
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="10" data-suffix="x">0x</div>
+          <div class="numero-label">Velocidade de Deploy</div>
+          <div class="numero-desc">mais rápido que o processo manual</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── POR QUE KR4 ── -->
+  <section class="section porque" id="porque">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Diferenciais</div>
+        <h2>Por que escolher a KR4?</h2>
+        <p>Não somos apenas uma empresa de TI. Somos especialistas em transformar redes em ativos estratégicos.</p>
+      </div>
+      <div class="porque-grid">
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M20 21a8 8 0 1 0-16 0"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Especialistas Certificados</h4>
+            <p>Nossa equipe é formada por engenheiros com certificações Cisco, Juniper, AWS e certificações em automação de infraestrutura — com projetos reais em ambientes críticos.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Segurança em Primeiro Lugar</h4>
+            <p>Cada solução é projetada com camadas de segurança desde a concepção. Implementamos práticas Zero Trust e conformidade com LGPD, ISO 27001 e frameworks de segurança.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Atendimento Local e Personalizado</h4>
+            <p>Entendemos as necessidades específicas do mercado brasileiro. Suporte em português, visitas técnicas presenciais e soluções adaptadas à realidade da sua empresa.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>ROI Rápido e Mensurável</h4>
+            <p>Apresentamos relatórios detalhados do impacto financeiro da automação. Nossos clientes veem retorno do investimento em média em 6 meses após a implantação.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Suporte 24/7 e SLA Garantido</h4>
+            <p>Nossa equipe de NOC monitora e suporta sua infraestrutura 24 horas por dia, 7 dias por semana. SLA definido em contrato com penalidades por descumprimento.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Implantação Gradual e Sem Riscos</h4>
+            <p>Adotamos metodologia de implantação por fases, com ambientes de homologação e rollback garantido. Sem impacto na operação durante a transição para automação.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROCESSO ── -->
+  <section class="section processo">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Metodologia</div>
+        <h2>Como funciona</h2>
+        <p>Do diagnóstico à operação autônoma — um processo estruturado para garantir resultados sem surpresas.</p>
+      </div>
+      <div class="processo-steps">
+        <div class="pstep reveal">
+          <div class="pstep-number">1</div>
+          <div class="pstep-line"></div>
+          <div class="pstep-content">
+            <h4>Diagnóstico</h4>
+            <p>Mapeamento completo da infraestrutura atual, identificação de gargalos e definição de objetivos de automação.</p>
+          </div>
+        </div>
+        <div class="pstep reveal">
+          <div class="pstep-number">2</div>
+          <div class="pstep-line"></div>
+          <div class="pstep-content">
+            <h4>Projeto</h4>
+            <p>Arquitetura da solução personalizada, definição de ferramentas, scripts e fluxos de automação alinhados ao seu ambiente.</p>
+          </div>
+        </div>
+        <div class="pstep reveal">
+          <div class="pstep-number">3</div>
+          <div class="pstep-line"></div>
+          <div class="pstep-content">
+            <h4>Implantação</h4>
+            <p>Implementação por fases em ambiente de homologação antes da produção. Testes extensivos e validação a cada etapa.</p>
+          </div>
+        </div>
+        <div class="pstep reveal">
+          <div class="pstep-number">4</div>
+          <div class="pstep-line last"></div>
+          <div class="pstep-content">
+            <h4>Operação e Evolução</h4>
+            <p>Monitoramento contínuo, relatórios periódicos e melhorias incrementais. Sua rede evolui junto com o negócio.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="section cta-section" id="contato">
+    <div class="cta-bg-anim"></div>
+    <div class="container">
+      <div class="cta-wrapper reveal">
+        <div class="cta-content">
+          <div class="section-badge" style="display:inline-flex;">Contato</div>
+          <h2>Pronto para automatizar?</h2>
+          <p>Converse com um especialista KR4 e descubra como a automação pode transformar a infraestrutura da sua empresa. Análise inicial gratuita e sem compromisso.</p>
+          <div class="cta-guarantees">
+            <div class="cta-guar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Consulta inicial gratuita
+            </div>
+            <div class="cta-guar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Proposta personalizada em 48h
+            </div>
+            <div class="cta-guar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Sem fidelidade no primeiro mês
+            </div>
+          </div>
+        </div>
+        <div class="cta-form">
+          <form id="contactForm">
+            <div class="form-group">
+              <label>Nome completo</label>
+              <input type="text" placeholder="João Silva" required />
+            </div>
+            <div class="form-group">
+              <label>E-mail corporativo</label>
+              <input type="email" placeholder="joao@empresa.com.br" required />
+            </div>
+            <div class="form-group">
+              <label>Telefone / WhatsApp</label>
+              <input type="tel" placeholder="(11) 99999-9999" />
+            </div>
+            <div class="form-group">
+              <label>Qual é o seu principal desafio de rede?</label>
+              <textarea rows="3" placeholder="Descreva brevemente..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+              <span>Solicitar Diagnóstico Gratuito</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <p class="form-note">Seus dados são protegidos conforme a LGPD. Sem spam.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#hero" class="nav-logo">
+            <div class="logo-icon">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity="0.4"/>
+                <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+                      font-family="Rajdhani" font-weight="700" font-size="14" fill="url(#footerLogoGrad)">KR4</text>
+                <defs>
+                  <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#a8b8d8"/>
+                    <stop offset="100%" stop-color="#ffffff"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <span class="logo-text">KR4 <span class="logo-sub">AUTOMATIONS</span></span>
+          </a>
+          <p>Transformando infraestruturas de rede em sistemas inteligentes, seguros e autossuficientes.</p>
+          <div class="footer-social">
+            <a href="#" aria-label="LinkedIn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+            <a href="#" aria-label="Instagram">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <a href="#" aria-label="WhatsApp">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h5>Serviços</h5>
+            <ul>
+              <li><a href="#servicos">Automação de Configuração</a></li>
+              <li><a href="#servicos">Monitoramento Inteligente</a></li>
+              <li><a href="#servicos">Segurança Automatizada</a></li>
+              <li><a href="#servicos">SD-WAN e SDN</a></li>
+              <li><a href="#servicos">Network as Code</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Empresa</h5>
+            <ul>
+              <li><a href="#porque">Sobre a KR4</a></li>
+              <li><a href="#numeros">Resultados</a></li>
+              <li><a href="#vantagens">Vantagens</a></li>
+              <li><a href="#contato">Contato</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 KR4 Automations. Todos os direitos reservados.</p>
+        <p>Automação de Rede Empresarial</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
