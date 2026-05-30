@@ -200,56 +200,73 @@ body {
 
 /* ── Hero visual (coluna direita) ── */
 .hero-visual {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+/* logo com anéis */
+.hero-logo-wrap {
   position: relative;
-  width: 380px;
-  height: 380px;
+  flex-shrink: 0;
+  width: 220px;
+  height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .hero-logo-img {
-  width: 260px;
-  height: 260px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 0 40px rgba(0, 119, 255, 0.55));
+  filter: drop-shadow(0 0 32px rgba(0, 119, 255, 0.55));
   animation: heroLogoFloat 5s ease-in-out infinite;
   border-radius: 16px;
 }
 @keyframes heroLogoFloat {
-  0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 40px rgba(0, 119, 255, 0.55)); }
-  50%       { transform: translateY(-12px); filter: drop-shadow(0 0 60px rgba(0, 170, 255, 0.75)); }
+  0%, 100% { transform: translateY(0);    filter: drop-shadow(0 0 32px rgba(0, 119, 255, 0.55)); }
+  50%       { transform: translateY(-10px); filter: drop-shadow(0 0 52px rgba(0, 170, 255, 0.75)); }
 }
 .hero-ring {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(0, 119, 255, 0.18);
+  border: 1px solid rgba(0, 119, 255, 0.2);
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
 }
-.hero-ring.ring-1 { width: 300px; height: 300px; animation: ringPulse 4s ease-in-out infinite; }
-.hero-ring.ring-2 { width: 360px; height: 360px; animation: ringPulse 4s ease-in-out infinite 0.6s; border-style: dashed; }
-.hero-ring.ring-3 { width: 420px; height: 420px; animation: ringPulse 4s ease-in-out infinite 1.2s; }
+.hero-ring.ring-1 { width: 220px; height: 220px; animation: ringPulse 4s ease-in-out infinite; }
+.hero-ring.ring-2 { width: 270px; height: 270px; animation: ringPulse 4s ease-in-out infinite 0.7s; border-style: dashed; }
 @keyframes ringPulse {
-  0%, 100% { opacity: 0.25; transform: translate(-50%, -50%) scale(1); }
-  50%       { opacity: 0.55; transform: translate(-50%, -50%) scale(1.03); }
+  0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 0.5; transform: translate(-50%, -50%) scale(1.04); }
 }
 
-/* cards flutuantes */
+/* coluna de cards */
+.hero-cards-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .hfloat-card {
-  position: absolute;
-  z-index: 3;
   background: rgba(8, 20, 40, 0.88);
-  border: 1px solid rgba(0, 119, 255, 0.35);
+  border: 1px solid rgba(0, 119, 255, 0.3);
   border-radius: 14px;
-  padding: 12px 18px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
   backdrop-filter: blur(14px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0,119,255,0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   white-space: nowrap;
+  animation: floatCard 5s ease-in-out infinite;
+}
+.hfloat-card:nth-child(2) { animation-delay: 1s; }
+.hfloat-card:nth-child(3) { animation-delay: 2s; }
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
 }
 .hfloat-card strong {
   display: block;
@@ -273,11 +290,6 @@ body {
   justify-content: center;
   flex-shrink: 0;
 }
-.hfloat-top    { top: 10px;   right: -30px; animation: floatA 5s ease-in-out infinite; }
-.hfloat-bottom { bottom: 10px; left: -30px; animation: floatB 5s ease-in-out infinite 1s; }
-.hfloat-side   { top: 45%;    left: -50px; animation: floatA 5s ease-in-out infinite 2s; }
-@keyframes floatA { 0%, 100% { transform: translateY(0); }   50% { transform: translateY(-8px); } }
-@keyframes floatB { 0%, 100% { transform: translateY(0); }   50% { transform: translateY(8px); } }
 .logo-text {
   font-family: var(--font-display);
   font-size: 1.2rem;
