@@ -202,48 +202,133 @@ body {
 .hero-visual {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 32px;
 }
 
-/* logo com anéis */
+/* ── Logo animado ── */
 .hero-logo-wrap {
   position: relative;
   flex-shrink: 0;
-  width: 220px;
-  height: 220px;
+  width: 224px;
+  height: 224px;
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: heroLogoFloat 5s ease-in-out infinite;
+}
+@keyframes heroLogoFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+/* borda giratória com gradiente cônico */
+.logo-spin-border {
+  position: absolute;
+  inset: -3px;
+  border-radius: 22px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 35%,
+    #0044cc 45%,
+    #0077ff 50%,
+    #00aaff 55%,
+    transparent 65%,
+    transparent 100%
+  );
+  animation: spinBorder 3s linear infinite;
+  z-index: 0;
+}
+.logo-spin-border::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 19px;
+  background: #030810;
+}
+@keyframes spinBorder {
+  to { transform: rotate(360deg); }
+}
+
+/* frame interno com overflow:hidden para scan line */
+.logo-inner-frame {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(0, 119, 255, 0.4);
 }
 .hero-logo-img {
   width: 200px;
   height: 200px;
   object-fit: contain;
-  position: relative;
-  z-index: 2;
-  filter: drop-shadow(0 0 32px rgba(0, 119, 255, 0.55));
-  animation: heroLogoFloat 5s ease-in-out infinite;
+  display: block;
   border-radius: 16px;
 }
-@keyframes heroLogoFloat {
-  0%, 100% { transform: translateY(0);    filter: drop-shadow(0 0 32px rgba(0, 119, 255, 0.55)); }
-  50%       { transform: translateY(-10px); filter: drop-shadow(0 0 52px rgba(0, 170, 255, 0.75)); }
+
+/* scan line varredura */
+.logo-scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0, 170, 255, 0.15) 20%,
+    rgba(0, 170, 255, 0.9) 50%,
+    rgba(0, 170, 255, 0.15) 80%,
+    transparent 100%
+  );
+  animation: scanDown 3s ease-in-out infinite;
+  top: -3px;
+  z-index: 3;
 }
+@keyframes scanDown {
+  0%   { top: -3px;   opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 0.7; }
+  100% { top: 100%;   opacity: 0; }
+}
+
+/* reflexo de luz no canto superior */
+.logo-glare {
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.08) 0%,
+    transparent 60%
+  );
+  animation: glareSwipe 6s ease-in-out infinite;
+  z-index: 4;
+}
+@keyframes glareSwipe {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  40%       { opacity: 1; }
+  50%       { transform: translate(120%, 120%); opacity: 0; }
+  51%, 99%  { opacity: 0; }
+}
+
+/* anéis */
 .hero-ring {
   position: absolute;
   border-radius: 50%;
   border: 1px solid rgba(0, 119, 255, 0.2);
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
+  z-index: 0;
 }
-.hero-ring.ring-1 { width: 220px; height: 220px; animation: ringPulse 4s ease-in-out infinite; }
-.hero-ring.ring-2 { width: 270px; height: 270px; animation: ringPulse 4s ease-in-out infinite 0.7s; border-style: dashed; }
+.hero-ring.ring-1 { width: 240px; height: 240px; animation: ringPulse 4s ease-in-out infinite; }
+.hero-ring.ring-2 { width: 300px; height: 300px; animation: ringPulse 4s ease-in-out infinite 0.8s; border-style: dashed; opacity: 0.6; }
 @keyframes ringPulse {
   0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
-  50%       { opacity: 0.5; transform: translate(-50%, -50%) scale(1.04); }
+  50%       { opacity: 0.6; transform: translate(-50%, -50%) scale(1.04); }
 }
 
-/* coluna de cards */
+/* ── Coluna de cards ── */
 .hero-cards-col {
   display: flex;
   flex-direction: column;
