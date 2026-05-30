@@ -125,8 +125,9 @@ document.querySelectorAll('.numero-value[data-target]').forEach(el => counterObs
     nodes   = Array.from({ length: NODE_COUNT }, makeNode);
     packets = [];
     pulses  = [];
-    setInterval(spawnPacket, 350);
-    setInterval(spawnPulse,  1200);
+    for (let i = 0; i < 6; i++) spawnPacket(); // burst inicial
+    setInterval(() => { for (let i = 0; i < 4; i++) spawnPacket(); }, 120);
+    setInterval(spawnPulse, 1200);
   }
 
   function draw() {
