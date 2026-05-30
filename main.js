@@ -81,15 +81,15 @@ document.querySelectorAll('.numero-value[data-target]').forEach(el => counterObs
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  let W, H, nodes, packets, pulses;
+  let W, H, nodes, animFrame;
 
-  const NODE_COUNT = 65;
-  const MAX_DIST   = 190;
-  const SPEED      = 0.45;
+  const NODE_COUNT = 55;
+  const MAX_DIST = 180;
+  const SPEED = 0.35;
 
   function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
   }
 
   function makeNode() {
@@ -100,163 +100,94 @@ document.querySelectorAll('.numero-value[data-target]').forEach(el => counterObs
       vy: (Math.random() - 0.5) * SPEED,
       r: Math.random() * 2.5 + 1,
       pulse: Math.random() * Math.PI * 2,
-      pulseSpeed: 0.018 + Math.random() * 0.012,
     };
-  }
-
-  /* pacote de dados viajando de nó A → nó B */
-  function spawnPacket() {
-    const a = nodes[Math.floor(Math.random() * nodes.length)];
-    const b = nodes[Math.floor(Math.random() * nodes.length)];
-    if (a === b) return;
-    const dist = Math.hypot(b.x - a.x, b.y - a.y);
-    if (dist > MAX_DIST) return;
-    packets.push({ ax: a.x, ay: a.y, bx: b.x, by: b.y, t: 0, speed: 0.012 + Math.random() * 0.01 });
-  }
-
-  /* onda de pulso saindo de um nó */
-  function spawnPulse() {
-    const n = nodes[Math.floor(Math.random() * nodes.length)];
-    pulses.push({ x: n.x, y: n.y, r: 0, maxR: 60 + Math.random() * 60, alpha: 0.7 });
   }
 
   function init() {
     resize();
-    nodes   = Array.from({ length: NODE_COUNT }, makeNode);
-    packets = [];
-    pulses  = [];
-    for (let i = 0; i < 6; i++) spawnPacket(); // burst inicial
-    setInterval(() => { for (let i = 0; i < 4; i++) spawnPacket(); }, 120);
-    setInterval(spawnPulse, 1200);
+    nodes = Array.from({ length: NODE_COUNT }, makeNode);
   }
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
 
-    /* ── pulses ── */
-    pulses.forEach((p, i) => {
-      p.r     += 1.4;
-      p.alpha -= 0.012;
-      if (p.alpha <= 0) { pulses.splice(i, 1); return; }
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(0, 119, 255, ${p.alpha * 0.5})`;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    });
-
-    /* ── edges ── */
+    /* edges */
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const a = nodes[i], b = nodes[j];
         const dx = b.x - a.x, dy = b.y - a.y;
         const dist = Math.hypot(dx, dy);
         if (dist > MAX_DIST) continue;
-        const alpha = (1 - dist / MAX_DIST) * 0.28;
-        /* linha gradiente de cor dinâmica */
-        const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-        const hue1 = 210 + Math.sin(a.pulse) * 20;
-        const hue2 = 210 + Math.sin(b.pulse) * 20;
-        grad.addColorStop(0, `hsla(${hue1}, 100%, 55%, ${alpha})`);
-        grad.addColorStop(1, `hsla(${hue2}, 100%, 55%, ${alpha})`);
+        const alpha = (1 - dist / MAX_DIST) * 0.25;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = `rgba(0, 119, 255, ${alpha})`;
+        ctx.lineWidth = 1;
         ctx.stroke();
       }
     }
 
-    /* ── packets (bolinhas nos fios) ── */
-    packets.forEach((p, i) => {
-      p.t += p.speed;
-      if (p.t >= 1) { packets.splice(i, 1); return; }
-      const x = p.ax + (p.bx - p.ax) * p.t;
-      const y = p.ay + (p.by - p.ay) * p.t;
-      /* trilha */
-      for (let k = 1; k <= 5; k++) {
-        const tr = p.t - k * 0.025;
-        if (tr < 0) continue;
-        const tx = p.ax + (p.bx - p.ax) * tr;
-        const ty = p.ay + (p.by - p.ay) * tr;
-        ctx.beginPath();
-        ctx.arc(tx, ty, 1.5 - k * 0.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 200, 255, ${0.35 - k * 0.06})`;
-        ctx.fill();
-      }
-      /* ponto principal */
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0, 220, 255, 0.95)';
-      ctx.fill();
-      /* micro glow */
-      const g = ctx.createRadialGradient(x, y, 0, x, y, 10);
-      g.addColorStop(0, 'rgba(0, 200, 255, 0.3)');
-      g.addColorStop(1, 'transparent');
-      ctx.beginPath();
-      ctx.arc(x, y, 10, 0, Math.PI * 2);
-      ctx.fillStyle = g;
-      ctx.fill();
-    });
-
-    /* ── nodes ── */
+    /* nodes */
     nodes.forEach(n => {
-      n.pulse += n.pulseSpeed;
+      n.pulse += 0.02;
       const glow = (Math.sin(n.pulse) + 1) / 2;
 
-      /* halo */
-      const halo = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, (n.r + 5) * 4);
-      halo.addColorStop(0, `rgba(0, 119, 255, ${0.15 * glow})`);
-      halo.addColorStop(1, 'transparent');
       ctx.beginPath();
-      ctx.arc(n.x, n.y, (n.r + 5) * 4, 0, Math.PI * 2);
-      ctx.fillStyle = halo;
+      ctx.arc(n.x, n.y, n.r + glow * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 170, 255, ${0.4 + glow * 0.4})`;
       ctx.fill();
 
-      /* nó */
+      /* subtle glow halo */
+      const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, (n.r + 4) * 3);
+      grad.addColorStop(0, `rgba(0, 119, 255, ${0.12 * glow})`);
+      grad.addColorStop(1, 'transparent');
       ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r + glow * 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${40 + glow * 60}, ${140 + glow * 60}, 255, ${0.5 + glow * 0.4})`;
+      ctx.arc(n.x, n.y, (n.r + 4) * 3, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
       ctx.fill();
 
       /* move */
-      n.x += n.vx; n.y += n.vy;
+      n.x += n.vx;
+      n.y += n.vy;
       if (n.x < -20) n.x = W + 20;
       if (n.x > W + 20) n.x = -20;
       if (n.y < -20) n.y = H + 20;
       if (n.y > H + 20) n.y = -20;
     });
 
-    requestAnimationFrame(draw);
+    animFrame = requestAnimationFrame(draw);
   }
 
-  /* ── mouse repulsion ── */
-  document.addEventListener('mousemove', e => {
-    const mx = e.clientX, my = e.clientY;
+  /* mouse interaction */
+  let mouse = { x: -9999, y: -9999 };
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
     nodes.forEach(n => {
-      const dx = n.x - mx, dy = n.y - my;
+      const dx = n.x - mouse.x, dy = n.y - mouse.y;
       const dist = Math.hypot(dx, dy);
-      if (dist < 110) {
-        const f = (110 - dist) / 110 * 0.7;
-        n.vx += (dx / dist) * f;
-        n.vy += (dy / dist) * f;
-        const spd = Math.hypot(n.vx, n.vy);
-        if (spd > SPEED * 5) { n.vx = n.vx / spd * SPEED * 5; n.vy = n.vy / spd * SPEED * 5; }
+      if (dist < 100) {
+        const force = (100 - dist) / 100 * 0.6;
+        n.vx += (dx / dist) * force;
+        n.vy += (dy / dist) * force;
+        /* clamp velocity */
+        const speed = Math.hypot(n.vx, n.vy);
+        if (speed > SPEED * 4) { n.vx = (n.vx / speed) * SPEED * 4; n.vy = (n.vy / speed) * SPEED * 4; }
       }
     });
-    /* spawn pulse on fast move */
-    if (Math.random() < 0.04) spawnPulse();
   });
+  canvas.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
 
-  /* ── click cria onda ── */
-  document.addEventListener('click', e => {
-    pulses.push({ x: e.clientX, y: e.clientY, r: 0, maxR: 120, alpha: 0.9 });
-  });
+  /* velocity decay */
+  setInterval(() => {
+    nodes.forEach(n => { n.vx *= 0.98; n.vy *= 0.98; });
+  }, 50);
 
-  setInterval(() => { nodes.forEach(n => { n.vx *= 0.97; n.vy *= 0.97; }); }, 60);
+  const ro = new ResizeObserver(() => { resize(); });
+  ro.observe(canvas.parentElement);
 
-  window.addEventListener('resize', resize, { passive: true });
   init();
   draw();
 })();

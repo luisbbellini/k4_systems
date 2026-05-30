@@ -11,28 +11,18 @@
 </head>
 <body>
 
+  <canvas id="networkCanvas"></canvas>
+
   <!-- ── NAVBAR ── -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <a href="#hero" class="nav-logo">
-        <div class="logo-icon">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity="0.4"/>
-            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
-                  font-family="Rajdhani" font-weight="700" font-size="14" fill="url(#logoGrad)">KR4</text>
-            <defs>
-              <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#a8b8d8"/>
-                <stop offset="100%" stop-color="#ffffff"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <span class="logo-text">KR4 <span class="logo-sub">AUTOMATIONS</span></span>
+        <img src="logo.png" alt="KR4 Automations" class="nav-logo-img" />
       </a>
       <ul class="nav-links" id="navLinks">
         <li><a href="#vantagens">Vantagens</a></li>
         <li><a href="#servicos">Serviços</a></li>
+        <li><a href="#demo">Demo</a></li>
         <li><a href="#porque">Por Que Nós</a></li>
         <li><a href="#numeros">Resultados</a></li>
         <li><a href="#contato" class="nav-cta">Fale Conosco</a></li>
@@ -45,48 +35,99 @@
 
   <!-- ── HERO ── -->
   <section class="hero" id="hero">
-    <canvas id="networkCanvas"></canvas>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <div class="hero-badge reveal">
-        <span class="badge-dot"></span>
-        Automação de Rede Empresarial
-      </div>
-      <h1 class="hero-title reveal">
-        Sua Rede.<br/>
-        <span class="gradient-text">Automatizada.</span><br/>
-        Invencível.
-      </h1>
-      <p class="hero-desc reveal">
-        A KR4 Automations transforma infraestruturas de rede em sistemas inteligentes e autossuficientes —
-        eliminando falhas humanas, reduzindo custos e maximizando a disponibilidade do seu negócio.
-      </p>
-      <div class="hero-actions reveal">
-        <a href="#contato" class="btn btn-primary">
-          <span>Solicitar Proposta</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
-        <a href="#vantagens" class="btn btn-ghost">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z" fill="currentColor" stroke="none"/></svg>
-          Conhecer Soluções
-        </a>
-      </div>
-      <div class="hero-stats reveal">
-        <div class="hstat">
-          <strong>99,9%</strong>
-          <span>de uptime</span>
+
+      <!-- coluna esquerda -->
+      <div class="hero-left">
+        <div class="hero-badge reveal">
+          <span class="badge-dot"></span>
+          Automação de Rede Empresarial
         </div>
-        <div class="hstat-divider"></div>
-        <div class="hstat">
-          <strong>70%</strong>
-          <span>menos falhas</span>
+        <h1 class="hero-title reveal">
+          Sua Rede.<br/>
+          <span class="gradient-text">Automatizada.</span><br/>
+          Invencível.
+        </h1>
+        <p class="hero-desc reveal">
+          A KR4 Automations transforma infraestruturas de rede em sistemas inteligentes e autossuficientes —
+          eliminando falhas humanas, reduzindo custos e maximizando a disponibilidade do seu negócio.
+        </p>
+        <div class="hero-actions reveal">
+          <a href="#contato" class="btn btn-primary">
+            <span>Solicitar Proposta</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#vantagens" class="btn btn-ghost">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z" fill="currentColor" stroke="none"/></svg>
+            Conhecer Soluções
+          </a>
         </div>
-        <div class="hstat-divider"></div>
-        <div class="hstat">
-          <strong>24/7</strong>
-          <span>monitoramento</span>
+        <div class="hero-stats reveal">
+          <div class="hstat">
+            <strong>99,9%</strong>
+            <span>de uptime</span>
+          </div>
+          <div class="hstat-divider"></div>
+          <div class="hstat">
+            <strong>70%</strong>
+            <span>menos falhas</span>
+          </div>
+          <div class="hstat-divider"></div>
+          <div class="hstat">
+            <strong>24/7</strong>
+            <span>monitoramento</span>
+          </div>
         </div>
       </div>
+
+      <!-- coluna direita -->
+      <div class="hero-right reveal">
+        <div class="hero-visual">
+          <!-- logo animado -->
+          <div class="hero-logo-wrap">
+            <div class="hero-ring ring-1"></div>
+            <div class="hero-ring ring-2"></div>
+            <div class="logo-spin-border"></div>
+            <div class="logo-inner-frame">
+              <img src="logo.png" alt="KR4 Automations" class="hero-logo-img" />
+              <div class="logo-scan-line"></div>
+              <div class="logo-glare"></div>
+            </div>
+          </div>
+          <!-- cards ao lado do logo -->
+          <div class="hero-cards-col">
+            <div class="hfloat-card">
+              <div class="hfloat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <strong>99,9% Uptime</strong>
+                <span>Disponibilidade garantida</span>
+              </div>
+            </div>
+            <div class="hfloat-card">
+              <div class="hfloat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <strong>&lt;30s Resposta</strong>
+                <span>Correção automática</span>
+              </div>
+            </div>
+            <div class="hfloat-card">
+              <div class="hfloat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div>
+                <strong>Zero Trust</strong>
+                <span>Segurança ativa</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="hero-scroll">
       <div class="scroll-line"></div>
@@ -483,7 +524,7 @@
           </div>
           <div class="pc-content">
             <h4>Especialistas Certificados</h4>
-            <p>Nossa equipe é formada por engenheiros com certificações Cisco, Juniper, AWS e certificações em automação de infraestrutura — com projetos reais em ambientes críticos.</p>
+            <p>Nossa equipe é formada por engenheiros com certificações Cisco, Juniper, FortiNet e certificações em automação de infraestrutura — com projetos reais em ambientes críticos.</p>
           </div>
         </div>
         <div class="porque-card reveal">
@@ -594,6 +635,37 @@
     </div>
   </section>
 
+  <!-- ── DEMO ── -->
+  <section class="section demo-section" id="demo">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Demonstração ao Vivo</div>
+        <h2>Veja o K4 Monitor em ação</h2>
+        <p>Nossa plataforma AIOps monitorando, detectando incidentes e executando correções automaticamente — em tempo real. Clique em <strong style="color:var(--blue-electric)">🎲 Simular Incidente</strong> para ver a IA agir.</p>
+      </div>
+      <div class="demo-wrapper reveal">
+        <div class="demo-bar">
+          <div class="demo-dots">
+            <span class="ddot red"></span>
+            <span class="ddot yellow"></span>
+            <span class="ddot green"></span>
+          </div>
+          <span class="demo-url">k4monitor.krautomations.com.br</span>
+          <span class="demo-live"><span class="badge-dot" style="width:6px;height:6px;display:inline-block;"></span> Ao vivo</span>
+        </div>
+        <div class="demo-frame-wrap">
+          <iframe
+            src="k4monitor.html"
+            class="demo-iframe"
+            title="K4 Monitor — AIOps Platform"
+            loading="lazy"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ── CTA ── -->
   <section class="section cta-section" id="contato">
     <div class="cta-bg-anim"></div>
@@ -653,20 +725,7 @@
       <div class="footer-top">
         <div class="footer-brand">
           <a href="#hero" class="nav-logo">
-            <div class="logo-icon">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity="0.4"/>
-                <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
-                      font-family="Rajdhani" font-weight="700" font-size="14" fill="url(#footerLogoGrad)">KR4</text>
-                <defs>
-                  <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#a8b8d8"/>
-                    <stop offset="100%" stop-color="#ffffff"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <span class="logo-text">KR4 <span class="logo-sub">AUTOMATIONS</span></span>
+            <img src="logo.png" alt="KR4 Automations" class="nav-logo-img" />
           </a>
           <p>Transformando infraestruturas de rede em sistemas inteligentes, seguros e autossuficientes.</p>
           <div class="footer-social">
