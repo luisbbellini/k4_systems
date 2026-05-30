@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KR4 Automations – Automação de Rede</title>
+  <style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-0: #030810;
+  --bg-1: #050e1a;
+  --bg-2: #081426;
+  --bg-card: #0a1830;
+  --bg-card-hover: #0e2040;
+  --blue-primary: #0077ff;
+  --blue-electric: #00aaff;
+  --blue-deep: #0044cc;
+  --blue-glow: rgba(0, 119, 255, 0.18);
+  --silver: #a8b8d8;
+  --silver-light: #c8d8f0;
+  --white: #ffffff;
+  --text-muted: #6a7f9c;
+  --text-body: #8fa0bc;
+  --success: #00d4aa;
+  --danger: #ff4757;
+  --border: rgba(0, 119, 255, 0.15);
+  --border-hover: rgba(0, 119, 255, 0.4);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow-card: 0 8px 40px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(0, 119, 255, 0.1);
+  --shadow-blue: 0 0 40px rgba(0, 119, 255, 0.25);
+  --font-main: 'Inter', sans-serif;
+  --font-display: 'Rajdhani', sans-serif;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--bg-0);
+  color: var(--white);
+  font-family: var(--font-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-0); }
+::-webkit-scrollbar-thumb { background: var(--blue-deep); border-radius: 3px; }
+
+/* ── SELECTION ── */
+::selection { background: rgba(0, 119, 255, 0.35); color: #fff; }
+
+/* ── UTILITIES ── */
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--blue-electric), var(--blue-primary), #66b3ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section {
+  padding: 100px 0;
+  position: relative;
+}
+
+.section-header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 64px;
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 119, 255, 0.12);
+  border: 1px solid rgba(0, 119, 255, 0.3);
+  color: var(--blue-electric);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 100px;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.section-header p {
+  color: var(--text-body);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+/* ── REVEAL ANIMATION ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(0, 119, 255, 0.35);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 119, 255, 0.55);
+  background: linear-gradient(135deg, #1a88ff, #0055ee);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--silver-light);
+  backdrop-filter: blur(8px);
+}
+.btn-ghost:hover {
+  background: rgba(0, 119, 255, 0.1);
+  border-color: rgba(0, 119, 255, 0.4);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.btn-full { width: 100%; justify-content: center; }
+
+/* ════════════════════════════════════════════
+   NAVBAR
+════════════════════════════════════════════ */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding: 16px 0;
+  transition: background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, padding 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+.navbar.scrolled {
+  background: rgba(3, 8, 16, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom-color: var(--border);
+  padding: 10px 0;
+}
+.nav-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+.logo-icon { flex-shrink: 0; }
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--silver-light);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+.logo-sub {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--blue-electric);
+  letter-spacing: 0.2em;
+  margin-top: 2px;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--silver);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: #fff; }
+.nav-cta {
+  background: linear-gradient(135deg, var(--blue-primary), var(--blue-deep)) !important;
+  color: #fff !important;
+  padding: 9px 20px;
+  border-radius: 8px;
+  transition: box-shadow 0.3s, transform 0.2s !important;
+}
+.nav-cta:hover {
+  box-shadow: 0 4px 20px rgba(0, 119, 255, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.nav-burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--silver-light);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* ════════════════════════════════════════════
+   HERO
+════════════════════════════════════════════ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 120px 24px 80px;
+}
+#networkCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 60% 40%, rgba(0, 119, 255, 0.08) 0%, transparent 60%),
+              linear-gradient(180deg, rgba(3,8,16,0.2) 0%, rgba(3,8,16,0.7) 70%, var(--bg-0) 100%);
+  z-index: 1;
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 119, 255, 0.1);
+  border: 1px solid rgba(0, 119, 255, 0.3);
+  color: var(--blue-electric);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 100px;
+  margin-bottom: 28px;
+}
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--blue-electric);
+  border-radius: 50%;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 170, 255, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 170, 255, 0); }
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+  max-width: 700px;
+}
+.hero-desc {
+  color: var(--text-body);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.75;
+  max-width: 560px;
+  margin-bottom: 36px;
+}
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 56px;
+}
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.hstat { text-align: center; padding: 0 32px; }
+.hstat:first-child { padding-left: 0; }
+.hstat strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--silver-light), #fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hstat span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.hstat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.hero-scroll {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: fadeInUp 1s 1.5s both;
+}
+.scroll-line {
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--blue-primary));
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.1); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ════════════════════════════════════════════
+   CLIENTS STRIP
+════════════════════════════════════════════ */
+.clients-strip {
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  overflow: hidden;
+}
+.clients-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.clients-track { overflow: hidden; }
+.clients-inner {
+  display: flex;
+  gap: 32px;
+  white-space: nowrap;
+  animation: scrollTrack 25s linear infinite;
+  width: max-content;
+}
+.clients-inner span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--silver);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.clients-inner .dot {
+  color: var(--blue-primary);
+  font-size: 0.5rem;
+  vertical-align: middle;
+}
+@keyframes scrollTrack {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ════════════════════════════════════════════
+   VANTAGENS
+════════════════════════════════════════════ */
+.vantagens { background: var(--bg-0); }
+.vantagens-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+.vantagem-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s, background 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.vantagem-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--blue-primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.vantagem-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card), var(--shadow-blue);
+  background: var(--bg-card-hover);
+}
+.vantagem-card:hover::before { opacity: 1; }
+.vc-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 119, 255, 0.1);
+  border: 1px solid rgba(0, 119, 255, 0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue-electric);
+  margin-bottom: 20px;
+  transition: background 0.3s, border-color 0.3s;
+}
+.vantagem-card:hover .vc-icon {
+  background: rgba(0, 119, 255, 0.18);
+  border-color: rgba(0, 119, 255, 0.4);
+}
+.vantagem-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--white);
+  letter-spacing: 0.01em;
+}
+.vantagem-card p {
+  color: var(--text-body);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+.vc-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.metric-value {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--blue-electric), var(--blue-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.metric-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ════════════════════════════════════════════
+   PROBLEM / SOLUTION
+════════════════════════════════════════════ */
+.problem-solution {
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.ps-wrapper {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 40px;
+  align-items: start;
+}
+.ps-side {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+}
+.ps-side.solution {
+  border-color: rgba(0, 212, 170, 0.2);
+  background: rgba(0, 212, 170, 0.03);
+}
+.ps-side.problem {
+  border-color: rgba(255, 71, 87, 0.2);
+  background: rgba(255, 71, 87, 0.03);
+}
+.ps-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.problem-icon { background: rgba(255, 71, 87, 0.15); color: var(--danger); }
+.solution-icon { background: rgba(0, 212, 170, 0.15); color: var(--success); }
+.ps-side h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: 0.01em;
+}
+.ps-side ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.ps-side li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--text-body);
+}
+.ps-side li svg { flex-shrink: 0; }
+.ps-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 120px;
+  opacity: 0.8;
+}
+
+/* ════════════════════════════════════════════
+   SERVIÇOS
+════════════════════════════════════════════ */
+.servicos { background: var(--bg-0); }
+.servicos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+.servico-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.servico-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card);
+}
+.sc-number {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 900;
+  color: rgba(0, 119, 255, 0.07);
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  user-select: none;
+  transition: color 0.3s;
+}
+.servico-card:hover .sc-number { color: rgba(0, 119, 255, 0.12); }
+.sc-icon {
+  width: 52px;
+  height: 52px;
+  background: rgba(0, 119, 255, 0.1);
+  border: 1px solid rgba(0, 119, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue-electric);
+  margin-bottom: 20px;
+}
+.servico-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--white);
+}
+.servico-card p {
+  color: var(--text-body);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.sc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sc-tags span {
+  background: rgba(0, 119, 255, 0.1);
+  border: 1px solid rgba(0, 119, 255, 0.2);
+  color: var(--blue-electric);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+/* ════════════════════════════════════════════
+   NÚMEROS
+════════════════════════════════════════════ */
+.numeros {
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.numeros-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(0, 119, 255, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.numeros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.numero-card {
+  background: var(--bg-card);
+  padding: 48px 32px;
+  text-align: center;
+  transition: background 0.3s;
+}
+.numero-card:hover { background: var(--bg-card-hover); }
+.numero-value {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffffff, var(--silver-light), var(--blue-electric));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.numero-label {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.numero-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ════════════════════════════════════════════
+   POR QUE KR4
+════════════════════════════════════════════ */
+.porque { background: var(--bg-0); }
+.porque-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+}
+.porque-card {
+  display: flex;
+  gap: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: border-color 0.3s, transform 0.3s, background 0.3s;
+}
+.porque-card:hover {
+  border-color: var(--border-hover);
+  transform: translateX(4px);
+  background: var(--bg-card-hover);
+}
+.pc-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 119, 255, 0.1);
+  border: 1px solid rgba(0, 119, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue-electric);
+}
+.pc-content h4 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--white);
+}
+.pc-content p {
+  font-size: 0.87rem;
+  color: var(--text-body);
+  line-height: 1.65;
+}
+
+/* ════════════════════════════════════════════
+   PROCESSO
+════════════════════════════════════════════ */
+.processo {
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.processo-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+  position: relative;
+}
+.pstep { position: relative; text-align: center; }
+.pstep-number {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 auto 16px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 0 6px rgba(0, 119, 255, 0.12);
+}
+.pstep-line {
+  position: absolute;
+  top: 30px;
+  left: calc(50% + 30px);
+  right: calc(-50% + 30px);
+  height: 2px;
+  background: linear-gradient(90deg, var(--blue-primary), var(--border));
+}
+.pstep-line.last { display: none; }
+.pstep-content h4 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--white);
+}
+.pstep-content p {
+  font-size: 0.85rem;
+  color: var(--text-body);
+  line-height: 1.65;
+}
+
+/* ════════════════════════════════════════════
+   CTA SECTION
+════════════════════════════════════════════ */
+.cta-section {
+  background: var(--bg-0);
+  position: relative;
+  overflow: hidden;
+}
+.cta-bg-anim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 70% at 15% 50%, rgba(0, 119, 255, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 40% at 85% 30%, rgba(0, 170, 255, 0.06) 0%, transparent 50%);
+  animation: ctaBgPulse 8s ease-in-out infinite alternate;
+}
+@keyframes ctaBgPulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+.cta-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+.cta-content h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  margin: 16px 0;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.cta-content p {
+  color: var(--text-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+.cta-guarantees {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cta-guar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--silver-light);
+}
+.cta-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+  box-shadow: var(--shadow-card);
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--silver);
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--white);
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  outline: none;
+  resize: vertical;
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder { color: var(--text-muted); }
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--blue-primary);
+  background: rgba(0, 119, 255, 0.05);
+  box-shadow: 0 0 0 3px rgba(0, 119, 255, 0.12);
+}
+.form-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
+/* ════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════ */
+.footer {
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+  padding: 64px 0 32px;
+}
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 64px;
+  margin-bottom: 48px;
+}
+.footer-brand p {
+  color: var(--text-body);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin: 16px 0 24px;
+  max-width: 320px;
+}
+.footer-social {
+  display: flex;
+  gap: 14px;
+}
+.footer-social a {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--silver);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.footer-social a:hover {
+  background: rgba(0, 119, 255, 0.12);
+  border-color: rgba(0, 119, 255, 0.3);
+  color: var(--blue-electric);
+  transform: translateY(-2px);
+}
+.footer-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+.footer-col h5 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue-electric);
+  margin-bottom: 16px;
+}
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-col a {
+  color: var(--text-body);
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--white); }
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ════════════════════════════════════════════
+   TOAST (form success)
+════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 212, 170, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 16px 24px;
+  color: var(--white);
+  font-size: 0.9rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.4s ease;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-icon { color: var(--success); }
+
+/* ════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(3, 8, 16, 0.98);
+    backdrop-filter: blur(20px);
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    z-index: 999;
+  }
+  .nav-links.open a { font-size: 1.5rem; }
+  .nav-burger { display: flex; z-index: 1000; position: relative; }
+  .nav-burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-burger.open span:nth-child(2) { opacity: 0; }
+  .nav-burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .ps-wrapper { grid-template-columns: 1fr; }
+  .ps-arrow { padding: 0; transform: rotate(90deg); }
+
+  .cta-wrapper { grid-template-columns: 1fr; gap: 48px; }
+
+  .footer-top { grid-template-columns: 1fr; gap: 40px; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+
+  .processo-steps { grid-template-columns: 1fr; }
+  .pstep-line { display: none; }
+
+  .hero-stats { flex-wrap: wrap; gap: 24px; }
+  .hstat { padding: 0 16px; }
+
+  .numeros-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .vantagens-grid, .servicos-grid, .porque-grid {
+    grid-template-columns: 1fr;
+  }
+  .numeros-grid { grid-template-columns: 1fr 1fr; }
+  .section { padding: 72px 0; }
+  .footer-links { grid-template-columns: 1fr; }
+}
+
+</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#hero" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity="0.4"/>
+            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+                  font-family="Rajdhani" font-weight="700" font-size="14" fill="url(#logoGrad)">KR4</text>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#a8b8d8"/>
+                <stop offset="100%" stop-color="#ffffff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">KR4 <span class="logo-sub">AUTOMATIONS</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#vantagens">Vantagens</a></li>
+        <li><a href="#servicos">Serviços</a></li>
+        <li><a href="#porque">Por Que Nós</a></li>
+        <li><a href="#numeros">Resultados</a></li>
+        <li><a href="#contato" class="nav-cta">Fale Conosco</a></li>
+      </ul>
+      <button class="nav-burger" id="navBurger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="hero">
+    <canvas id="networkCanvas"></canvas>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge reveal">
+        <span class="badge-dot"></span>
+        Automação de Rede Empresarial
+      </div>
+      <h1 class="hero-title reveal">
+        Sua Rede.<br/>
+        <span class="gradient-text">Automatizada.</span><br/>
+        Invencível.
+      </h1>
+      <p class="hero-desc reveal">
+        A KR4 Automations transforma infraestruturas de rede em sistemas inteligentes e autossuficientes —
+        eliminando falhas humanas, reduzindo custos e maximizando a disponibilidade do seu negócio.
+      </p>
+      <div class="hero-actions reveal">
+        <a href="#contato" class="btn btn-primary">
+          <span>Solicitar Proposta</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#vantagens" class="btn btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z" fill="currentColor" stroke="none"/></svg>
+          Conhecer Soluções
+        </a>
+      </div>
+      <div class="hero-stats reveal">
+        <div class="hstat">
+          <strong>99,9%</strong>
+          <span>de uptime</span>
+        </div>
+        <div class="hstat-divider"></div>
+        <div class="hstat">
+          <strong>70%</strong>
+          <span>menos falhas</span>
+        </div>
+        <div class="hstat-divider"></div>
+        <div class="hstat">
+          <strong>24/7</strong>
+          <span>monitoramento</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      <span>Role para descobrir</span>
+    </div>
+  </section>
+
+  <!-- ── CLIENTES STRIP ── -->
+  <section class="clients-strip">
+    <div class="clients-label">Soluções aplicadas em ambientes de missão crítica</div>
+    <div class="clients-track">
+      <div class="clients-inner">
+        <span>Indústria</span>
+        <span class="dot">●</span>
+        <span>Saúde</span>
+        <span class="dot">●</span>
+        <span>Financeiro</span>
+        <span class="dot">●</span>
+        <span>Varejo</span>
+        <span class="dot">●</span>
+        <span>Logística</span>
+        <span class="dot">●</span>
+        <span>Educação</span>
+        <span class="dot">●</span>
+        <span>Governo</span>
+        <span class="dot">●</span>
+        <span>Tecnologia</span>
+        <span class="dot">●</span>
+        <span>Indústria</span>
+        <span class="dot">●</span>
+        <span>Saúde</span>
+        <span class="dot">●</span>
+        <span>Financeiro</span>
+        <span class="dot">●</span>
+        <span>Varejo</span>
+        <span class="dot">●</span>
+        <span>Logística</span>
+        <span class="dot">●</span>
+        <span>Educação</span>
+        <span class="dot">●</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VANTAGENS ── -->
+  <section class="section vantagens" id="vantagens">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Vantagens</div>
+        <h2>Por que automatizar sua rede?</h2>
+        <p>A automação de redes não é tendência — é vantagem competitiva real. Veja o que sua empresa ganha.</p>
+      </div>
+      <div class="vantagens-grid">
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>Eliminação de Erros Humanos</h3>
+          <p>Configurações manuais são fontes de falhas. A automação garante que cada alteração seja executada com precisão absoluta, sem margem para erros de digitação ou configurações inconsistentes.</p>
+          <div class="vc-metric">
+            <span class="metric-value">85%</span>
+            <span class="metric-label">redução de incidentes</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <h3>Resposta em Tempo Real</h3>
+          <p>Enquanto equipes manuais levam horas para reagir a falhas, sistemas automatizados identificam e corrigem problemas em segundos — antes que seus usuários percebam.</p>
+          <div class="vc-metric">
+            <span class="metric-value">&lt;30s</span>
+            <span class="metric-label">tempo de resposta</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h3>Redução de Custos Operacionais</h3>
+          <p>Menos horas de equipe dedicadas a tarefas repetitivas, menos paradas não planejadas e menos desperdício de recursos. A automação paga por si mesma rapidamente.</p>
+          <div class="vc-metric">
+            <span class="metric-value">40%</span>
+            <span class="metric-label">redução de custos</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <h3>Visibilidade e Controle Total</h3>
+          <p>Dashboards em tempo real mostram exatamente o que está acontecendo na sua rede — tráfego, desempenho, alertas e tendências — tudo centralizado e acessível.</p>
+          <div class="vc-metric">
+            <span class="metric-value">100%</span>
+            <span class="metric-label">visibilidade da rede</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+          <h3>Escalabilidade Sem Atrito</h3>
+          <p>Cresceu a empresa? A rede cresce junto. Com automação, novos dispositivos e filiais são integrados rapidamente — sem necessidade de retrabalho ou grandes equipes.</p>
+          <div class="vc-metric">
+            <span class="metric-value">10x</span>
+            <span class="metric-label">mais rápido para escalar</span>
+          </div>
+        </div>
+
+        <div class="vantagem-card reveal">
+          <div class="vc-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h3>Segurança Proativa</h3>
+          <p>Políticas de segurança aplicadas automaticamente em todos os dispositivos. Detecção de comportamentos anômalos e resposta a ameaças antes que causem danos.</p>
+          <div class="vc-metric">
+            <span class="metric-value">3x</span>
+            <span class="metric-label">mais seguro</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROBLEMA / SOLUÇÃO ── -->
+  <section class="section problem-solution">
+    <div class="container">
+      <div class="ps-wrapper reveal">
+        <div class="ps-side problem">
+          <div class="ps-icon problem-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3>Sem Automação</h3>
+          <ul>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Configurações manuais e propensas a erros
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Horas de inatividade não planejada
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Equipes sobrecarregadas com tarefas repetitivas
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Visibilidade limitada da infraestrutura
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Resposta lenta a incidentes e ameaças
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Expansão cara e demorada
+            </li>
+          </ul>
+        </div>
+        <div class="ps-arrow">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="url(#arrowGrad)" stroke-width="2">
+            <defs>
+              <linearGradient id="arrowGrad" x1="0" y1="0" x2="24" y2="0">
+                <stop offset="0%" stop-color="#ff4757"/>
+                <stop offset="100%" stop-color="#0077ff"/>
+              </linearGradient>
+            </defs>
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+        <div class="ps-side solution">
+          <div class="ps-icon solution-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <h3>Com KR4 Automations</h3>
+          <ul>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Configurações precisas e consistentes
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              99,9% de disponibilidade garantida
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Equipe focada em projetos estratégicos
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Dashboard completo em tempo real
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Alertas e correções automáticas instantâneas
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Escalabilidade ágil e econômica
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SERVIÇOS ── -->
+  <section class="section servicos" id="servicos">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Serviços</div>
+        <h2>Soluções KR4</h2>
+        <p>Um portfólio completo de automação para cada camada da sua infraestrutura de rede.</p>
+      </div>
+      <div class="servicos-grid">
+
+        <div class="servico-card reveal">
+          <div class="sc-number">01</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <h3>Automação de Configuração</h3>
+          <p>Provisionamento e configuração automática de switches, roteadores e firewalls via scripts Ansible, Python ou Terraform — com rollback automático em caso de falha.</p>
+          <div class="sc-tags">
+            <span>Ansible</span><span>NetConf</span><span>Python</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">02</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M18 20V10M12 20V4M6 20v-6"/>
+            </svg>
+          </div>
+          <h3>Monitoramento Inteligente</h3>
+          <p>Coleta e análise contínua de métricas de desempenho. Alertas preditivos que identificam gargalos antes que impactem usuários — com integração a plataformas como Zabbix, Grafana e Prometheus.</p>
+          <div class="sc-tags">
+            <span>Zabbix</span><span>Grafana</span><span>SNMP</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">03</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <h3>Segurança Automatizada</h3>
+          <p>Políticas de firewall, ACLs e segmentação de rede aplicadas automaticamente. Detecção e contenção de ameaças em tempo real, sem intervenção humana.</p>
+          <div class="sc-tags">
+            <span>Firewall</span><span>Zero Trust</span><span>IDS/IPS</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">04</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </div>
+          <h3>SD-WAN e SDN</h3>
+          <p>Implantação e gestão de redes definidas por software. Controle centralizado de toda a WAN, com otimização dinâmica de rotas e QoS automatizado por aplicação.</p>
+          <div class="sc-tags">
+            <span>SD-WAN</span><span>OpenFlow</span><span>BGP</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">05</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="1 4 1 10 7 10"/>
+              <polyline points="23 20 23 14 17 14"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+          </div>
+          <h3>Recuperação Automática</h3>
+          <p>Scripts de auto-healing que detectam falhas e executam recuperação sem intervenção humana. Failover automático de links, serviços e dispositivos críticos.</p>
+          <div class="sc-tags">
+            <span>Auto-healing</span><span>Failover</span><span>HA</span>
+          </div>
+        </div>
+
+        <div class="servico-card reveal">
+          <div class="sc-number">06</div>
+          <div class="sc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/>
+            </svg>
+          </div>
+          <h3>Network as Code</h3>
+          <p>Toda a infraestrutura de rede gerenciada como código. Versionamento, revisões e implantações controladas via Git — com rastreabilidade completa de cada mudança.</p>
+          <div class="sc-tags">
+            <span>GitOps</span><span>CI/CD</span><span>IaC</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── NÚMEROS ── -->
+  <section class="section numeros" id="numeros">
+    <div class="numeros-bg"></div>
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Resultados</div>
+        <h2>Números que comprovam</h2>
+        <p>Impacto real, mensurável e imediato nas operações de quem automatiza com a KR4.</p>
+      </div>
+      <div class="numeros-grid">
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="99" data-suffix=",9%">0%</div>
+          <div class="numero-label">Disponibilidade Garantida</div>
+          <div class="numero-desc">de uptime em ambientes críticos</div>
+        </div>
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="85" data-suffix="%">0%</div>
+          <div class="numero-label">Redução de Incidentes</div>
+          <div class="numero-desc">menos falhas após implantação</div>
+        </div>
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="40" data-suffix="%">0%</div>
+          <div class="numero-label">Economia Operacional</div>
+          <div class="numero-desc">de redução média nos custos de TI</div>
+        </div>
+        <div class="numero-card reveal">
+          <div class="numero-value" data-target="10" data-suffix="x">0x</div>
+          <div class="numero-label">Velocidade de Deploy</div>
+          <div class="numero-desc">mais rápido que o processo manual</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── POR QUE KR4 ── -->
+  <section class="section porque" id="porque">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Diferenciais</div>
+        <h2>Por que escolher a KR4?</h2>
+        <p>Não somos apenas uma empresa de TI. Somos especialistas em transformar redes em ativos estratégicos.</p>
+      </div>
+      <div class="porque-grid">
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M20 21a8 8 0 1 0-16 0"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Especialistas Certificados</h4>
+            <p>Nossa equipe é formada por engenheiros com certificações Cisco, Juniper, AWS e certificações em automação de infraestrutura — com projetos reais em ambientes críticos.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Segurança em Primeiro Lugar</h4>
+            <p>Cada solução é projetada com camadas de segurança desde a concepção. Implementamos práticas Zero Trust e conformidade com LGPD, ISO 27001 e frameworks de segurança.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Atendimento Local e Personalizado</h4>
+            <p>Entendemos as necessidades específicas do mercado brasileiro. Suporte em português, visitas técnicas presenciais e soluções adaptadas à realidade da sua empresa.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>ROI Rápido e Mensurável</h4>
+            <p>Apresentamos relatórios detalhados do impacto financeiro da automação. Nossos clientes veem retorno do investimento em média em 6 meses após a implantação.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Suporte 24/7 e SLA Garantido</h4>
+            <p>Nossa equipe de NOC monitora e suporta sua infraestrutura 24 horas por dia, 7 dias por semana. SLA definido em contrato com penalidades por descumprimento.</p>
+          </div>
+        </div>
+        <div class="porque-card reveal">
+          <div class="pc-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <div class="pc-content">
+            <h4>Implantação Gradual e Sem Riscos</h4>
+            <p>Adotamos metodologia de implantação por fases, com ambientes de homologação e rollback garantido. Sem impacto na operação durante a transição para automação.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROCESSO ── -->
+  <section class="section processo">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-badge">Metodologia</div>
+        <h2>Como funciona</h2>
+        <p>Do diagnóstico à operação autônoma — um processo estruturado para garantir resultados sem surpresas.</p>
+      </div>
+      <div class="processo-steps">
+        <div class="pstep reveal">
+          <div class="pstep-number">1</div>
+          <div class="pstep-line"></div>
+          <div class="pstep-content">
+            <h4>Diagnóstico</h4>
+            <p>Mapeamento completo da infraestrutura atual, identificação de gargalos e definição de objetivos de automação.</p>
+          </div>
+        </div>
+        <div class="pstep reveal">
+          <div class="pstep-number">2</div>
+          <div class="pstep-line"></div>
+          <div class="pstep-content">
+            <h4>Projeto</h4>
+            <p>Arquitetura da solução personalizada, definição de ferramentas, scripts e fluxos de automação alinhados ao seu ambiente.</p>
+          </div>
+        </div>
+        <div class="pstep reveal">
+          <div class="pstep-number">3</div>
+          <div class="pstep-line"></div>
+          <div class="pstep-content">
+            <h4>Implantação</h4>
+            <p>Implementação por fases em ambiente de homologação antes da produção. Testes extensivos e validação a cada etapa.</p>
+          </div>
+        </div>
+        <div class="pstep reveal">
+          <div class="pstep-number">4</div>
+          <div class="pstep-line last"></div>
+          <div class="pstep-content">
+            <h4>Operação e Evolução</h4>
+            <p>Monitoramento contínuo, relatórios periódicos e melhorias incrementais. Sua rede evolui junto com o negócio.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="section cta-section" id="contato">
+    <div class="cta-bg-anim"></div>
+    <div class="container">
+      <div class="cta-wrapper reveal">
+        <div class="cta-content">
+          <div class="section-badge" style="display:inline-flex;">Contato</div>
+          <h2>Pronto para automatizar?</h2>
+          <p>Converse com um especialista KR4 e descubra como a automação pode transformar a infraestrutura da sua empresa. Análise inicial gratuita e sem compromisso.</p>
+          <div class="cta-guarantees">
+            <div class="cta-guar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Consulta inicial gratuita
+            </div>
+            <div class="cta-guar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Proposta personalizada em 48h
+            </div>
+            <div class="cta-guar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Sem fidelidade no primeiro mês
+            </div>
+          </div>
+        </div>
+        <div class="cta-form">
+          <form id="contactForm">
+            <div class="form-group">
+              <label>Nome completo</label>
+              <input type="text" placeholder="João Silva" required />
+            </div>
+            <div class="form-group">
+              <label>E-mail corporativo</label>
+              <input type="email" placeholder="joao@empresa.com.br" required />
+            </div>
+            <div class="form-group">
+              <label>Telefone / WhatsApp</label>
+              <input type="tel" placeholder="(11) 99999-9999" />
+            </div>
+            <div class="form-group">
+              <label>Qual é o seu principal desafio de rede?</label>
+              <textarea rows="3" placeholder="Descreva brevemente..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+              <span>Solicitar Diagnóstico Gratuito</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <p class="form-note">Seus dados são protegidos conforme a LGPD. Sem spam.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#hero" class="nav-logo">
+            <div class="logo-icon">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity="0.4"/>
+                <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+                      font-family="Rajdhani" font-weight="700" font-size="14" fill="url(#footerLogoGrad)">KR4</text>
+                <defs>
+                  <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#a8b8d8"/>
+                    <stop offset="100%" stop-color="#ffffff"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <span class="logo-text">KR4 <span class="logo-sub">AUTOMATIONS</span></span>
+          </a>
+          <p>Transformando infraestruturas de rede em sistemas inteligentes, seguros e autossuficientes.</p>
+          <div class="footer-social">
+            <a href="#" aria-label="LinkedIn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+            <a href="#" aria-label="Instagram">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <a href="#" aria-label="WhatsApp">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h5>Serviços</h5>
+            <ul>
+              <li><a href="#servicos">Automação de Configuração</a></li>
+              <li><a href="#servicos">Monitoramento Inteligente</a></li>
+              <li><a href="#servicos">Segurança Automatizada</a></li>
+              <li><a href="#servicos">SD-WAN e SDN</a></li>
+              <li><a href="#servicos">Network as Code</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Empresa</h5>
+            <ul>
+              <li><a href="#porque">Sobre a KR4</a></li>
+              <li><a href="#numeros">Resultados</a></li>
+              <li><a href="#vantagens">Vantagens</a></li>
+              <li><a href="#contato">Contato</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 KR4 Automations. Todos os direitos reservados.</p>
+        <p>Automação de Rede Empresarial</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+/* ════════════════════════════════════════════
+   KR4 AUTOMATIONS – main.js
+════════════════════════════════════════════ */
+
+/* ── NAVBAR SCROLL ── */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+/* ── MOBILE MENU ── */
+const burger = document.getElementById('navBurger');
+const navLinks = document.getElementById('navLinks');
+burger.addEventListener('click', () => {
+  burger.classList.toggle('open');
+  navLinks.classList.toggle('open');
+});
+navLinks.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    burger.classList.remove('open');
+    navLinks.classList.remove('open');
+  });
+});
+
+/* ── SMOOTH SCROLL for native fallback ── */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (!target) return;
+    e.preventDefault();
+    const offset = 80;
+    window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' });
+  });
+});
+
+/* ── REVEAL ON SCROLL ── */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      entry.target.style.transitionDelay = `${(i % 4) * 0.08}s`;
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+/* ── COUNTER ANIMATION ── */
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target, 10);
+  const suffix = el.dataset.suffix || '';
+  const duration = 1800;
+  const start = performance.now();
+
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const value = Math.round(eased * target);
+    el.textContent = value + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      animateCounter(entry.target);
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.numero-value[data-target]').forEach(el => counterObserver.observe(el));
+
+/* ── NETWORK CANVAS ── */
+(function initCanvas() {
+  const canvas = document.getElementById('networkCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  let W, H, nodes, animFrame;
+
+  const NODE_COUNT = 55;
+  const MAX_DIST = 180;
+  const SPEED = 0.35;
+
+  function resize() {
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+
+  function makeNode() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * SPEED,
+      vy: (Math.random() - 0.5) * SPEED,
+      r: Math.random() * 2.5 + 1,
+      pulse: Math.random() * Math.PI * 2,
+    };
+  }
+
+  function init() {
+    resize();
+    nodes = Array.from({ length: NODE_COUNT }, makeNode);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    /* edges */
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > MAX_DIST) continue;
+        const alpha = (1 - dist / MAX_DIST) * 0.25;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = `rgba(0, 119, 255, ${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    /* nodes */
+    nodes.forEach(n => {
+      n.pulse += 0.02;
+      const glow = (Math.sin(n.pulse) + 1) / 2;
+
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r + glow * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 170, 255, ${0.4 + glow * 0.4})`;
+      ctx.fill();
+
+      /* subtle glow halo */
+      const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, (n.r + 4) * 3);
+      grad.addColorStop(0, `rgba(0, 119, 255, ${0.12 * glow})`);
+      grad.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, (n.r + 4) * 3, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      /* move */
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < -20) n.x = W + 20;
+      if (n.x > W + 20) n.x = -20;
+      if (n.y < -20) n.y = H + 20;
+      if (n.y > H + 20) n.y = -20;
+    });
+
+    animFrame = requestAnimationFrame(draw);
+  }
+
+  /* mouse interaction */
+  let mouse = { x: -9999, y: -9999 };
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+    nodes.forEach(n => {
+      const dx = n.x - mouse.x, dy = n.y - mouse.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 100) {
+        const force = (100 - dist) / 100 * 0.6;
+        n.vx += (dx / dist) * force;
+        n.vy += (dy / dist) * force;
+        /* clamp velocity */
+        const speed = Math.hypot(n.vx, n.vy);
+        if (speed > SPEED * 4) { n.vx = (n.vx / speed) * SPEED * 4; n.vy = (n.vy / speed) * SPEED * 4; }
+      }
+    });
+  });
+  canvas.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+
+  /* velocity decay */
+  setInterval(() => {
+    nodes.forEach(n => { n.vx *= 0.98; n.vy *= 0.98; });
+  }, 50);
+
+  const ro = new ResizeObserver(() => { resize(); });
+  ro.observe(canvas.parentElement);
+
+  init();
+  draw();
+})();
+
+/* ── STAGGER REVEAL DELAY ── */
+function applyStagger(selector) {
+  document.querySelectorAll(selector).forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.08}s`;
+  });
+}
+applyStagger('.vantagem-card.reveal');
+applyStagger('.servico-card.reveal');
+applyStagger('.numero-card.reveal');
+applyStagger('.porque-card.reveal');
+applyStagger('.pstep.reveal');
+
+/* ── CONTACT FORM ── */
+const form = document.getElementById('contactForm');
+if (form) {
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span>Enviando...</span>';
+
+    setTimeout(() => {
+      form.reset();
+      btn.disabled = false;
+      btn.innerHTML = '<span>Solicitar Diagnóstico Gratuito</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+      showToast('Mensagem enviada! Entraremos em contato em até 24h.');
+    }, 1600);
+  });
+}
+
+function showToast(message) {
+  let toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      <span></span>
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.querySelector('span').textContent = message;
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 4000);
+}
+
+/* ── ACTIVE NAV HIGHLIGHT ── */
+const sections = document.querySelectorAll('section[id]');
+const navAnchors = document.querySelectorAll('.nav-links a[href^="#"]');
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navAnchors.forEach(a => {
+        a.classList.toggle('nav-active', a.getAttribute('href') === `#${entry.target.id}`);
+      });
+    }
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+
+sections.forEach(s => sectionObserver.observe(s));
+
+/* Inject nav-active style */
+const styleTag = document.createElement('style');
+styleTag.textContent = `
+  .nav-links a.nav-active:not(.nav-cta) {
+    color: #fff !important;
+    position: relative;
+  }
+  .nav-links a.nav-active:not(.nav-cta)::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0; right: 0;
+    height: 2px;
+    background: var(--blue-electric);
+    border-radius: 2px;
+  }
+`;
+document.head.appendChild(styleTag);
+
+</script>
+</body>
+</html>
