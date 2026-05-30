@@ -88,8 +88,8 @@ document.querySelectorAll('.numero-value[data-target]').forEach(el => counterObs
   const SPEED      = 0.45;
 
   function resize() {
-    W = canvas.width  = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
   }
 
   function makeNode() {
@@ -232,9 +232,8 @@ document.querySelectorAll('.numero-value[data-target]').forEach(el => counterObs
   }
 
   /* ── mouse repulsion ── */
-  canvas.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  document.addEventListener('mousemove', e => {
+    const mx = e.clientX, my = e.clientY;
     nodes.forEach(n => {
       const dx = n.x - mx, dy = n.y - my;
       const dist = Math.hypot(dx, dy);
@@ -251,14 +250,13 @@ document.querySelectorAll('.numero-value[data-target]').forEach(el => counterObs
   });
 
   /* ── click cria onda ── */
-  canvas.addEventListener('click', e => {
-    const rect = canvas.getBoundingClientRect();
-    pulses.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, r: 0, maxR: 120, alpha: 0.9 });
+  document.addEventListener('click', e => {
+    pulses.push({ x: e.clientX, y: e.clientY, r: 0, maxR: 120, alpha: 0.9 });
   });
 
   setInterval(() => { nodes.forEach(n => { n.vx *= 0.97; n.vy *= 0.97; }); }, 60);
 
-  new ResizeObserver(resize).observe(canvas.parentElement);
+  window.addEventListener('resize', resize, { passive: true });
   init();
   draw();
 })();
