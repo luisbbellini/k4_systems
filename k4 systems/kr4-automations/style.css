@@ -38,6 +38,16 @@ body {
   overflow-x: hidden;
 }
 
+/* canvas fixo cobrindo toda a página */
+#networkCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-0); }
@@ -63,6 +73,7 @@ body {
 .section {
   padding: 100px 0;
   position: relative;
+  z-index: 1;
 }
 
 .section-header {
@@ -162,6 +173,7 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 1000;
+  isolation: isolate;
   padding: 16px 0;
   transition: background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, padding 0.3s ease;
   border-bottom: 1px solid transparent;
@@ -445,20 +457,15 @@ body {
   overflow: hidden;
   padding: 120px 24px 80px;
 }
-#networkCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 60% 40%, rgba(0, 119, 255, 0.08) 0%, transparent 60%),
-              linear-gradient(180deg, rgba(3,8,16,0.2) 0%, rgba(3,8,16,0.7) 70%, var(--bg-0) 100%);
+  background: radial-gradient(ellipse 70% 60% at 60% 40%, rgba(0, 119, 255, 0.06) 0%, transparent 60%),
+              linear-gradient(180deg, rgba(3,8,16,0.15) 0%, rgba(3,8,16,0.55) 70%, rgba(3,8,16,0.92) 100%);
   z-index: 1;
+  pointer-events: none;
 }
+.hero { z-index: 1; }
 .hero-content {
   position: relative;
   z-index: 2;
@@ -593,7 +600,7 @@ body {
    CLIENTS STRIP
 ════════════════════════════════════════════ */
 .clients-strip {
-  background: var(--bg-1);
+  background: rgba(5, 14, 26, 0.88);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   padding: 20px 0;
@@ -636,7 +643,7 @@ body {
 /* ════════════════════════════════════════════
    VANTAGENS
 ════════════════════════════════════════════ */
-.vantagens { background: var(--bg-0); }
+.vantagens { background: rgba(3, 8, 16, 0.82); }
 .vantagens-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -723,7 +730,7 @@ body {
    PROBLEM / SOLUTION
 ════════════════════════════════════════════ */
 .problem-solution {
-  background: var(--bg-1);
+  background: rgba(5, 14, 26, 0.86);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
@@ -785,7 +792,7 @@ body {
 /* ════════════════════════════════════════════
    SERVIÇOS
 ════════════════════════════════════════════ */
-.servicos { background: var(--bg-0); }
+.servicos { background: rgba(3, 8, 16, 0.82); }
 .servicos-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -864,7 +871,7 @@ body {
    NÚMEROS
 ════════════════════════════════════════════ */
 .numeros {
-  background: var(--bg-1);
+  background: rgba(5, 14, 26, 0.86);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
@@ -917,7 +924,7 @@ body {
 /* ════════════════════════════════════════════
    POR QUE KR4
 ════════════════════════════════════════════ */
-.porque { background: var(--bg-0); }
+.porque { background: rgba(3, 8, 16, 0.82); }
 .porque-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -966,7 +973,7 @@ body {
    PROCESSO
 ════════════════════════════════════════════ */
 .processo {
-  background: var(--bg-1);
+  background: rgba(5, 14, 26, 0.86);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
@@ -1020,7 +1027,7 @@ body {
    CTA SECTION
 ════════════════════════════════════════════ */
 .cta-section {
-  background: var(--bg-0);
+  background: rgba(3, 8, 16, 0.82);
   position: relative;
   overflow: hidden;
 }
@@ -1121,8 +1128,10 @@ body {
    FOOTER
 ════════════════════════════════════════════ */
 .footer {
-  background: var(--bg-1);
+  background: rgba(5, 14, 26, 0.92);
   border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
   padding: 64px 0 32px;
 }
 .footer-top {
