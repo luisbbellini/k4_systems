@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KR4 Automations – NOC Simulação</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-0: #030810;
+      --bg-1: #050e1a;
+      --bg-2: #081426;
+      --bg-card: #0a1830;
+      --bg-card-hover: #0e2040;
+      --blue-primary: #0077ff;
+      --blue-electric: #00aaff;
+      --blue-deep: #0044cc;
+      --silver: #a8b8d8;
+      --silver-light: #c8d8f0;
+      --white: #ffffff;
+      --text-muted: #6a7f9c;
+      --text-body: #8fa0bc;
+      --success: #00d4aa;
+      --warning: #ffb800;
+      --danger: #ff4757;
+      --purple: #b06aff;
+      --border: rgba(0,119,255,0.15);
+      --border-hover: rgba(0,119,255,0.4);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-main: 'Inter', sans-serif;
+      --font-display: 'Rajdhani', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg-0); color: var(--white); font-family: var(--font-main); overflow: hidden; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      height: 56px; background: var(--bg-1); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 20px; flex-shrink: 0;
+    }
+    .tb-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .tb-logo-text { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--silver-light); letter-spacing: .05em; }
+    .tb-logo-sub { display: block; font-size: .55rem; font-weight: 500; color: var(--blue-electric); letter-spacing: .2em; margin-top: 1px; }
+    .tb-title { font-family: var(--font-display); font-size: .9rem; font-weight: 600; color: var(--silver); letter-spacing: .08em; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 20px; }
+    .tb-spacer { flex: 1; }
+    .tb-live { display: flex; align-items: center; gap: 7px; font-size: .72rem; color: var(--success); font-weight: 600; }
+    .tb-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pdot 2s ease-in-out infinite; }
+    @keyframes pdot { 0%,100%{box-shadow:0 0 0 0 rgba(0,212,170,.5)} 50%{box-shadow:0 0 0 5px rgba(0,212,170,0)} }
+    .tb-clock { font-family: var(--font-mono); font-size: .78rem; color: var(--text-muted); background: rgba(255,255,255,.04); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); }
+
+    /* ── STATS BAR ── */
+    .statsbar { height: 44px; background: var(--bg-2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
+    .st { display: flex; align-items: center; gap: 7px; padding: 0 18px; border-right: 1px solid var(--border); font-size: .75rem; }
+    .st:first-child { padding-left: 0; }
+    .st-lbl { color: var(--text-muted); }
+    .st-val { font-family: var(--font-display); font-size: .95rem; font-weight: 700; color: var(--white); }
+    .st-val.blue { color: var(--blue-electric); }
+    .st-val.green { color: var(--success); }
+    .st-val.yellow { color: var(--warning); }
+    .st-val.red { color: var(--danger); }
+
+    /* ── APP SHELL ── */
+    .app { display: flex; flex-direction: column; height: 100vh; }
+    .main { display: grid; grid-template-columns: 258px 1fr 318px; flex: 1; overflow: hidden; min-height: 0; }
+
+    /* ── PANEL BASE ── */
+    .panel { display: flex; flex-direction: column; overflow: hidden; }
+    .panel-left { background: var(--bg-1); border-right: 1px solid var(--border); }
+    .panel-center { background: var(--bg-0); }
+    .panel-right { background: var(--bg-1); border-left: 1px solid var(--border); }
+    .ph { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .ph-title { font-family: var(--font-display); font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--silver); }
+    .ph-badge { font-size: .65rem; font-weight: 600; background: rgba(0,119,255,.15); color: var(--blue-electric); padding: 2px 8px; border-radius: 100px; border: 1px solid rgba(0,119,255,.25); }
+    .pscroll { flex: 1; overflow-y: auto; }
+    .pscroll::-webkit-scrollbar { width: 3px; }
+    .pscroll::-webkit-scrollbar-thumb { background: var(--blue-deep); border-radius: 2px; }
+
+    /* ── EQUIPMENT CARDS ── */
+    .eq-list { padding: 10px; }
+    .eq-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 7px; transition: border-color .3s, background .3s; }
+    .eq-card:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+    .eq-card.warn { border-color: rgba(255,184,0,.35); background: rgba(255,184,0,.04); }
+    .eq-card.offline { border-color: rgba(255,71,87,.35); background: rgba(255,71,87,.05); }
+    .eq-card.alert { border-color: rgba(255,71,87,.5); background: rgba(255,71,87,.08); animation: apulse 1.8s ease-in-out infinite; }
+    @keyframes apulse { 0%,100%{border-color:rgba(255,71,87,.4)} 50%{border-color:rgba(255,71,87,.85);box-shadow:0 0 12px rgba(255,71,87,.2)} }
+    .eq-hdr { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-on { background: var(--success); }
+    .dot-warn { background: var(--warning); animation: wpulse 1.5s ease-in-out infinite; }
+    .dot-off { background: var(--danger); }
+    .dot-alert { background: var(--danger); animation: alpulse 1s ease-in-out infinite; }
+    @keyframes wpulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,184,0,.6)} 50%{box-shadow:0 0 0 4px rgba(255,184,0,0)} }
+    @keyframes alpulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,71,87,.7)} 50%{box-shadow:0 0 0 5px rgba(255,71,87,0)} }
+    .eq-name { font-family: var(--font-mono); font-size: .7rem; font-weight: 500; color: var(--white); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .eq-type { font-size: .62rem; color: var(--text-muted); margin-bottom: 6px; }
+    .eq-metrics { display: flex; gap: 10px; flex-wrap: wrap; }
+    .eq-m { display: flex; flex-direction: column; gap: 1px; }
+    .eq-m-lbl { font-size: .58rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .eq-m-val { font-family: var(--font-mono); font-size: .67rem; color: var(--silver); }
+    .eq-m-val.hi { color: var(--warning); }
+    .eq-m-val.crit { color: var(--danger); }
+    .eq-m-val.ok { color: var(--success); }
+    .eq-alert { margin-top: 7px; font-size: .62rem; color: var(--danger); background: rgba(255,71,87,.1); padding: 3px 7px; border-radius: 4px; border-left: 2px solid var(--danger); }
+
+    /* ── CENTER HEADER ── */
+    .ch { padding: 11px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-shrink: 0; background: var(--bg-1); }
+    .ch-filters { display: flex; gap: 6px; }
+    .cf { font-size: .68rem; font-weight: 600; padding: 3px 11px; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; transition: all .2s; }
+    .cf.active, .cf:hover { background: rgba(0,119,255,.15); border-color: rgba(0,119,255,.4); color: var(--blue-electric); }
+    .btn-manual { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: .7rem; font-weight: 600; padding: 5px 13px; border-radius: 6px; border: 1px solid rgba(0,212,170,.4); background: rgba(0,212,170,.1); color: var(--success); cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .btn-manual:hover { background: rgba(0,212,170,.2); border-color: rgba(0,212,170,.6); }
+    .tickets { flex: 1; overflow-y: auto; padding: 14px; }
+    .tickets::-webkit-scrollbar { width: 3px; }
+    .tickets::-webkit-scrollbar-thumb { background: var(--blue-deep); border-radius: 2px; }
+
+    /* ── TICKET CARD ── */
+    .tc { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; transition: border-color .3s, transform .2s; animation: tslide .4s ease both; }
+    @keyframes tslide { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .tc:hover { border-color: var(--border-hover); transform: translateX(2px); }
+    .tc.p-high { border-left: 3px solid var(--danger); }
+    .tc.p-medium { border-left: 3px solid var(--warning); }
+    .tc.p-low { border-left: 3px solid var(--success); }
+    .tc-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .tc-id { font-family: var(--font-mono); font-size: .62rem; color: var(--text-muted); background: rgba(255,255,255,.05); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; margin-top: 1px; }
+    .tc-title { font-family: var(--font-display); font-size: .9rem; font-weight: 600; color: var(--white); flex: 1; line-height: 1.3; }
+    .tc-status { flex-shrink: 0; font-size: .62rem; font-weight: 700; padding: 3px 9px; border-radius: 100px; letter-spacing: .05em; text-transform: uppercase; }
+    .s-open { background: rgba(255,184,0,.15); color: var(--warning); border: 1px solid rgba(255,184,0,.3); }
+    .s-ai { background: rgba(0,119,255,.15); color: var(--blue-electric); border: 1px solid rgba(0,119,255,.35); animation: aipulse 1.5s ease-in-out infinite; }
+    @keyframes aipulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,170,255,.3)} 50%{box-shadow:0 0 0 4px rgba(0,170,255,0)} }
+    .s-resolved { background: rgba(0,212,170,.15); color: var(--success); border: 1px solid rgba(0,212,170,.3); }
+    .s-escalated-field { background: rgba(255,71,87,.15); color: var(--danger); border: 1px solid rgba(255,71,87,.3); }
+    .s-escalated-op { background: rgba(176,106,255,.15); color: var(--purple); border: 1px solid rgba(176,106,255,.3); }
+    .tc-meta { display: flex; gap: 14px; margin-bottom: 9px; font-size: .68rem; color: var(--text-muted); flex-wrap: wrap; }
+    .tc-m { display: flex; align-items: center; gap: 4px; }
+    .tc-steps { display: flex; gap: 3px; margin-top: 8px; }
+    .ts { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.08); transition: background .5s; }
+    .ts.done { background: var(--success); }
+    .ts.active { background: var(--blue-primary); animation: stepblink 1s ease-in-out infinite; }
+    .ts.esc { background: var(--danger); }
+    @keyframes stepblink { 0%,100%{opacity:.7} 50%{opacity:1} }
+    .tc-action { margin-top: 7px; font-size: .68rem; color: var(--blue-electric); display: flex; align-items: center; gap: 6px; }
+    .spinner { width: 10px; height: 10px; border: 2px solid rgba(0,170,255,.3); border-top-color: var(--blue-electric); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .tc-res { margin-top: 8px; font-size: .68rem; padding: 5px 9px; border-radius: 5px; display: flex; align-items: center; gap: 5px; }
+    .tc-res.ok { background: rgba(0,212,170,.1); color: var(--success); border: 1px solid rgba(0,212,170,.2); }
+    .tc-res.esc { background: rgba(255,71,87,.07); color: #ff8c96; border: 1px solid rgba(255,71,87,.2); }
+    .tc-res.op { background: rgba(176,106,255,.08); color: var(--purple); border: 1px solid rgba(176,106,255,.2); }
+
+    /* ── AI LOG ── */
+    .log-wrap { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column-reverse; }
+    .log-wrap::-webkit-scrollbar { width: 3px; }
+    .log-wrap::-webkit-scrollbar-thumb { background: var(--blue-deep); border-radius: 2px; }
+    .log-inner { display: flex; flex-direction: column; gap: 1px; }
+    .le { display: flex; gap: 6px; padding: 3px 6px; border-radius: 3px; font-family: var(--font-mono); font-size: .64rem; line-height: 1.5; animation: lfade .25s ease; }
+    @keyframes lfade { from{opacity:0;transform:translateX(5px)} to{opacity:1;transform:translateX(0)} }
+    .le:hover { background: rgba(255,255,255,.03); }
+    .lt { color: var(--text-muted); flex-shrink: 0; width: 54px; }
+    .lk { flex-shrink: 0; width: 48px; font-weight: 600; text-align: right; }
+    .lk.info { color: var(--blue-electric); }
+    .lk.ok { color: var(--success); }
+    .lk.warn { color: var(--warning); }
+    .lk.err { color: var(--danger); }
+    .lk.ai { color: var(--purple); }
+    .lk.snmp { color: #ff9500; }
+    .lm { color: var(--silver); word-break: break-word; }
+    .lm .h { color: var(--white); font-weight: 600; }
+    .lm .cmd { color: #aaffaa; }
+    .lm .ip { color: var(--blue-electric); }
+
+    /* ── TOASTS ── */
+    .toast-wrap { position: fixed; top: 68px; right: 18px; z-index: 9999; display: flex; flex-direction: column; gap: 7px; }
+    .toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 15px; max-width: 300px; display: flex; align-items: flex-start; gap: 9px; box-shadow: 0 8px 32px rgba(0,0,0,.4); animation: tin .35s ease; transition: opacity .25s, transform .25s; }
+    @keyframes tin { from{opacity:0;transform:translateX(18px)} to{opacity:1;transform:translateX(0)} }
+    .toast.out { opacity: 0; transform: translateX(18px); }
+    .toast.danger { border-color: rgba(255,71,87,.4); }
+    .toast.success { border-color: rgba(0,212,170,.4); }
+    .toast.info { border-color: rgba(0,119,255,.4); }
+    .toast.warning { border-color: rgba(255,184,0,.4); }
+    .toast-ttl { font-family: var(--font-display); font-size: .8rem; font-weight: 700; color: var(--white); margin-bottom: 2px; }
+    .toast-desc { font-size: .68rem; color: var(--text-body); }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; color: var(--text-muted); padding: 60px 20px; font-size: .82rem; }
+    .empty svg { opacity: .25; margin-bottom: 10px; }
+
+    /* scanlines overlay */
+    body::after { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,119,255,.012) 2px,rgba(0,119,255,.012) 4px); pointer-events:none; z-index:9998; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a class="tb-logo" href="../index.html">
+      <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity="0.5"/>
+        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+              font-family="Rajdhani" font-weight="700" font-size="13" fill="url(#tg)">KR4</text>
+        <defs><linearGradient id="tg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#a8b8d8"/><stop offset="100%" stop-color="#fff"/>
+        </linearGradient></defs>
+      </svg>
+      <span class="tb-logo-text">KR4 <span class="tb-logo-sub">AUTOMATIONS</span></span>
+    </a>
+    <span class="tb-title">NOC — Sistema de Chamados Inteligente</span>
+    <div class="tb-spacer"></div>
+    <div class="tb-live"><div class="tb-live-dot"></div>SISTEMA OPERACIONAL</div>
+    <div class="tb-clock" id="clock">00:00:00</div>
+  </header>
+
+  <!-- STATS BAR -->
+  <div class="statsbar">
+    <div class="st"><span class="st-lbl">Abertos</span><span class="st-val yellow" id="s-open">0</span></div>
+    <div class="st"><span class="st-lbl">IA Atuando</span><span class="st-val blue" id="s-ai">0</span></div>
+    <div class="st"><span class="st-lbl">Resolvidos hoje</span><span class="st-val green" id="s-res">0</span></div>
+    <div class="st"><span class="st-lbl">Escalados</span><span class="st-val red" id="s-esc">0</span></div>
+    <div class="st"><span class="st-lbl">Equipamentos online</span><span class="st-val green" id="s-eq">10/10</span></div>
+    <div class="st"><span class="st-lbl">Alertas SNMP</span><span class="st-val yellow" id="s-snmp">0</span></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: EQUIPAMENTOS -->
+    <aside class="panel panel-left">
+      <div class="ph">
+        <span class="ph-title">Inventário / SNMP</span>
+        <span class="ph-badge" id="eq-count">10 ativos</span>
+      </div>
+      <div class="pscroll"><div class="eq-list" id="eq-list"></div></div>
+    </aside>
+
+    <!-- CENTER: CHAMADOS -->
+    <main class="panel panel-center">
+      <div class="ch">
+        <span class="ph-title">Sistema de Chamados</span>
+        <div class="ch-filters">
+          <button class="cf active" data-f="all">Todos</button>
+          <button class="cf" data-f="open">Abertos</button>
+          <button class="cf" data-f="ai">IA Atuando</button>
+          <button class="cf" data-f="resolved">Resolvidos</button>
+        </div>
+        <button class="btn-manual" id="btn-manual">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Simular Chamado Manual
+        </button>
+      </div>
+      <div class="tickets pscroll" id="tickets"></div>
+    </main>
+
+    <!-- RIGHT: AI LOG -->
+    <aside class="panel panel-right">
+      <div class="ph">
+        <span class="ph-title">Log IA — Tempo Real</span>
+        <span class="ph-badge" id="log-count">0 eventos</span>
+      </div>
+      <div class="log-wrap"><div class="log-inner" id="log-inner"></div></div>
+    </aside>
+
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   KR4 NOC SIMULATION ENGINE
+═══════════════════════════════════════════ */
+
+const S = {
+  tickets: [], tctr: 1000, logCtr: 0,
+  snmpAlerts: 0, running: false,
+  eqs: [
+    { id:'SW-CORE-01',    type:'Core Switch',         ip:'10.0.0.1',   s:'online', cpu:22, mem:45, up:'847d' },
+    { id:'SW-DIST-01',    type:'Dist Switch',          ip:'10.0.0.2',   s:'online', cpu:18, mem:38, up:'847d' },
+    { id:'SW-ACESSO-01',  type:'Access Switch',        ip:'10.0.1.1',   s:'online', cpu:12, mem:30, up:'210d' },
+    { id:'SW-ACESSO-02',  type:'Access Switch',        ip:'10.0.1.2',   s:'online', cpu: 9, mem:28, up:'210d' },
+    { id:'SW-ACESSO-03',  type:'Access Switch',        ip:'10.0.1.3',   s:'online', cpu:15, mem:32, up:'195d' },
+    { id:'RT-BORDA-01',   type:'Border Router',        ip:'10.0.0.254', s:'online', cpu:35, mem:55, up:'410d' },
+    { id:'FW-01',         type:'Firewall',             ip:'10.0.0.253', s:'online', cpu:28, mem:62, up:'400d' },
+    { id:'AP-TERREO-01',  type:'Access Point',         ip:'10.0.2.1',   s:'online', cpu: 5, mem:20, up:'90d'  },
+    { id:'AP-2ANDAR-01',  type:'Access Point',         ip:'10.0.2.2',   s:'online', cpu: 7, mem:22, up:'90d'  },
+    { id:'LINK-OP-01',    type:'Link WAN / Operadora', ip:'200.1.1.1',  s:'online', cpu: 0, mem: 0, up:'30d', bw:'45%' },
+  ]
+};
+
+/* ── CLOCK ── */
+const clk = document.getElementById('clock');
+setInterval(() => { clk.textContent = new Date().toLocaleTimeString('pt-BR',{hour12:false}); }, 1000);
+clk.textContent = new Date().toLocaleTimeString('pt-BR',{hour12:false});
+
+/* ── HELPERS ── */
+const delay = ms => new Promise(r => setTimeout(r, ms));
+const now = () => new Date().toLocaleTimeString('pt-BR',{hour12:false});
+
+/* ── LOG ── */
+function log(kind, msg) {
+  const inner = document.getElementById('log-inner');
+  const d = document.createElement('div');
+  d.className = 'le';
+  d.innerHTML = `<span class="lt">${now()}</span><span class="lk ${kind}">[${kind.toUpperCase()}]</span><span class="lm">${msg}</span>`;
+  inner.appendChild(d);
+  while (inner.children.length > 300) inner.removeChild(inner.firstChild);
+  S.logCtr++;
+  document.getElementById('log-count').textContent = `${S.logCtr} eventos`;
+  // auto-scroll
+  const wrap = inner.parentElement;
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+/* ── TOAST ── */
+const TICO = {
+  danger:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  success:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
+  info:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+  warning:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffb800" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+};
+function toast(type, title, desc) {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${TICO[type]||TICO.info}<div><div class="toast-ttl">${title}</div><div class="toast-desc">${desc}</div></div>`;
+  wrap.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 280); }, 5000);
+}
+
+/* ── RENDER EQUIPMENT ── */
+function renderEq() {
+  let on = 0;
+  document.getElementById('eq-list').innerHTML = S.eqs.map(e => {
+    if (e.s === 'online') on++;
+    const dc = e.s==='warn'?'dot-warn':e.s==='offline'?'dot-off':e.s==='alert'?'dot-alert':'dot-on';
+    const cc = e.s==='warn'?'warn':e.s==='offline'?'offline':e.s==='alert'?'alert':'';
+    const cv = e.cpu>80?'crit':e.cpu>60?'hi':'ok';
+    const mv = e.mem>85?'crit':e.mem>70?'hi':'ok';
+    return `<div class="eq-card ${cc}">
+      <div class="eq-hdr"><div class="dot ${dc}"></div><span class="eq-name">${e.id}</span></div>
+      <div class="eq-type">${e.type} · ${e.ip}</div>
+      <div class="eq-metrics">
+        <div class="eq-m"><span class="eq-m-lbl">CPU</span><span class="eq-m-val ${cv}">${e.cpu}%</span></div>
+        <div class="eq-m"><span class="eq-m-lbl">MEM</span><span class="eq-m-val ${mv}">${e.mem}%</span></div>
+        <div class="eq-m"><span class="eq-m-lbl">UPTIME</span><span class="eq-m-val">${e.up}</span></div>
+        ${e.bw?`<div class="eq-m"><span class="eq-m-lbl">BW</span><span class="eq-m-val ${parseInt(e.bw)>80?'hi':''}">${e.bw}</span></div>`:''}
+      </div>
+      ${e.alert?`<div class="eq-alert">⚠ ${e.alert}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('eq-count').textContent = `${S.eqs.length} ativos`;
+  document.getElementById('s-eq').textContent = `${on}/${S.eqs.length}`;
+}
+
+/* ── RENDER TICKETS ── */
+const SL = { open:'Aberto', ai:'IA Atuando', resolved:'Resolvido', 'escalated-field':'Escalado · Field', 'escalated-op':'Escalado · Operadora' };
+const PL = { high:'Alta', medium:'Média', low:'Baixa' };
+const PC = { high:'var(--danger)', medium:'var(--warning)', low:'var(--success)' };
+
+function renderTickets() {
+  const af = document.querySelector('.cf.active')?.dataset.f || 'all';
+  let list = [...S.tickets];
+  if (af === 'open')     list = list.filter(t => t.s === 'open');
+  else if (af === 'ai')  list = list.filter(t => t.s === 'ai');
+  else if (af === 'resolved') list = list.filter(t => t.s === 'resolved' || t.s === 'escalated-field' || t.s === 'escalated-op');
+
+  const el = document.getElementById('tickets');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><div>Nenhum chamado neste filtro</div></div>`;
+    return;
+  }
+
+  el.innerHTML = [...list].reverse().map(t => {
+    const isActive = t.s === 'open' || t.s === 'ai';
+    const stepsH = t.steps.map((_, i) => {
+      let c = '';
+      if (i < t.step) c = 'done';
+      else if (i === t.step && isActive) c = 'active';
+      else if ((t.s === 'escalated-field' || t.s === 'escalated-op') && i === t.steps.length-1) c = 'esc';
+      return `<div class="ts ${c}"></div>`;
+    }).join('');
+
+    const actionH = t.s === 'ai' ? `<div class="tc-action"><div class="spinner"></div>${t.action||'IA analisando...'}</div>` : '';
+
+    let resH = '';
+    if (t.s === 'resolved') resH = `<div class="tc-res ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${t.res}</div>`;
+    else if (t.s === 'escalated-field') resH = `<div class="tc-res esc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>${t.res}</div>`;
+    else if (t.s === 'escalated-op') resH = `<div class="tc-res op"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>${t.res}</div>`;
+
+    const srcIco = t.src === 'auto'
+      ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
+      : `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+    return `<div class="tc p-${t.p}">
+      <div class="tc-top">
+        <span class="tc-id">#${t.id}</span>
+        <span class="tc-title">${t.title}</span>
+        <span class="tc-status s-${t.s}">${SL[t.s]||t.s}</span>
+      </div>
+      <div class="tc-meta">
+        <span class="tc-m">${srcIco} ${t.src==='auto'?'Automático':'Manual'}</span>
+        <span class="tc-m"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> ${t.dev}</span>
+        <span class="tc-m"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${t.at}</span>
+        <span class="tc-m" style="margin-left:auto;color:${PC[t.p]}">● ${PL[t.p]}</span>
+      </div>
+      <div class="tc-steps">${stepsH}</div>
+      ${actionH}${resH}
+    </div>`;
+  }).join('');
+}
+
+/* ── STATS ── */
+function updateStats() {
+  document.getElementById('s-open').textContent  = S.tickets.filter(t=>t.s==='open').length;
+  document.getElementById('s-ai').textContent    = S.tickets.filter(t=>t.s==='ai').length;
+  document.getElementById('s-res').textContent   = S.tickets.filter(t=>t.s==='resolved').length;
+  document.getElementById('s-esc').textContent   = S.tickets.filter(t=>t.s==='escalated-field'||t.s==='escalated-op').length;
+  document.getElementById('s-snmp').textContent  = S.snmpAlerts;
+}
+
+/* ── TICKET FACTORY ── */
+function mkTicket(title, dev, p, src, steps) {
+  const t = { id: S.tctr++, title, dev, p, src, steps, s:'open', step:0, action:'', at:now(), res:'' };
+  S.tickets.push(t);
+  return t;
+}
+
+/* ── FLOW RUNNER ── */
+async function runFlow(ticket, actions, outcome) {
+  await delay(1400);
+  ticket.s = 'ai';
+  renderTickets(); updateStats();
+
+  for (let i = 0; i < actions.length; i++) {
+    const a = actions[i];
+    ticket.step = i;
+    ticket.action = a.lbl;
+    renderTickets();
+    log(a.k || 'ai', a.msg);
+    await delay(a.ms || 2000);
+  }
+
+  ticket.step = actions.length;
+  ticket.action = '';
+  ticket.s = outcome.escalate || 'resolved';
+  ticket.res = outcome.msg;
+  renderTickets(); updateStats();
+
+  if (outcome.escalate) {
+    const isOp = outcome.escalate === 'escalated-op';
+    toast(isOp ? 'info' : 'warning', isOp ? '📡 Chamado Operadora Aberto' : '🔧 Escalado para Field', outcome.msg);
+    log('warn', `Ticket #${ticket.id} escalado — ${outcome.msg}`);
+  } else {
+    toast('success', '✅ Chamado Resolvido', outcome.msg);
+    log('ok', `Ticket #${ticket.id} RESOLVIDO — ${outcome.msg}`);
+  }
+  renderEq();
+}
+
+/* ════════════════════════════════
+   CENÁRIO 1 — LOOP STP
+════════════════════════════════ */
+async function cLoop() {
+  const sw = S.eqs.find(e => e.id === 'SW-ACESSO-01');
+  const port = 'Gi0/5';
+  sw.s = 'alert'; sw.cpu = 78; sw.alert = `Loop STP detectado em ${port}`;
+  S.snmpAlerts++;
+  renderEq(); updateStats();
+
+  log('snmp', `TRAP recebido — <span class="h">SW-ACESSO-01</span> · STP topology change · OID 1.3.6.1.2.1.17`);
+  log('warn', `Loop STP detectado em <span class="h">SW-ACESSO-01 ${port}</span> — abrindo chamado automático`);
+  toast('danger', '🔁 Loop STP Detectado', `SW-ACESSO-01 · Porta ${port} · Chamado automático aberto`);
+
+  const t = mkTicket(`Loop STP — SW-ACESSO-01 porta ${port}`, 'SW-ACESSO-01', 'high', 'auto',
+    ['Detecção SNMP','Análise IA','SSH Switch','Diagnóstico','Ação corretiva','Verificação']);
+  renderTickets(); updateStats();
+
+  const ok = Math.random() > 0.4;
+  await runFlow(t, [
+    { lbl:`SNMP Trap analisado — SW-ACESSO-01`,   k:'snmp', msg:`Coletando bridge-MIB de <span class="ip">10.0.1.1</span> — ifIndex: 5` },
+    { lbl:'IA correlacionando eventos...',          k:'ai',   msg:`Correlacionando trap com histórico STP — storm confirmado`, ms:2200 },
+    { lbl:`SSH → 10.0.1.1`,                        k:'ai',   msg:`Autenticado em <span class="ip">10.0.1.1</span> com credencial vault`, ms:1500 },
+    { lbl:'Executando diagnóstico',                 k:'ai',   msg:`<span class="cmd">show spanning-tree detail</span> → BPDU flood em ${port}`, ms:2000 },
+    { lbl:`Desativando porta ${port}`,              k:'ai',   msg:`<span class="cmd">interface ${port} → errdisable</span> aplicado`, ms:1800 },
+    { lbl:'Verificando estabilidade STP',           k:'ai',   msg:`Aguardando convergência — BPDU flood cessado`, ms:2500 },
+  ], ok
+    ? { msg: `IA desativou ${port} (err-disable). Loop eliminado. Field notificado.` }
+    : { escalate:'escalated-field', msg: `${port} desativada, loop persiste em ${port}. Escalado para Field.` }
+  );
+
+  sw.s = ok ? 'online' : 'warn';
+  sw.cpu = ok ? 15 : 30;
+  sw.alert = ok ? '' : `Porta ${port} err-disable — aguardando field`;
+  if (ok) S.snmpAlerts = Math.max(0, S.snmpAlerts - 1);
+  renderEq(); updateStats();
+}
+
+/* ════════════════════════════════
+   CENÁRIO 2 — LINK DOWN
+════════════════════════════════ */
+async function cLinkDown() {
+  const lk = S.eqs.find(e => e.id === 'LINK-OP-01');
+  const rt = S.eqs.find(e => e.id === 'RT-BORDA-01');
+  lk.s = 'offline'; lk.alert = 'Interface WAN DOWN — sem resposta SNMP';
+  rt.s = 'warn';    rt.alert = 'Rota default indisponível';
+  S.snmpAlerts += 2;
+  renderEq(); updateStats();
+
+  log('snmp', `ifOperStatus DOWN — <span class="h">LINK-OP-01</span> · GigabitEthernet0/0 · <span class="ip">200.1.1.1</span>`);
+  log('warn', `Link WAN DOWN — perda conectividade externa. Abrindo chamado.`);
+  toast('danger', '📡 Link WAN Caiu', 'LINK-OP-01 offline — chamado na operadora em andamento');
+
+  const t = mkTicket(`Link WAN offline — LINK-OP-01`, 'LINK-OP-01', 'high', 'auto',
+    ['Detecção SNMP','Verificação BGP','Diagnóstico rota','Abertura operadora','Acompanhamento']);
+  renderTickets(); updateStats();
+
+  const opTicket = `INC-OP-${Math.floor(10000 + Math.random()*90000)}`;
+  await runFlow(t, [
+    { lbl:'SNMP polling — timeout',          k:'snmp', msg:`<span class="ip">200.1.1.1</span> sem resposta — 3 tentativas timeout` },
+    { lbl:'Testando BGP session',             k:'ai',   msg:`<span class="cmd">ping 200.1.1.2 source lo0</span> → 100% packet loss`, ms:1800 },
+    { lbl:'Verificando rota default',         k:'ai',   msg:`<span class="cmd">show ip route 0.0.0.0</span> → rota BGP removida da tabela`, ms:1600 },
+    { lbl:'Abrindo chamado operadora...',     k:'ai',   msg:`API Operadora → POST /incidents · circuit-id: BR-SP-0042 · P1`, ms:2500 },
+    { lbl:'Aguardando confirmação operadora', k:'info', msg:`Protocolo #${opTicket} confirmado — técnico despachado para PoP`, ms:2000 },
+  ], { escalate:'escalated-op', msg: `Chamado #${opTicket} aberto na operadora. Previsão: 45 min.` });
+
+  // simulate recovery after 28s
+  setTimeout(async () => {
+    log('ok', `Operadora confirmou restauração — aguardando BGP convergir`);
+    await delay(3000);
+    lk.s = 'online'; lk.alert = '';
+    rt.s = 'online'; rt.alert = '';
+    S.snmpAlerts = Math.max(0, S.snmpAlerts - 2);
+    log('ok', `<span class="h">LINK-OP-01</span> ONLINE — BGP established · prefixes: 847`);
+    toast('success', '🟢 Link Restaurado', 'LINK-OP-01 online. BGP reconvergido.');
+    renderEq(); updateStats();
+  }, 28000);
+}
+
+/* ════════════════════════════════
+   CENÁRIO 3 — CHAMADO MANUAL
+════════════════════════════════ */
+const manuals = [
+  {
+    title:'Internet lenta — Setor Financeiro',
+    dev:'SW-ACESSO-02',
+    desc:'Usuários relatando lentidão severa desde as 14h. Chamado aberto manualmente.',
+    ok_msg:'QoS mal configurado em SW-ACESSO-02. Política de tráfego corrigida. Velocidade restaurada.',
+    esc_msg:'Saturação no link WAN (>92% BW). Escalado operadora para upgrade de circuito.',
+    esc:'escalated-op',
+    steps:['Análise SNMP','Latência/Jitter','Inspeção QoS','Busca MAC/ARP','Correção'],
+    actions: [
+      { lbl:'Analisando tráfego SNMP',        k:'snmp', msg:`Coletando ifInOctets/ifOutOctets de SW-ACESSO-02 e RT-BORDA-01`, ms:2000 },
+      { lbl:'Testando latência e jitter',      k:'ai',   msg:`Ping 8.8.8.8 — latência: 185ms, jitter: 42ms (acima do SLA)`, ms:2200 },
+      { lbl:'Inspecionando fila QoS',          k:'ai',   msg:`<span class="cmd">show policy-map int Gi0/1</span> → fila BULK saturada a 100%`, ms:1800 },
+      { lbl:'Verificando tabela MAC',          k:'ai',   msg:`247 hosts ativos · sem anomalia de flood detectada`, ms:1600 },
+      { lbl:'Aplicando correção QoS',          k:'ai',   msg:`<span class="cmd">policy-map KR4-QOS → class BULK → bandwidth percent 10</span>`, ms:2200 },
+    ],
+  },
+  {
+    title:'Sem acesso externo — Filial Sul',
+    dev:'RT-BORDA-01',
+    desc:'Filial Sul sem internet. Rede interna OK. Provável problema no gateway.',
+    ok_msg:'Rota estática sobrepondo BGP identificada e removida. Acesso restaurado.',
+    esc_msg:'BGP session instável — flapping detectado. Escalado operadora para análise de circuito.',
+    esc:'escalated-op',
+    steps:['Tabela rotas','BGP session','Traceroute','Rota conflito','Verificação'],
+    actions: [
+      { lbl:'Verificando tabela de rotas',    k:'ai',   msg:`<span class="cmd">show ip route</span> → rota estática 0.0.0.0/0 conflitando com BGP`, ms:2000 },
+      { lbl:'Testando BGP session',           k:'ai',   msg:`BGP neighbor <span class="ip">200.1.1.2</span> — state: Established · hold: 3s`, ms:1800 },
+      { lbl:'Analisando traceroute',          k:'ai',   msg:`<span class="cmd">traceroute 8.8.8.8</span> → hop 2 descartando pacotes (TTL exceeded)`, ms:2200 },
+      { lbl:'Removendo rota conflitante',     k:'ai',   msg:`<span class="cmd">no ip route 0.0.0.0 0.0.0.0 192.168.1.1</span> aplicado`, ms:1500 },
+      { lbl:'Verificando rota final',         k:'ai',   msg:`Rota default BGP ativa — traceroute 8.8.8.8: 14 hops · OK`, ms:2000 },
+    ],
+  },
+];
+let mIdx = 0;
+async function cManual() {
+  const sc = manuals[mIdx++ % manuals.length];
+  const eq = S.eqs.find(e => e.id === sc.dev);
+  if (eq) { eq.s = 'warn'; eq.alert = 'Chamado manual em aberto'; }
+  renderEq();
+
+  log('info', `Chamado MANUAL recebido — <span class="h">${sc.title}</span>`);
+  toast('warning', '📋 Chamado Manual', sc.desc);
+
+  const ok = Math.random() > 0.35;
+  const t = mkTicket(sc.title, sc.dev, 'medium', 'manual', sc.steps);
+  renderTickets(); updateStats();
+
+  await runFlow(t, sc.actions,
+    ok ? { msg: sc.ok_msg } : { escalate: sc.esc, msg: sc.esc_msg }
+  );
+
+  if (eq) {
+    eq.s = ok ? 'online' : 'warn';
+    eq.alert = ok ? '' : 'Aguardando resolução operadora';
+    renderEq();
+  }
+}
+
+/* ════════════════════════════════
+   CENÁRIO 4 — SEGURANÇA
+════════════════════════════════ */
+async function cSecurity() {
+  const sw = S.eqs.find(e => e.id === 'SW-ACESSO-03');
+  sw.s = 'alert'; sw.cpu = 90; sw.alert = 'MAC flood detectado — possível ataque CAM';
+  S.snmpAlerts++;
+  renderEq(); updateStats();
+
+  log('warn', `<span class="h">ALERTA SEGURANÇA</span> — MAC flood em SW-ACESSO-03 · 8.400 MACs/s`);
+  toast('danger', '🔒 Alerta de Segurança', 'MAC flood em SW-ACESSO-03 — IA isolando porta');
+
+  const t = mkTicket(`Alerta segurança — MAC flood SW-ACESSO-03`, 'SW-ACESSO-03', 'high', 'auto',
+    ['Detecção','Análise CAM','Isolamento','Quarentena','Relatório']);
+  renderTickets(); updateStats();
+
+  await runFlow(t, [
+    { lbl:'Analisando CAM table',             k:'warn', msg:`CAM overflow — tabela saturada (8192 entradas). Flooding ativo.`, ms:1800 },
+    { lbl:'Identificando porta origem',       k:'ai',   msg:`<span class="cmd">show mac address-table count</span> → Gi0/12: 4.200 MACs únicos`, ms:2000 },
+    { lbl:'Aplicando port security',          k:'ai',   msg:`<span class="cmd">port-security maximum 5 · violation shutdown</span> em Gi0/12`, ms:1800 },
+    { lbl:'Movendo para VLAN quarentena',     k:'ai',   msg:`Host <span class="h">00:1A:2B:3C:4D:5E</span> → VLAN 999 (quarentena)`, ms:2200 },
+    { lbl:'Gerando relatório de segurança',   k:'ai',   msg:`Relatório enviado para equipe de segurança e SIEM`, ms:1500 },
+  ], { msg: `Porta Gi0/12 isolada (err-disable). Host suspeito em VLAN quarentena. Incidente registrado no SIEM.` });
+
+  sw.s = 'warn'; sw.cpu = 20;
+  sw.alert = 'Gi0/12 em quarentena — análise pendente';
+  S.snmpAlerts = Math.max(0, S.snmpAlerts - 1);
+  renderEq(); updateStats();
+}
+
+/* ── SCHEDULER ── */
+const scQueue = [cLoop, cLinkDown, cSecurity];
+let qIdx = 0;
+
+async function runNext() {
+  if (S.running) return;
+  S.running = true;
+  try { await scQueue[qIdx++ % scQueue.length](); } catch(e) { console.error(e); }
+  S.running = false;
+}
+
+/* ── METRICS FLUCTUATION ── */
+function fluctuate() {
+  S.eqs.forEach(e => {
+    if (e.s !== 'online') return;
+    e.cpu = Math.round(Math.max(3,  Math.min(95, e.cpu + (Math.random()-.5)*8)));
+    e.mem = Math.round(Math.max(15, Math.min(95, e.mem + (Math.random()-.5)*4)));
+  });
+  const lk = S.eqs.find(e => e.id === 'LINK-OP-01');
+  if (lk && lk.s === 'online') {
+    const v = Math.round(Math.max(10, Math.min(98, parseInt(lk.bw) + (Math.random()-.45)*10)));
+    lk.bw = v + '%';
+  }
+  renderEq();
+}
+
+/* ── FILTERS ── */
+document.querySelectorAll('.cf').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.cf').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    renderTickets();
+  });
+});
+
+/* ── MANUAL BUTTON ── */
+document.getElementById('btn-manual').addEventListener('click', () => {
+  if (S.running) { toast('info','IA Ocupada','Aguarde o chamado atual ser processado'); return; }
+  cManual();
+});
+
+/* ── BOOT ── */
+function boot() {
+  const msgs = [
+    ['snmp','SNMP engine iniciado — community: kr4-private · porta 161'],
+    ['info','Polling SNMP iniciado — 10 dispositivos · intervalo: 60s'],
+    ['ok',  'Todos os equipamentos respondendo ao SNMP — sistema operacional'],
+    ['ai',  'HUB IA online — modelos carregados · aguardando eventos'],
+    ['info','Sistema de chamados pronto — modo automático ativado'],
+    ['ai',  'Thresholds configurados — monitorando CPU, MEM, BW, STP, MAC'],
+  ];
+  msgs.forEach((m, i) => setTimeout(() => log(m[0], m[1]), i * 500));
+}
+
+renderEq();
+renderTickets();
+updateStats();
+boot();
+
+setTimeout(() => runNext(), 6000);
+setInterval(() => { if (!S.running) runNext(); }, 38000);
+setInterval(fluctuate, 9000);
+</script>
+</body>
+</html>
