@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>K4 Monitor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#020617;--s0:rgba(9,15,29,.99);--s1:rgba(15,23,42,.88);--s2:rgba(30,41,59,.5);
+  --b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.04);
+  --in:#6366f1;--in2:rgba(99,102,241,.15);--in3:rgba(99,102,241,.08);
+  --em:#10b981;--re:#ef4444;--am:#f59e0b;--cy:#22d3ee;--pu:#a855f7;
+  --t0:#f8fafc;--t1:#cbd5e1;--t2:#94a3b8;--t3:#64748b;--t4:#334155;
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--t0);display:flex;flex-direction:column;font-size:13px}
+
+/* ── TOP BAR ── */
+.topbar{height:46px;flex-shrink:0;background:var(--s0);border-bottom:1px solid var(--b);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:20}
+.brand{display:flex;align-items:center;gap:9px;margin-right:6px}
+.brand-mark{width:30px;height:30px;border-radius:7px;background:var(--in2);border:1px solid rgba(99,102,241,.3);display:flex;align-items:center;justify-content:center;font-size:14px}
+.brand h1{font-size:13px;font-weight:700}
+.brand p{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.09em}
+.tp{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;border:1px solid}
+.tp.g{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.2);color:#34d399}
+.tp.p{background:rgba(168,85,247,.07);border-color:rgba(168,85,247,.2);color:#c084fc}
+.tp.c{background:rgba(34,211,238,.07);border-color:rgba(34,211,238,.2);color:#67e8f9}
+.tpdot{width:6px;height:6px;border-radius:50%}
+.tpdot.g{background:var(--em);animation:pulse 2s infinite}
+.tpdot.p{background:var(--pu);animation:pulse 2s infinite}
+.tpdot.c{background:var(--cy);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.clock{font-family:var(--mono);font-size:12px;color:var(--t3)}
+.btn{padding:5px 11px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;font-family:var(--font)}
+.btn.pr{background:var(--in2);border-color:rgba(99,102,241,.4);color:#a5b4fc}.btn.pr:hover{background:rgba(99,102,241,.25)}
+.btn.gh{background:rgba(255,255,255,.04);border-color:var(--b);color:var(--t2)}.btn.gh:hover{background:rgba(255,255,255,.08);color:var(--t1)}
+.btn.su{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);color:#34d399}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── WORKSPACE ── */
+.ws{flex:1;display:flex;overflow:hidden}
+
+/* ── SIDEBAR ── */
+aside{width:212px;flex-shrink:0;background:var(--s0);border-right:1px solid var(--b);display:flex;flex-direction:column}
+.nav-section{padding:8px 8px 0}
+.nav-label{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--t4);padding:6px 10px 4px;font-weight:600}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--t3);transition:all .15s;font-size:12.5px;border:none;background:none;width:100%;text-align:left;margin-bottom:2px}
+.ni:hover{background:rgba(255,255,255,.04);color:var(--t1)}
+.ni.active{background:var(--in2);color:#a5b4fc;font-weight:500}
+.ni .ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.ni .nb{margin-left:auto;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700}
+.nb.r{background:rgba(239,68,68,.25);color:#f87171}
+.nb.g{background:rgba(16,185,129,.18);color:#34d399}
+.nb.c{background:rgba(34,211,238,.15);color:#67e8f9}
+
+/* Device quick-connect in sidebar */
+.sidebar-devs{flex:1;overflow-y:auto;padding:8px;border-top:1px solid var(--b);margin-top:4px}
+.sdlabel{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--t4);padding:4px 2px 6px;font-weight:600}
+.sdev{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent;transition:all .15s;margin-bottom:3px}
+.sdev:hover{background:rgba(255,255,255,.04);border-color:var(--b)}
+.sdev.ssh-open{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.2)}
+.sdev-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.sdev-name{font-size:12px;font-weight:500;line-height:1.2;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sdev-status{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sdev-status.up{background:var(--em)}.sdev-status.down{background:var(--re);animation:pulse 1.5s infinite}.sdev-status.ssh{background:var(--cy);box-shadow:0 0 5px var(--cy)}
+
+.ai-bar{padding:10px 12px;border-top:1px solid var(--b)}
+.ai-bar-dot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t3)}
+.ai-brain-dot{width:8px;height:8px;border-radius:50%;background:var(--pu);box-shadow:0 0 7px var(--pu);animation:pulse 2s infinite}
+
+/* ── MAIN ── */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.pages{flex:1;overflow:hidden;position:relative}
+.pg{position:absolute;inset:0;overflow-y:auto;padding:22px 26px;display:none;animation:fi .2s}
+.pg.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.ph{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600;margin-bottom:10px}
+.card{background:var(--s1);border:1px solid var(--b);border-radius:11px;backdrop-filter:blur(8px)}
+.p14{padding:14px 16px}.p18{padding:18px 20px}
+.row{display:flex;gap:14px;margin-bottom:14px}.row>.card{flex:1}
+
+/* ── STATS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat{padding:14px 16px;background:var(--s1);border:1px solid var(--b);border-radius:10px;display:flex;align-items:center;gap:11px}
+.si{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.sv{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.sv.g{color:var(--em)}.sv.r{color:var(--re)}.sv.a{color:var(--am)}.sv.p{color:#c084fc}.sv.c{color:var(--cy)}
+
+/* ── BADGES ── */
+.b{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid;white-space:nowrap}
+.b.up{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.25)}
+.b.down{background:rgba(239,68,68,.1);color:#f87171;border-color:rgba(239,68,68,.25)}
+.b.warn{background:rgba(245,158,11,.1);color:#fbbf24;border-color:rgba(245,158,11,.25)}
+.b.ai{background:rgba(168,85,247,.1);color:#c084fc;border-color:rgba(168,85,247,.25)}
+.b.ssh{background:rgba(34,211,238,.1);color:#67e8f9;border-color:rgba(34,211,238,.25)}
+.b.done{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.25)}
+.b.crit{background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.35)}
+.bdot{width:5px;height:5px;border-radius:50%}
+.bdot.up{background:#34d399}.bdot.down{background:#f87171;animation:pulse 1.5s infinite}
+.bdot.ai{background:#c084fc;animation:pulse 2s infinite}.bdot.ssh{background:#67e8f9;animation:pulse 1s infinite}
+
+/* ── DEVICE CARDS ── */
+.dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.dc{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:14px;transition:border-color .3s}
+.dc.alert{border-color:rgba(239,68,68,.35)}
+.dc.ssh-open{border-color:rgba(34,211,238,.3)}
+.dc-top{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.dc-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.dc-name{font-weight:600;font-size:13px}
+.dc-host{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.dc-badges{display:flex;gap:5px;margin-left:auto;align-items:center;flex-shrink:0}
+.mrow{display:flex;gap:8px;margin-bottom:8px}
+.mbox{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--b2);border-radius:6px;padding:6px 8px}
+.mname{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em}
+.mval{font-size:14px;font-weight:700;font-family:var(--mono);margin-top:1px}
+.mval.ok{color:var(--em)}.mval.wn{color:var(--am)}.mval.cr{color:var(--re)}
+.mbar{height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden}
+.mfill{height:100%;border-radius:2px;transition:width .8s}
+.mfill.ok{background:var(--em)}.mfill.wn{background:var(--am)}.mfill.cr{background:var(--re)}
+.dc-actions{display:flex;gap:6px;margin-top:8px}
+.dc-btn{flex:1;padding:5px 0;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;font-family:var(--font);text-align:center}
+.dc-btn.ssh-btn{background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25);color:#67e8f9}
+.dc-btn.ssh-btn:hover{background:rgba(34,211,238,.18)}
+.dc-btn.ssh-btn.active{background:rgba(34,211,238,.2);border-color:rgba(34,211,238,.5)}
+.dc-btn.ai-btn{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.2);color:#c084fc}
+.dc-btn.ai-btn:hover{background:rgba(168,85,247,.15)}
+
+/* ── AI PANEL ── */
+.ai-panel{background:rgba(9,15,29,.97);border:1px solid rgba(168,85,247,.2);border-radius:11px;overflow:hidden;margin-bottom:14px}
+.ai-ph{padding:11px 14px;background:rgba(168,85,247,.08);border-bottom:1px solid rgba(168,85,247,.15);display:flex;align-items:center;gap:8px}
+.ai-spin{font-size:17px;animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-think{font-family:var(--mono);font-size:11.5px;color:#e2d9f3;line-height:1.8;min-height:60px;padding:12px 14px}
+.cursor{display:inline-block;width:7px;height:12px;background:#c084fc;animation:blink .8s steps(1) infinite;vertical-align:text-bottom}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.ai-steps{display:flex;flex-direction:column;gap:5px;padding:0 14px 12px}
+.ai-step{display:flex;align-items:flex-start;gap:9px;padding:7px 10px;border-radius:7px;border:1px solid var(--b2);background:rgba(255,255,255,.02);font-size:12px}
+.ai-step.run{border-color:rgba(34,211,238,.25);background:rgba(34,211,238,.04)}
+.ai-step.done{border-color:rgba(16,185,129,.2);background:rgba(16,185,129,.04)}
+.step-ic{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px}
+.step-ic.pend{background:rgba(100,116,139,.15)}
+.step-ic.run{background:rgba(34,211,238,.15);animation:glow2 1s infinite}
+.step-ic.done{background:rgba(16,185,129,.15)}
+@keyframes glow2{0%,100%{box-shadow:none}50%{box-shadow:0 0 8px rgba(34,211,238,.4)}}
+
+/* ── TERMINAL PAGE ── */
+.term-layout{display:flex;height:100%;overflow:hidden;gap:0}
+.term-sidebar{width:220px;flex-shrink:0;border-right:1px solid var(--b);display:flex;flex-direction:column;background:var(--s0)}
+.term-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tab-bar{height:36px;flex-shrink:0;background:rgba(9,15,29,.95);border-bottom:1px solid var(--b);display:flex;align-items:flex-end;padding:0 4px;gap:2px;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:6px;padding:0 10px;height:30px;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;border:1px solid transparent;border-bottom:none;flex-shrink:0;transition:all .15s;max-width:170px}
+.tab.active{background:var(--s1);border-color:var(--b);color:var(--t0)}
+.tab:not(.active){color:var(--t3)}.tab:not(.active):hover{background:rgba(255,255,255,.04);color:var(--t2)}
+.tab-dot2{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tab-dot2.conn{background:var(--em);box-shadow:0 0 4px var(--em)}.tab-dot2.cing{background:var(--am);animation:pulse 1s infinite}.tab-dot2.disc{background:var(--t4)}
+.tab-x{width:15px;height:15px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;margin-left:auto;opacity:.35;transition:opacity .15s}
+.tab-x:hover{opacity:1;background:rgba(239,68,68,.2);color:#f87171}
+.new-tab{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);font-size:16px;margin-left:4px;transition:all .15s;flex-shrink:0}
+.new-tab:hover{background:rgba(255,255,255,.06);color:var(--t1)}
+.panels{flex:1;overflow:hidden;position:relative}
+.tpanel{position:absolute;inset:0;display:none;flex-direction:column}
+.tpanel.active{display:flex}
+.xterm-wrap{flex:1;overflow:hidden;background:#0a0e1a;padding:6px}
+
+/* connect form */
+.conn-form{flex:1;display:flex;align-items:center;justify-content:center}
+.conn-card{background:var(--s1);border:1px solid var(--b);border-radius:13px;padding:26px 28px;width:360px}
+.conn-card h3{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field input,.field select{width:100%;background:rgba(9,15,29,.9);border:1px solid var(--b);border-radius:7px;color:var(--t1);padding:7px 10px;font-size:13px;font-family:var(--font);outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:rgba(99,102,241,.45)}
+.field select option{background:#0f172a}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.conn-btn{width:100%;padding:9px;border-radius:8px;background:var(--in2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+.conn-btn:hover{background:rgba(99,102,241,.25)}
+
+/* connecting overlay */
+.conn-ov{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.spinner{width:38px;height:38px;border:3px solid var(--b);border-top-color:var(--in);border-radius:50%;animation:spin 1s linear infinite}
+.conn-log{font-family:var(--mono);font-size:12px;color:var(--em);background:rgba(0,0,0,.4);border:1px solid var(--b);border-radius:8px;padding:12px 16px;width:360px;min-height:90px;max-height:180px;overflow-y:auto;line-height:1.9}
+.conn-log .step{color:var(--cy)}.conn-log .ok{color:var(--em)}.conn-log .err{color:var(--re)}
+
+/* term sidebar */
+.ts-header{padding:10px 12px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.ts-title{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600}
+.ts-dev-list{flex:1;overflow-y:auto;padding:6px}
+.ts-dev{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:all .15s}
+.ts-dev:hover{background:rgba(255,255,255,.04);border-color:var(--b)}
+.ts-dev.open{background:rgba(34,211,238,.07);border-color:rgba(34,211,238,.2)}
+.ts-dev-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.ts-dev-name{font-size:12px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-dev-host{font-size:10px;color:var(--t3);font-family:var(--mono)}
+.quick-section{padding:10px 12px;border-top:1px solid var(--b)}
+.qcmd{display:block;width:100%;text-align:left;padding:5px 8px;border-radius:5px;background:var(--s2);border:1px solid var(--b2);color:var(--t2);font-size:11px;font-family:var(--mono);cursor:pointer;margin-bottom:3px;transition:all .15s}
+.qcmd:hover{background:rgba(255,255,255,.06);color:var(--t1)}
+.ai-cmd-section{padding:10px 12px;border-top:1px solid var(--b)}
+.ai-cmd-input{width:100%;background:rgba(9,15,29,.9);border:1px solid var(--b);border-radius:6px;color:var(--t1);padding:6px 9px;font-size:12px;font-family:var(--font);outline:none;margin-bottom:6px}
+.ai-cmd-input:focus{border-color:rgba(168,85,247,.4)}
+.ai-cmd-out{font-size:11px;color:#c084fc;font-family:var(--mono);background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.15);border-radius:6px;padding:8px 10px;max-height:120px;overflow-y:auto;display:none;line-height:1.7;white-space:pre-wrap}
+
+/* status bar */
+.sbar{height:22px;flex-shrink:0;background:rgba(9,15,29,.95);border-top:1px solid var(--b2);display:flex;align-items:center;padding:0 12px;gap:14px;font-size:11px;color:var(--t3);font-family:var(--mono)}
+
+/* incidents */
+.inc-item{padding:12px 14px;border-bottom:1px solid var(--b2);display:flex;gap:10px;align-items:flex-start}
+.inc-item:last-child{border-bottom:none}
+.inc-sev{width:3px;border-radius:2px;align-self:stretch;min-height:32px;flex-shrink:0}
+.inc-sev.crit{background:var(--re)}.inc-sev.warn{background:var(--am)}
+.inc-msg{font-size:13px;font-weight:500;margin-bottom:3px}
+.inc-meta{font-size:11px;color:var(--t3);display:flex;gap:8px;flex-wrap:wrap}
+.inc-actions-row{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+
+/* audit */
+.arow{padding:9px 14px;border-bottom:1px solid var(--b2);display:flex;gap:10px;font-size:12px;align-items:center}
+.arow:last-child{border-bottom:none}
+.atime{font-family:var(--mono);color:var(--t3);flex-shrink:0;width:62px}
+.adev{color:var(--cy);flex-shrink:0;width:120px;font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aact{flex:1;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* playbooks */
+.pb{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px}
+.pb-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(99,102,241,.1)}
+.pb-name{font-weight:600;font-size:13px;margin-bottom:3px}
+.pb-desc{font-size:12px;color:var(--t3);line-height:1.5}
+.pb-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.06);border:1px solid var(--b);color:var(--t2);padding:2px 6px;border-radius:4px}
+.risk{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px}
+.risk.low{background:rgba(16,185,129,.12);color:#34d399}
+.risk.med{background:rgba(245,158,11,.12);color:#fbbf24}
+.risk.hi{background:rgba(239,68,68,.12);color:#f87171}
+.toggle{width:34px;height:19px;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:rgba(99,102,241,.5);border-color:rgba(99,102,241,.6)}
+.toggle::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.9);top:2px;left:2px;transition:left .2s}
+.toggle.on::after{left:17px}
+
+/* empty */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--t4);padding:60px 0}
+.empty-icon{font-size:40px;opacity:.3}
+
+/* terminal */
+.terminal-block{background:#010810;border:1px solid rgba(99,102,241,.2);border-radius:8px;overflow:hidden;margin-top:10px}
+.term-bar2{background:rgba(15,23,42,.8);padding:5px 10px;display:flex;align-items:center;gap:5px;border-bottom:1px solid rgba(255,255,255,.05)}
+.tdot{width:10px;height:10px;border-radius:50%}
+.term-title2{font-size:11px;color:var(--t3);margin-left:4px;font-family:var(--mono);flex:1}
+.term-body2{padding:10px 12px;font-family:var(--mono);font-size:11.5px;line-height:1.8;max-height:200px;overflow-y:auto;color:#a3e635}
+.term-body2 .cmd{color:#67e8f9}.term-body2 .warn{color:#fbbf24}.term-body2 .err{color:#f87171}.term-body2 .dim{color:#475569}.term-body2 .hi{color:#c084fc}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#1e293b;border-radius:2px}
+
+/* modal */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center}
+.moverlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--b);border-radius:13px;padding:24px;width:420px;display:flex;flex-direction:column;gap:12px}
+.modal h3{font-size:15px;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">🧠</div>
+    <div><h1>K4 Monitor</h1><p>AIOps Platform</p></div>
+  </div>
+  <div class="tp g"><div class="tpdot g"></div>Monitoramento ativo</div>
+  <div class="tp p"><div class="tpdot p"></div>IA operando</div>
+  <div class="tp c" id="ssh-pill" style="display:none"><div class="tpdot c"></div><span id="ssh-pill-txt">0 sessões SSH</span></div>
+  <div class="topbar-r">
+    <button class="btn gh" onclick="triggerScenario()">🎲 Simular Incidente</button>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="ws">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <button class="ni active" onclick="goPage('dashboard',this)"><span class="ic">🏠</span>Dashboard</button>
+      <button class="ni" onclick="goPage('incidents',this)"><span class="ic">🚨</span>Incidentes<span class="nb r" id="nb-inc">0</span></button>
+      <button class="ni" onclick="goPage('playbooks',this)"><span class="ic">📋</span>Playbooks</button>
+      <div class="nav-label" style="margin-top:6px">Infraestrutura</div>
+      <button class="ni" onclick="goPage('devices',this)"><span class="ic">🖥️</span>Dispositivos</button>
+      <button class="ni" onclick="goPage('terminal',this)"><span class="ic">💻</span>Terminal SSH<span class="nb c" id="nb-ssh" style="display:none">0</span></button>
+      <button class="ni" onclick="goPage('audit',this)"><span class="ic">📜</span>Auditoria</button>
+    </div>
+    <!-- Quick connect list -->
+    <div class="sidebar-devs">
+      <div class="sdlabel">Conexão rápida</div>
+      <div id="sidebar-devs"></div>
+    </div>
+    <div class="ai-bar">
+      <div class="ai-bar-dot"><div class="ai-brain-dot"></div>Motor de IA pronto</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div class="pages">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div id="pg-dashboard" class="pg active">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px">
+          <div><h2 style="font-size:20px;font-weight:700">Dashboard</h2><p style="color:var(--t3);font-size:12px;margin-top:3px">Infraestrutura monitorada em tempo real</p></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="si" style="background:rgba(34,211,238,.1)">📡</div><div><div class="sl">Dispositivos</div><div class="sv c" id="st-total">6</div></div></div>
+          <div class="stat"><div class="si" style="background:rgba(16,185,129,.1)">✅</div><div><div class="sl">Online</div><div class="sv g" id="st-up">6</div></div></div>
+          <div class="stat"><div class="si" style="background:rgba(239,68,68,.1)">🚨</div><div><div class="sl">Incidentes</div><div class="sv r" id="st-inc">0</div></div></div>
+          <div class="stat"><div class="si" style="background:rgba(168,85,247,.1)">🤖</div><div><div class="sl">Ações IA</div><div class="sv p" id="st-ai">0</div></div></div>
+        </div>
+        <div class="row">
+          <div class="card p14" style="flex:1.3">
+            <div class="ph">Motor de IA — atividade em tempo real</div>
+            <div id="ai-activity"><div class="empty"><div class="empty-icon">🧠</div><div style="font-size:13px;color:var(--t3)">Aguardando alertas...</div><div style="font-size:11px;color:var(--t4)">Clique em "Simular Incidente" para ver a IA agir</div></div></div>
+          </div>
+          <div class="card p14" style="flex:1">
+            <div class="ph">Últimas ações executadas</div>
+            <div id="action-log"><div style="color:var(--t4);font-size:12px;text-align:center;padding:30px 0">Nenhuma ação ainda</div></div>
+          </div>
+        </div>
+        <div class="ph">Dispositivos</div>
+        <div class="dev-grid" id="dash-devs"></div>
+      </div>
+
+      <!-- ══ INCIDENTS ══ -->
+      <div id="pg-incidents" class="pg">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <div><h2 style="font-size:20px;font-weight:700">Incidentes</h2><p style="color:var(--t3);font-size:12px;margin-top:3px" id="inc-subtitle">Gerenciados pela IA</p></div>
+          <button class="btn pr" onclick="triggerScenario()">🎲 Simular</button>
+        </div>
+        <div class="card" id="inc-list"><div class="empty"><div class="empty-icon">🎉</div><div style="color:var(--t3)">Nenhum incidente. Clique em Simular.</div></div></div>
+      </div>
+
+      <!-- ══ PLAYBOOKS ══ -->
+      <div id="pg-playbooks" class="pg">
+        <div style="margin-bottom:18px"><h2 style="font-size:20px;font-weight:700">Playbooks</h2><p style="color:var(--t3);font-size:12px;margin-top:3px">Automações que a IA executa ao detectar anomalias</p></div>
+        <div id="pb-list"></div>
+      </div>
+
+      <!-- ══ DEVICES ══ -->
+      <div id="pg-devices" class="pg">
+        <div style="margin-bottom:18px"><h2 style="font-size:20px;font-weight:700">Dispositivos</h2><p style="color:var(--t3);font-size:12px;margin-top:3px">Clique em "SSH" para abrir terminal direto no dispositivo</p></div>
+        <div class="dev-grid" id="full-devs"></div>
+      </div>
+
+      <!-- ══ TERMINAL SSH ══ -->
+      <div id="pg-terminal" class="pg" style="padding:0">
+        <div class="term-layout">
+          <!-- left: device list + quick cmds + AI ask -->
+          <div class="term-sidebar">
+            <div class="ts-header">
+              <span class="ts-title">Dispositivos</span>
+              <button class="btn gh" style="padding:3px 8px;font-size:11px" onclick="openNewSession()">＋</button>
+            </div>
+            <div class="ts-dev-list" id="ts-devs"></div>
+            <div class="quick-section" id="qsection" style="display:none">
+              <div class="ph" style="margin-bottom:6px">Comandos rápidos</div>
+              <div id="qcmds-list"></div>
+            </div>
+            <div class="ai-cmd-section">
+              <div class="ph" style="margin-bottom:6px">🧠 Perguntar à IA</div>
+              <input class="ai-cmd-input" id="ai-ask" placeholder="ex: ver processos pesados" onkeydown="if(event.key==='Enter')aiAsk()"/>
+              <button class="btn pr" style="width:100%;padding:5px;font-size:11px;margin-bottom:6px" onclick="aiAsk()">Sugerir comando</button>
+              <div class="ai-cmd-out" id="ai-out"></div>
+            </div>
+          </div>
+          <!-- right: tabs + terminal panels -->
+          <div class="term-main">
+            <div class="tab-bar" id="tab-bar">
+              <div class="new-tab" onclick="openNewSession()" title="Nova sessão">＋</div>
+            </div>
+            <div class="panels" id="term-panels">
+              <div id="term-empty" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--t4)">
+                <div style="font-size:36px;opacity:.2">💻</div>
+                <div style="font-size:14px;color:var(--t3)">Nenhuma sessão aberta</div>
+                <div style="font-size:12px;text-align:center;max-width:280px">Clique em um dispositivo ao lado ou no botão "＋" para conectar via SSH</div>
+                <button class="btn pr" onclick="openNewSession()">＋ Nova sessão SSH</button>
+              </div>
+            </div>
+            <div class="sbar" id="sbar" style="display:none">
+              <span id="sbar-host">—</span>
+              <span>👤 <span id="sbar-user">—</span></span>
+              <span>🖥 <span id="sbar-type">—</span></span>
+              <span style="margin-left:auto">⌨ <span id="sbar-size">—</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ AUDIT ══ -->
+      <div id="pg-audit" class="pg">
+        <div style="margin-bottom:18px"><h2 style="font-size:20px;font-weight:700">Auditoria</h2><p style="color:var(--t3);font-size:12px;margin-top:3px">Todas as ações executadas pelo sistema e pela IA</p></div>
+        <div class="card">
+          <div style="padding:9px 14px;border-bottom:1px solid var(--b);display:flex;gap:10px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3)">
+            <span style="width:62px">Hora</span><span style="width:120px">Dispositivo</span><span style="flex:1">Ação</span><span>Resultado</span>
+          </div>
+          <div id="audit-list"><div class="empty"><div class="empty-icon" style="font-size:28px">📜</div><div style="color:var(--t3)">Nenhuma ação auditada ainda.</div></div></div>
+        </div>
+      </div>
+
+    </div><!-- /pages -->
+  </main>
+</div>
+
+<!-- ADD SESSION MODAL -->
+<div class="moverlay" id="modal-new">
+  <div class="modal">
+    <h3>💻 Nova Sessão SSH</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap" id="quick-pick"></div>
+    <hr style="border:none;border-top:1px solid var(--b);margin-bottom:12px"/>
+    <div class="field"><label>Host / IP</label><input id="m-host" placeholder="192.168.1.1"/></div>
+    <div class="g2">
+      <div class="field"><label>Porta</label><input id="m-port" value="22" type="number"/></div>
+      <div class="field"><label>Usuário</label><input id="m-user" value="admin"/></div>
+    </div>
+    <div class="field"><label>Senha</label><input id="m-pass" type="password" placeholder="••••••••"/></div>
+    <div class="field"><label>Tipo</label>
+      <select id="m-type">
+        <option value="linux">Linux / Unix</option>
+        <option value="fortios">FortiGate (FortiOS)</option>
+        <option value="cisco_ios">Cisco IOS / IOS-XE</option>
+        <option value="ubnt">Ubiquiti (AirOS)</option>
+        <option value="mikrotik">MikroTik RouterOS</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn gh" style="flex:1" onclick="closeModal()">Cancelar</button>
+      <button class="btn pr" style="flex:1" onclick="connectManual()">Conectar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DISPOSITIVOS
+// ════════════════════════════════════════
+const DEVS = [
+  {id:1,name:'FW-EDGE-01',  host:'10.0.0.1', port:22,user:'admin',  pass:'admin123',type:'fortios',  icon:'🔥',color:'rgba(99,102,241,.12)', metrics:{mem:55,cpu:22,sessions:4200}, limits:{mem:85,cpu:90}},
+  {id:2,name:'SW-CORE-01',  host:'10.0.0.2', port:22,user:'cisco',  pass:'cisco',   type:'cisco_ios',icon:'🌐',color:'rgba(34,211,238,.12)',  metrics:{cpu:31,temp:44,ports:22},    limits:{cpu:85,temp:75}},
+  {id:3,name:'AP-ROOF-01',  host:'10.0.0.50',port:22,user:'ubnt',   pass:'ubnt',    type:'ubnt',     icon:'📡',color:'rgba(16,185,129,.12)',  metrics:{signal:-58,snr:28,tp:420},  limits:{snr:15,signal:-75}},
+  {id:4,name:'SRV-APP-01',  host:'10.0.0.10',port:22,user:'root',   pass:'root123', type:'linux',    icon:'🖥️',color:'rgba(168,85,247,.12)', metrics:{mem:68,cpu:45,disk:72},      limits:{mem:90,cpu:95}},
+  {id:5,name:'MK-ROUTER-01',host:'10.0.0.5', port:22,user:'admin',  pass:'',        type:'mikrotik', icon:'🔀',color:'rgba(245,158,11,.12)',  metrics:{cpu:18,temp:38},             limits:{cpu:85,temp:70}},
+  {id:6,name:'AP-FLOOR-02', host:'10.0.0.51',port:22,user:'ubnt',   pass:'ubnt',    type:'ubnt',     icon:'📶',color:'rgba(16,185,129,.12)',  metrics:{signal:-62,snr:22,tp:180},  limits:{snr:10,signal:-80}},
+];
+
+// ════════════════════════════════════════
+// CLI SIMULADA
+// ════════════════════════════════════════
+const CLI = {
+  fortios:{
+    'get system status':()=>`\r\nVersion: FortiGate-100F v7.4.3,build2573\r\nSerial-Number: FGT100FTK22012345\r\nUptime: 12 days, 3 hours, 44 minutes\r\nHostname: FW-EDGE-01\r\nOperation Mode: NAT\r\n`,
+    'diagnose sys top 1 20':()=>`\r\nRun Time:  12 days, 3h 44min\r\nUser: 22%  System: 8%  Idle: 70%\r\nTotal memory: 4096MB  Used: 2252MB (55%)\r\n\r\n  PID   RSS %CPU %MEM NAME\r\n 1021 48200  6.0  1.1 ipsengine\r\n 1102 31200  4.0  0.7 miglogd\r\n 3812 98000  3.0  2.4 fnbamd\r\n`,
+    'diagnose sys session stat':()=>`\r\nsession table: total=4200, v4=3980, v6=220\r\ntcp: 3500  udp: 600  icmp: 100\r\nsetup_rate=42/s\r\n`,
+    'get system interface physical':()=>`\r\n== [port1] ==\r\n\tip: 200.10.10.1/29  status: up  speed: 1000Mbps\r\n== [port2] ==\r\n\tip: 10.0.0.1/24   status: up  speed: 1000Mbps\r\n`,
+    default:cmd=>`\r\nCommand parse error: '${cmd}'\r\nType '?' for help.\r\n`,
+  },
+  cisco_ios:{
+    'show version':()=>`\r\nCisco IOS XE 17.09.04a — Catalyst 9300\r\nUptime: 18 days, 7 hours\r\nProcessor: X86, DRAM: 4096MB\r\n`,
+    'show processes cpu sorted':()=>`\r\nCPU: 31% (5s) / 29% (1m)\r\n PID   %CPU Process\r\n  11   12.0 ARP Input\r\n 168    5.0 Cat STP\r\n  42    3.0 IP Input\r\n`,
+    'show interfaces status':()=>`\r\nPort     Status     Vlan  Speed\r\nGi1/0/1  connected  10    100\r\nGi1/0/2  connected  10    1G\r\nGi1/0/3  notconnect 1     auto\r\nGi1/0/24 connected  trunk 1G\r\n`,
+    'show ip route':()=>`\r\nO 0.0.0.0/0 via 10.0.0.1\r\nC 10.0.0.0/24 connected Vlan1\r\nC 192.168.10.0/24 connected Vlan10\r\n`,
+    default:cmd=>`\r\n% Invalid input: '${cmd}'\r\n`,
+  },
+  linux:{
+    'uptime && free -h':()=>`\r\n 14:32:11 up 5d 3:44, load: 0.42, 0.58, 0.61\r\n              total  used   free\r\nMem:          3.9Gi  1.7Gi  890Mi\r\nSwap:         2.0Gi    0B   2.0Gi\r\n`,
+    'ps aux --sort=-%mem | head -10':()=>`\r\nUSER    PID %CPU %MEM COMMAND\r\napp    5521  2.1 23.4 java -jar /opt/app/myapp.jar\r\npostgres 2821 0.8  4.2 postgres: appdb\r\nnginx  3014  0.1  0.3 nginx: worker\r\n`,
+    'df -h':()=>`\r\nFilesystem  Size  Used  Avail Use%\r\n/dev/sda1    50G   34G    14G  72%\r\n/dev/sda2   200G   98G    92G  52%\r\n`,
+    'ss -tlnp':()=>`\r\nLISTEN 0.0.0.0:22   sshd\r\nLISTEN 0.0.0.0:80   nginx\r\nLISTEN 0.0.0.0:8080 java\r\nLISTEN 0.0.0.0:5432 postgres\r\n`,
+    'journalctl -n 30 --no-pager':()=>`\r\nMay 22 14:30:11 server nginx: GET /api/health 200\r\nMay 22 14:28:05 server sshd: Accepted publickey for app\r\nMay 22 14:15:33 server app: GC overhead: 92ms\r\n`,
+    default:cmd=>{
+      if(cmd==='clear'||cmd==='\x0c') return '\x1b[H\x1b[2J';
+      if(cmd==='pwd') return '\r\n/root\r\n';
+      if(cmd==='whoami') return '\r\nroot\r\n';
+      if(cmd.startsWith('ls')) return '\r\napp.log  config/  data/  logs/\r\n';
+      return `\r\nbash: ${cmd}: command not found\r\n`;
+    },
+  },
+  ubnt:{
+    'ubntbox ver':()=>`\r\nModel: AirFiber 5XHD\r\nVersion: XW.v8.7.11\r\n`,
+    'iwconfig ath0':()=>`\r\nath0 ESSID:"K4-Link"\r\n  Signal: -58 dBm  Noise: -90 dBm\r\n  SNR: 28 dB  Freq: 5.5GHz\r\n`,
+    'ubntbox linkstatus':()=>`\r\nRX Signal: -58 dBm  TX: -57 dBm\r\nSNR: 28 dB  Throughput: 420 Mbps\r\n`,
+    'cat /proc/loadavg':()=>`\r\n0.12 0.18 0.22 1/84 4021\r\n`,
+    default:cmd=>`\r\n-sh: ${cmd}: not found\r\n`,
+  },
+  mikrotik:{
+    '/system resource print':()=>`\r\nuptime: 5d3h44m\r\nversion: 7.13.2\r\nfree-memory: 1034.8MiB\r\ncpu-load: 18%\r\n`,
+    '/interface print':()=>`\r\n# NAME    TYPE   STATUS\r\n0 ether1  ether  running\r\n1 ether2  ether  running\r\n2 wlan1   wlan   running\r\n`,
+    '/ip route print':()=>`\r\n# DST-ADDRESS      GATEWAY\r\n0 0.0.0.0/0        200.10.10.1\r\n1 10.0.0.0/24      ether1\r\n`,
+    '/log print count=20':()=>`\r\n14:30:11 ether2 link up\r\n14:15:33 dhcp assigned 192.168.1.100\r\n`,
+    default:cmd=>`\r\nbad command: ${cmd}\r\n`,
+  },
+};
+
+const MOTD = {
+  fortios: u=>`\x1b[1;32mFortiGate-100F — FW-EDGE-01\x1b[0m\r\nFortiOS v7.4.3 · Uptime: 12d 3h\r\n\r\n\x1b[32mFW-EDGE-01 # \x1b[0m`,
+  cisco_ios: u=>`\x1b[1;36m\r\nCisco Catalyst 9300 — SW-CORE-01\x1b[0m\r\nIOS-XE 17.09.04a · Authorized access only.\r\n\r\n\x1b[36mSW-CORE-01#\x1b[0m`,
+  linux: u=>`\x1b[1;35m\r\nSRV-APP-01 — Ubuntu 22.04\x1b[0m\r\nLoad: 0.42 · Users: 2 · Uptime: 5d\r\n\r\n\x1b[35m${u}@server:~$ \x1b[0m`,
+  ubnt: u=>`\x1b[1;32m\r\nUbiquiti AirFiber — AP-ROOF-01\x1b[0m\r\nAirOS v8.7.11\r\n\r\n\x1b[32m${u}@ubnt:~$ \x1b[0m`,
+  mikrotik: u=>`\x1b[1;33m\r\nMikroTik RouterOS 7.13.2\x1b[0m\r\n\r\n\x1b[33m[${u}@MikroTik] > \x1b[0m`,
+};
+
+const PROMPT_FN = {
+  fortios: ()=>`\x1b[32mFW-EDGE-01 # \x1b[0m`,
+  cisco_ios: ()=>`\x1b[36mSW-CORE-01#\x1b[0m`,
+  linux: u=>`\x1b[35m${u}@server:~$ \x1b[0m`,
+  ubnt: u=>`\x1b[32m${u}@ubnt:~$ \x1b[0m`,
+  mikrotik: u=>`\x1b[33m[${u}@MikroTik] > \x1b[0m`,
+};
+
+const QUICK = {
+  fortios:   ['get system status','diagnose sys top 1 20','diagnose sys session stat','get system interface physical'],
+  cisco_ios: ['show version','show processes cpu sorted','show interfaces status','show ip route'],
+  linux:     ['uptime && free -h','ps aux --sort=-%mem | head -10','df -h','ss -tlnp'],
+  ubnt:      ['ubntbox ver','iwconfig ath0','ubntbox linkstatus','cat /proc/loadavg'],
+  mikrotik:  ['/system resource print','/interface print','/ip route print','/log print count=20'],
+};
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let incidents=[], auditLog=[], actionLog=[], actionCount=0, scenarioIdx=0;
+let sessions={}, activeTab=null, tabN=0;
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function goPage(id, btn) {
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  btn?.classList.add('active');
+  if(id==='devices') renderFullDevs();
+  if(id==='playbooks') renderPlaybooks();
+  if(id==='terminal') { renderTsDevs(); resizeActiveTerminal(); }
+}
+function navToTerminal(devId) {
+  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.ni[onclick*="terminal"]')?.classList.add('active');
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pg-terminal').classList.add('active');
+  renderTsDevs();
+  const dev = DEVS.find(d=>d.id===devId);
+  if(dev) connectDev(dev);
+}
+
+// ════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════
+setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR'); },1000);
+
+// ════════════════════════════════════════
+// METRIC HELPERS
+// ════════════════════════════════════════
+function mc(v,limit,inv=false){
+  if(inv){if(v<limit*.6)return'cr';if(v<limit*.8)return'wn';return'ok';}
+  if(v>=limit)return'cr';if(v>=limit*.85)return'wn';return'ok';
+}
+function mbar(v,limit,inv=false){
+  const pct=inv?Math.min(100,(v/60)*100):Math.min(100,(v/limit)*100);
+  return `<div class="mbar"><div class="mfill ${mc(v,limit,inv)}" style="width:${pct}%"></div></div>`;
+}
+function jitter(v,p=8){return Math.max(0,parseFloat((v*(1+(Math.random()-.5)*2*(p/100))).toFixed(1)));}
+
+// ════════════════════════════════════════
+// DEVICE CARD HTML
+// ════════════════════════════════════════
+function devCardHtml(d, withActions=true){
+  const hasSSH = Object.values(sessions).some(s=>s.dev?.id===d.id&&s.state==='connected');
+  let metrics='';
+  if(d.id===1||d.id===4){
+    const mk=d.id===1?'mem':'mem', lk=d.id===1?'cpu':'cpu';
+    metrics=`
+      <div class="mbox"><div class="mname">Memória</div><div class="mval ${mc(d.metrics.mem,d.limits.mem)}">${d.metrics.mem.toFixed(0)}%</div>${mbar(d.metrics.mem,d.limits.mem)}</div>
+      <div class="mbox"><div class="mname">CPU</div><div class="mval ${mc(d.metrics.cpu,d.limits.cpu)}">${d.metrics.cpu.toFixed(0)}%</div>${mbar(d.metrics.cpu,d.limits.cpu)}</div>`;
+  } else if(d.id===2||d.id===5){
+    metrics=`
+      <div class="mbox"><div class="mname">CPU</div><div class="mval ${mc(d.metrics.cpu,d.limits.cpu)}">${d.metrics.cpu.toFixed(0)}%</div>${mbar(d.metrics.cpu,d.limits.cpu)}</div>
+      <div class="mbox"><div class="mname">Temp</div><div class="mval ${mc(d.metrics.temp,d.limits.temp)}">${d.metrics.temp.toFixed(0)}°C</div>${mbar(d.metrics.temp,d.limits.temp)}</div>`;
+  } else {
+    metrics=`
+      <div class="mbox"><div class="mname">Sinal</div><div class="mval ${mc(Math.abs(d.metrics.signal),75)}">${d.metrics.signal.toFixed(0)}dBm</div></div>
+      <div class="mbox"><div class="mname">SNR</div><div class="mval ok">${d.metrics.snr.toFixed(0)}dB</div>${mbar(d.metrics.snr,40)}</div>`;
+  }
+  const inc=incidents.find(i=>!i.resolved&&i.devId===d.id);
+  return `<div class="dc ${inc?'alert':''} ${hasSSH?'ssh-open':''}">
+    <div class="dc-top">
+      <div class="dc-icon" style="background:${d.color}">${d.icon}</div>
+      <div style="min-width:0"><div class="dc-name">${d.name}</div><div class="dc-host">${d.host}</div></div>
+      <div class="dc-badges">
+        ${hasSSH?`<span class="b ssh"><span class="bdot ssh"></span>SSH</span>`:''}
+        <span class="b up"><span class="bdot up"></span>UP</span>
+      </div>
+    </div>
+    <div class="mrow">${metrics}</div>
+    ${withActions?`<div class="dc-actions">
+      <div class="dc-btn ssh-btn ${hasSSH?'active':''}" onclick="navToTerminal(${d.id})">
+        ${hasSSH?'💻 Terminal aberto':'🔌 Conectar SSH'}
+      </div>
+      <div class="dc-btn ai-btn" onclick="triggerScenarioFor(${d.id})">🤖 Simular IA</div>
+    </div>`:''}
+  </div>`;
+}
+
+function renderDashDevs(){
+  const el=document.getElementById('dash-devs');
+  if(el) el.innerHTML=DEVS.map(d=>devCardHtml(d,true)).join('');
+}
+function renderFullDevs(){
+  const el=document.getElementById('full-devs');
+  if(el) el.innerHTML=DEVS.map(d=>devCardHtml(d,true)).join('');
+}
+
+// ════════════════════════════════════════
+// SIDEBAR DEVICES
+// ════════════════════════════════════════
+function renderSidebarDevs(){
+  const el=document.getElementById('sidebar-devs');
+  if(!el) return;
+  el.innerHTML=DEVS.map(d=>{
+    const hasSSH=Object.values(sessions).some(s=>s.dev?.id===d.id&&s.state==='connected');
+    return `<div class="sdev ${hasSSH?'ssh-open':''}" onclick="navToTerminal(${d.id})">
+      <div class="sdev-icon" style="background:${d.color}">${d.icon}</div>
+      <div class="sdev-name">${d.name}</div>
+      <div class="sdev-status ${hasSSH?'ssh':'up'}"></div>
+    </div>`;
+  }).join('');
+}
+
+function renderTsDevs(){
+  const el=document.getElementById('ts-devs');
+  if(!el) return;
+  el.innerHTML=DEVS.map(d=>{
+    const hasSSH=Object.values(sessions).some(s=>s.dev?.id===d.id&&s.state==='connected');
+    return `<div class="ts-dev ${hasSSH?'open':''}" onclick="connectDev(DEVS.find(x=>x.id===${d.id}))">
+      <div class="ts-dev-icon" style="background:${d.color}">${d.icon}</div>
+      <div style="min-width:0">
+        <div class="ts-dev-name">${d.name}</div>
+        <div class="ts-dev-host">${d.host}:${d.port}</div>
+      </div>
+      ${hasSSH?`<span class="b ssh" style="font-size:9px">SSH</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// SSH TERMINAL — SESSION MANAGEMENT
+// ════════════════════════════════════════
+function connectDev(dev){
+  if(!dev) return;
+  const existing=Object.entries(sessions).find(([,s])=>s.dev?.id===dev.id);
+  if(existing){ activateTab(existing[0]); return; }
+  openTab(dev);
+}
+
+function openNewSession(){
+  // Populate quick-pick buttons in modal
+  document.getElementById('quick-pick').innerHTML=DEVS.map(d=>
+    `<button class="btn gh" style="font-size:11px;padding:4px 9px" onclick="quickConnect(${d.id})">${d.icon} ${d.name}</button>`
+  ).join('');
+  document.getElementById('modal-new').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal-new').classList.remove('open'); }
+function quickConnect(id){
+  closeModal();
+  navToTerminal(id);
+}
+function connectManual(){
+  const dev={
+    id:Date.now(), name:document.getElementById('m-host').value||'host',
+    host:document.getElementById('m-host').value, port:+document.getElementById('m-port').value||22,
+    user:document.getElementById('m-user').value, pass:document.getElementById('m-pass').value,
+    type:document.getElementById('m-type').value, icon:'💻', color:'rgba(99,102,241,.12)',
+    metrics:{cpu:0,mem:0}, limits:{cpu:100,mem:100},
+  };
+  closeModal();
+  openTab(dev);
+}
+
+function openTab(dev){
+  const tabId=`t${++tabN}`;
+  const typeInfo=MOTD[dev.type]||MOTD.linux;
+
+  // Tab element
+  const tab=document.createElement('div');
+  tab.className='tab'; tab.id=`tab-${tabId}`;
+  tab.innerHTML=`<div class="tab-dot2 cing" id="td-${tabId}"></div><span>${dev.icon}</span><span class="tab-name" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${dev.name}</span><div class="tab-x" onclick="closeTab('${tabId}',event)">✕</div>`;
+  tab.onclick=(e)=>{ if(!e.target.classList.contains('tab-x')) activateTab(tabId); };
+  document.getElementById('tab-bar').insertBefore(tab, document.querySelector('.new-tab'));
+
+  // Panel
+  const panel=document.createElement('div');
+  panel.className='tpanel'; panel.id=`panel-${tabId}`;
+  panel.innerHTML=`
+    <div class="conn-ov" id="cov-${tabId}">
+      <div class="spinner"></div>
+      <div style="text-align:center"><div style="font-size:14px;font-weight:600;margin-bottom:4px">Conectando a ${dev.name}</div><div style="font-size:12px;color:var(--t3)">${dev.user}@${dev.host}:${dev.port}</div></div>
+      <div class="conn-log" id="clog-${tabId}"></div>
+    </div>
+    <div class="xterm-wrap" id="xt-${tabId}" style="display:none"></div>`;
+  document.getElementById('term-panels').appendChild(panel);
+
+  sessions[tabId]={dev,state:'connecting',term:null,fit:null,hist:[],histIdx:-1,cur:''};
+  activateTab(tabId);
+  simulateConnect(tabId, dev);
+}
+
+function activateTab(tabId){
+  activeTab=tabId;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tpanel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tab-${tabId}`)?.classList.add('active');
+  document.getElementById(`panel-${tabId}`)?.classList.add('active');
+  document.getElementById('term-empty').style.display='none';
+  const s=sessions[tabId];
+  if(s){ updateSbar(s); updateQuick(s.dev.type); s.term?.focus(); }
+  renderTsDevs();
+}
+
+function closeTab(tabId, e){
+  e?.stopPropagation();
+  sessions[tabId]?.term?.dispose();
+  delete sessions[tabId];
+  document.getElementById(`tab-${tabId}`)?.remove();
+  document.getElementById(`panel-${tabId}`)?.remove();
+  const rem=Object.keys(sessions);
+  if(rem.length) activateTab(rem[rem.length-1]);
+  else {
+    activeTab=null;
+    document.getElementById('term-empty').style.display='flex';
+    document.getElementById('sbar').style.display='none';
+    document.getElementById('qsection').style.display='none';
+  }
+  updateSSHPill(); renderSidebarDevs(); renderTsDevs(); renderDashDevs();
+}
+
+// ════════════════════════════════════════
+// SIMULATE SSH CONNECT
+// ════════════════════════════════════════
+async function simulateConnect(tabId, dev){
+  const log=document.getElementById(`clog-${tabId}`);
+  const steps=[
+    {t:200, m:`Resolvendo ${dev.host}...`},
+    {t:400, m:`Handshake TCP → ${dev.host}:${dev.port}`},
+    {t:700, m:`Negociando SSH-2.0 (curve25519-sha256)...`},
+    {t:1000,m:`Autenticando como ${dev.user}...`},
+    {t:1350,m:`Abrindo PTY xterm-256color (220x50)...`},
+    {t:1700,m:'<ok>Sessão estabelecida!</ok>'},
+  ];
+  for(const s of steps){
+    await sleep(s.t);
+    if(!sessions[tabId]) return;
+    const d=document.createElement('div');
+    d.innerHTML=s.m.includes('<ok>')?`<span class="ok">${s.m.replace(/<\/?ok>/g,'')}</span>`:`<span class="step">> ${s.m}</span>`;
+    log.appendChild(d); log.scrollTop=log.scrollHeight;
+  }
+  await sleep(280);
+  if(!sessions[tabId]) return;
+
+  document.getElementById(`cov-${tabId}`)?.remove();
+  const xt=document.getElementById(`xt-${tabId}`);
+  if(xt) xt.style.display='block';
+
+  const term=new Terminal({
+    theme:{background:'#0a0e1a',foreground:'#cbd5e1',cursor:'#6366f1',selectionBackground:'rgba(99,102,241,.3)',
+      black:'#0f172a',brightBlack:'#334155',red:'#ef4444',brightRed:'#f87171',
+      green:'#10b981',brightGreen:'#34d399',yellow:'#f59e0b',brightYellow:'#fbbf24',
+      blue:'#3b82f6',brightBlue:'#60a5fa',magenta:'#a855f7',brightMagenta:'#c084fc',
+      cyan:'#22d3ee',brightCyan:'#67e8f9',white:'#cbd5e1',brightWhite:'#f8fafc'},
+    fontFamily:"'JetBrains Mono','Consolas','Courier New',monospace",
+    fontSize:13,lineHeight:1.4,cursorBlink:true,cursorStyle:'block',scrollback:5000,
+  });
+  const fit=new FitAddon.FitAddon();
+  term.loadAddon(fit);
+  term.open(xt);
+  try { fit.fit(); } catch{}
+
+  sessions[tabId].term=term; sessions[tabId].fit=fit; sessions[tabId].state='connected';
+  document.getElementById(`td-${tabId}`)?.setAttribute('class','tab-dot2 conn');
+
+  term.write((MOTD[dev.type]||MOTD.linux)(dev.user));
+  term.onData(data=>handleInput(tabId,data));
+
+  const ro=new ResizeObserver(()=>{ try{fit.fit();}catch{} });
+  ro.observe(xt);
+
+  updateSSHPill(); updateSbar(sessions[tabId]); updateQuick(dev.type);
+  renderSidebarDevs(); renderTsDevs(); renderDashDevs();
+  term.focus();
+  addAudit(dev.name,'Sessão SSH aberta','Conectado com sucesso', true);
+}
+
+// ════════════════════════════════════════
+// TERMINAL INPUT
+// ════════════════════════════════════════
+function handleInput(tabId, data){
+  const s=sessions[tabId];
+  if(!s||s.state!=='connected') return;
+  const t=s.term;
+  for(let i=0;i<data.length;i++){
+    const ch=data[i], code=ch.charCodeAt(0);
+    if(ch==='\r'){
+      const cmd=s.cur.trim();
+      t.write('\r\n');
+      if(cmd){ s.hist.unshift(cmd); s.histIdx=-1; execCmd(tabId,cmd); }
+      else writePrompt(tabId);
+      s.cur='';
+    } else if(code===127||ch==='\x08'){
+      if(s.cur.length){ s.cur=s.cur.slice(0,-1); t.write('\b \b'); }
+    } else if(ch==='\x1b[A'){
+      if(s.hist.length){ s.histIdx=Math.min(s.histIdx+1,s.hist.length-1); clearInput(tabId); s.cur=s.hist[s.histIdx]; t.write(s.cur); }
+    } else if(ch==='\x1b[B'){
+      if(s.histIdx>0){ s.histIdx--; clearInput(tabId); s.cur=s.hist[s.histIdx]; t.write(s.cur); }
+      else if(s.histIdx===0){ s.histIdx=-1; clearInput(tabId); }
+    } else if(ch==='\x03'){
+      t.write('^C\r\n'); s.cur=''; writePrompt(tabId);
+    } else if(ch==='\x0c'){
+      t.write('\x1b[H\x1b[2J'); s.cur=''; writePrompt(tabId);
+    } else if(ch==='\t'){
+      const cmds=Object.keys(CLI[s.dev.type]||{}).filter(k=>k!=='default'&&k.startsWith(s.cur));
+      if(cmds.length===1){ const rest=cmds[0].slice(s.cur.length); s.cur=cmds[0]; t.write(rest); }
+      else if(cmds.length>1){ t.write('\r\n'+cmds.join('   ')+'\r\n'); writePrompt(tabId); t.write(s.cur); }
+    } else if(code>=32){ s.cur+=ch; t.write(ch); }
+  }
+}
+
+function clearInput(tabId){ const s=sessions[tabId]; for(let i=0;i<s.cur.length;i++) s.term.write('\b \b'); s.cur=''; }
+
+function writePrompt(tabId){
+  const s=sessions[tabId];
+  if(!s) return;
+  const fn=PROMPT_FN[s.dev.type]||PROMPT_FN.linux;
+  s.term.write(fn(s.dev.user));
+}
+
+function execCmd(tabId, cmd){
+  const s=sessions[tabId]; if(!s) return;
+  const map=CLI[s.dev.type]||CLI.linux;
+  const norm=cmd.trim().toLowerCase();
+  const exact=Object.keys(map).find(k=>k.toLowerCase()===norm);
+  setTimeout(()=>{
+    if(!sessions[tabId]) return;
+    let out=exact?map[exact]():(map.default?map.default(cmd):`\r\nCommand not found: ${cmd}\r\n`);
+    s.term.write(colorize(out));
+    writePrompt(tabId);
+    addAudit(s.dev.name, `SSH: ${cmd}`, 'Executado', true);
+  }, 60+Math.random()*160);
+}
+
+function sendToActive(cmd){
+  if(!activeTab||!sessions[activeTab]||sessions[activeTab].state!=='connected') return;
+  const s=sessions[activeTab];
+  clearInput(activeTab);
+  s.cur=cmd;
+  s.term.write(cmd+'\r\n');
+  s.cur='';
+  execCmd(activeTab,cmd);
+}
+
+function colorize(t){
+  return t
+    .replace(/\b(error|fail|down|FAIL|ERROR|DOWN)\b/gi,'\x1b[31m$1\x1b[0m')
+    .replace(/\b(up|ok|OK|running|connected|active)\b/g,'\x1b[32m$1\x1b[0m')
+    .replace(/\b(warning|warn)\b/gi,'\x1b[33m$1\x1b[0m')
+    .replace(/(\d+\.\d+\.\d+\.\d+)/g,'\x1b[36m$1\x1b[0m');
+}
+
+// ════════════════════════════════════════
+// QUICK COMMANDS + AI ASK
+// ════════════════════════════════════════
+function updateQuick(dtype){
+  const cmds=QUICK[dtype]||[];
+  const sec=document.getElementById('qsection');
+  const list=document.getElementById('qcmds-list');
+  if(!cmds.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+  list.innerHTML=cmds.map(c=>`<button class="qcmd" onclick="sendToActive('${c.replace(/'/g,"\\'")}')">$ ${c}</button>`).join('');
+}
+
+const AI_TIPS={
+  'memória':{fortios:'diagnose sys top 1 20\ndiagnose hardware sysinfo mem',linux:'free -h\nps aux --sort=-%mem | head -10',cisco_ios:'show processes memory sorted',ubnt:'cat /proc/meminfo',mikrotik:'/system resource print'},
+  'cpu':{fortios:'get system performance status\ndiagnose sys top 1 20',linux:'uptime && top -bn1 | head -15',cisco_ios:'show processes cpu sorted',ubnt:'cat /proc/loadavg',mikrotik:'/system resource print'},
+  'interface':{fortios:'get system interface physical',linux:'ip a && ip link show',cisco_ios:'show interfaces status',ubnt:'iwconfig ath0',mikrotik:'/interface print'},
+  'rota':{fortios:'get router info routing-table all',linux:'ip route',cisco_ios:'show ip route',ubnt:'ip route',mikrotik:'/ip route print'},
+  'log':{fortios:'diagnose debug crashlog read',linux:'journalctl -n 30 --no-pager',cisco_ios:'show logging | last 20',ubnt:'dmesg | tail -20',mikrotik:'/log print count=20'},
+  'sessão':{fortios:'diagnose sys session stat',linux:'ss -antp',cisco_ios:'show ip nat translations',ubnt:'cat /proc/net/nf_conntrack | wc -l',mikrotik:'/ip firewall connection print count-only'},
+};
+
+function aiAsk(){
+  const ask=document.getElementById('ai-ask').value.trim().toLowerCase();
+  const out=document.getElementById('ai-out');
+  if(!ask) return;
+  const s=activeTab?sessions[activeTab]:null;
+  const dtype=s?.dev?.type||'linux';
+  let found=AI_TIPS.default||{};
+  for(const [k,v] of Object.entries(AI_TIPS)){ if(ask.includes(k)){found=v;break;} }
+  const cmds=found[dtype]||Object.values(found)[0]||'uptime';
+  out.style.display='block';
+  out.innerHTML=`🧠 Para <em>${ask}</em> em <strong>${dtype}</strong>:\n\n`+
+    cmds.split('\n').map(c=>`<span style="cursor:pointer;color:#67e8f9;text-decoration:underline dotted" onclick="sendToActive('${c.replace(/'/g,"\\'")}')">$ ${c}</span>`).join('\n')+
+    `\n\n<span style="color:var(--t3);font-size:10px">💡 Clique para executar</span>`;
+}
+
+// ════════════════════════════════════════
+// STATUS BAR + PILLS
+// ════════════════════════════════════════
+function updateSbar(s){
+  const el=document.getElementById('sbar');
+  if(!s||s.state!=='connected'){el.style.display='none';return;}
+  el.style.display='flex';
+  document.getElementById('sbar-host').textContent=`${s.dev.host}:${s.dev.port}`;
+  document.getElementById('sbar-user').textContent=s.dev.user;
+  document.getElementById('sbar-type').textContent=s.dev.type;
+  document.getElementById('sbar-size').textContent=`${s.dev.name}`;
+}
+
+function updateSSHPill(){
+  const n=Object.values(sessions).filter(s=>s.state==='connected').length;
+  const pill=document.getElementById('ssh-pill');
+  const nbSSH=document.getElementById('nb-ssh');
+  if(n>0){
+    pill.style.display='flex';
+    document.getElementById('ssh-pill-txt').textContent=`${n} sessão${n!==1?'s':''} SSH`;
+    nbSSH.style.display='inline';
+    nbSSH.textContent=n;
+  } else {
+    pill.style.display='none';
+    nbSSH.style.display='none';
+  }
+}
+
+function resizeActiveTerminal(){
+  if(!activeTab||!sessions[activeTab]?.fit) return;
+  setTimeout(()=>{ try{sessions[activeTab].fit.fit();}catch{} },100);
+}
+
+// ════════════════════════════════════════
+// AIOPS SCENARIOS
+// ════════════════════════════════════════
+const SCENARIOS=[
+  {devId:1,title:'Memória crítica: 91%',sev:'crit',
+   think:`Analisando: FW-EDGE-01 (10.0.0.1) — memória em 91%.\nThreshold: 85%. Conectando via SSH para diagnóstico...\n\nExecutando: diagnose sys top 1 20\nProcessos identificados:\n  → httpsd  PID 3847: 210MB — GUI web (não-vital)\n  → reportd PID 4102: 145MB — relatórios (seguro matar)\n\nDecisão: kill httpsd + reportd. Economia: ~355MB.\nRisco: Baixo. GUI temporariamente indisponível.`,
+   steps:[{l:'SSH → FW-EDGE-01',r:'Conectado em 1.2s'},{l:'diagnose sys top 1 20',r:'3 candidatos encontrados'},{l:'Kill httpsd (PID 3847)',r:'✓ 210MB liberados'},{l:'Kill reportd (PID 4102)',r:'✓ 145MB liberados'},{l:'Verificar memória',r:'✓ 91% → 64%'}],
+   termLines:[{t:'cmd',v:'admin@FW-EDGE-01 # diagnose sys top 1 20'},{t:'',v:'Used: 3722MB/4096MB (91%)'},{t:'warn',v:'3847 214204 12.0 5.2 httpsd'},{t:'warn',v:'4102 148832  4.0 3.6 reportd'},{t:'cmd',v:'admin@FW-EDGE-01 # diagnose sys kill 11 3847'},{t:'',v:''},{t:'cmd',v:'admin@FW-EDGE-01 # diagnose sys kill 11 4102'},{t:'',v:''},{t:'hi',v:'✓ Memória: 91% → 64%'}],
+   fix:d=>{d.metrics.mem=64;},
+   sshCmd:'diagnose sys top 1 20',
+  },
+  {devId:2,title:'CPU switch em 93% — broadcast storm',sev:'crit',
+   think:`Analisando: SW-CORE-01 (10.0.0.2) — CPU em 93%.\nSpike iniciado há 4 minutos. Padrão: broadcast storm.\n\nExecutando: show processes cpu sorted\n→ Cat STP: 87% do load — recalculação STP em loop\n\nInspecionando portas:\n→ Gi0/21: 847.000 broadcast frames/s (servidor de impressão)\n\nDecisão: storm-control broadcast level 20 na Gi0/21.\nRisco: Baixo. Impressoras com latência por ~60s.`,
+   steps:[{l:'SSH → SW-CORE-01',r:'Conectado'},{l:'show processes cpu sorted',r:'STP: 87% do CPU'},{l:'show interfaces counters',r:'Gi0/21: 847K bcast/s'},{l:'storm-control broadcast level 20',r:'✓ Rate-limit aplicado'},{l:'Verificar CPU',r:'✓ 93% → 28%'}],
+   termLines:[{t:'cmd',v:'SW-CORE-01# show processes cpu sorted | head'},{t:'warn',v:'CPU: 93%/12%'},{t:'warn',v:'168 87.28% Cat STP'},{t:'cmd',v:'SW-CORE-01# conf t'},{t:'cmd',v:'(config-if)# storm-control broadcast level 20'},{t:'',v:''},{t:'hi',v:'✓ CPU: 93% → 28%'}],
+   fix:d=>{d.metrics.cpu=28;},
+   sshCmd:'show processes cpu sorted',
+  },
+  {devId:3,title:'SNR degradado: 8dB (mínimo: 15dB)',sev:'crit',
+   think:`Analisando: AP-ROOF-01 (10.0.0.50) — SNR em 8dB.\nThreshold mínimo: 15dB. Throughput: 47Mbps (era 420).\n\nScan de espectro 5GHz:\n  Canal 36 [5.18GHz]: 87% ocupação — ATUAL\n  Canal 100 [5.50GHz]: 12% ocupação — ÓTIMO\n\nCanal 100 selecionado: DFS disponível, mínima interferência.\nAção: SNMP SET → mudar canal 36→100.\nRisco: Baixo. Link interrompido por ~12s durante re-associação.`,
+   steps:[{l:'SNMP GET métricas atuais',r:'SNR: 8dB, Canal: 36'},{l:'Scan de espectro',r:'Canal 100: 12% ocupação'},{l:'SNMP SET: canal = 100',r:'✓ Comando aceito'},{l:'Aguardar re-associação',r:'Link re-estabelecido em 11s'},{l:'Verificar SNR',r:'✓ 8dB → 31dB'}],
+   termLines:[{t:'cmd',v:'root@AP-ROOF-01:~# ubntbox spectrumScan'},{t:'warn',v:'CH 36 [5180MHz]: 87% ← ATUAL'},{t:'hi',v:'CH 100 [5500MHz]: 12% ← MELHOR'},{t:'cmd',v:'root@AP-ROOF-01:~# iwconfig ath0 channel 100'},{t:'',v:'Re-associating... 11s'},{t:'hi',v:'✓ SNR: 8dB → 31dB'}],
+   fix:d=>{d.metrics.snr=31; d.metrics.signal=-55;},
+   sshCmd:'ubntbox linkstatus',
+  },
+  {devId:4,title:'Memory leak: 96% — processo Java',sev:'crit',
+   think:`Analisando: SRV-APP-01 (10.0.0.10) — memória em 96%.\nHistórico: 68%→74%→81%→89%→96% (últimos 30min).\nCrescimento linear: +9.3%/h — padrão de memory leak.\n\nProcesso: java -jar myapp.jar (PID 5521, 3.8GB)\nHeap Java: 99.9% esgotado. Full GC: 847×/min.\n\nVerificação: sem transações ativas há 2min.\nServiço gerenciado por systemd (reiniciável).\n\nDecisão: systemctl restart myapp.service.\nRisco: Médio. Serviço ficará ~8s indisponível.`,
+   steps:[{l:'SSH → SRV-APP-01',r:'Conectado'},{l:'ps aux --sort=-%mem',r:'java PID 5521: 3.8GB (96%)'},{l:'Analisar heap (jcmd)',r:'Leak confirmado: +1.2GB/3h'},{l:'Checar transações ativas',r:'✓ Nenhuma — reinício seguro'},{l:'systemctl restart myapp',r:'✓ Serviço reiniciado em 8s'},{l:'Verificar saúde',r:'✓ 96% → 41% | HTTP 200'}],
+   termLines:[{t:'cmd',v:'root@SRV-APP-01:~# ps aux --sort=-%mem | head'},{t:'warn',v:'app 5521 98.2 95.8 java -jar myapp.jar'},{t:'cmd',v:'root@SRV-APP-01:~# systemctl restart myapp'},{t:'dim',v:'Stopping... 3.2s | Started: 8.1s'},{t:'cmd',v:'root@SRV-APP-01:~# curl http://localhost:8080/health'},{t:'hi',v:'{"status":"UP","memory":"41%"}'}],
+   fix:d=>{d.metrics.mem=41;},
+   sshCmd:'ps aux --sort=-%mem | head -10',
+  },
+];
+
+let lastScenario={};
+
+function triggerScenarioFor(devId){
+  const sc=SCENARIOS.find(s=>s.devId===devId)||SCENARIOS[scenarioIdx%SCENARIOS.length];
+  scenarioIdx++;
+  fireIncident(sc);
+}
+
+function triggerScenario(){
+  const sc=SCENARIOS[scenarioIdx%SCENARIOS.length];
+  scenarioIdx++;
+  fireIncident(sc);
+}
+
+async function fireIncident(sc){
+  const dev=DEVS.find(d=>d.id===sc.devId);
+  const id=Date.now();
+  const inc={id,devId:dev.id,devName:dev.name,title:sc.title,sev:sc.sev,sc,status:'analyzing',resolved:false,time:new Date().toLocaleTimeString('pt-BR')};
+  incidents.unshift(inc);
+  updateTopStats();
+  renderDashDevs(); renderFullDevs();
+  renderIncidents();
+  showAIActivity(inc,sc,dev);
+  // Also open SSH session to device and run the key command
+  await sleep(2000);
+  if(!Object.values(sessions).some(s=>s.dev?.id===dev.id)) {
+    openTab(dev);
+    await sleep(2200);
+  }
+  const existingTab=Object.entries(sessions).find(([,s])=>s.dev?.id===dev.id);
+  if(existingTab){
+    const [tabId]=existingTab;
+    setTimeout(()=>{ execCmd(tabId, sc.sshCmd); addAudit(dev.name,`IA executou: ${sc.sshCmd}`,'Diagnóstico coletado',true); },500);
+  }
+  await executeSteps(inc,sc,dev);
+}
+
+function showAIActivity(inc,sc,dev){
+  const el=document.getElementById('ai-activity');
+  el.innerHTML=`<div class="ai-panel">
+    <div class="ai-ph">
+      <span class="ai-spin">🧠</span>
+      <div style="flex:1"><div style="font-weight:600;color:#c084fc;font-size:13px">IA analisando: ${inc.title}</div><div style="font-size:11px;color:var(--t3);margin-top:2px">${dev.name} · ${dev.host}</div></div>
+      <span class="b ai"><span class="bdot ai"></span>Processando</span>
+    </div>
+    <div class="ai-think" id="ai-think"><span class="cursor"></span></div>
+    <div class="terminal-block" id="ai-term" style="margin:0 14px 12px;display:none">
+      <div class="term-bar2"><div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#ffbd2e;margin-left:4px"></div><div class="tdot" style="background:#28ca41;margin-left:4px"></div><div class="term-title2">SSH — ${dev.host}</div></div>
+      <div class="term-body2" id="ai-term-body"></div>
+    </div>
+    <div class="ai-steps" id="ai-steps" style="display:none"></div>
+  </div>`;
+  typeText('ai-think', sc.think, 10);
+}
+
+function typeText(elId,text,spd){
+  const el=document.getElementById(elId); if(!el) return;
+  let i=0;
+  el.innerHTML='<span class="cursor"></span>';
+  const t=setInterval(()=>{
+    if(i>=text.length){clearInterval(t);el.innerHTML=text.replace(/\n/g,'<br>');return;}
+    el.innerHTML=text.slice(0,i).replace(/\n/g,'<br>')+'<span class="cursor"></span>';
+    i+=4;
+  },spd);
+}
+
+async function executeSteps(inc,sc,dev){
+  await sleep(sc.think.length/4*10+800);
+  const stEl=document.getElementById('ai-steps');
+  const tEl=document.getElementById('ai-term');
+  if(stEl) stEl.style.display='flex';
+  if(tEl)  tEl.style.display='block';
+  const icons={pending:'○',run:'⚡',done:'✓'};
+  const steps=sc.steps.map(s=>({...s,status:'pending'}));
+
+  function renderSteps(){
+    if(!stEl) return;
+    stEl.innerHTML=steps.map(s=>`<div class="ai-step ${s.status==='run'?'run':s.status==='done'?'done':''}">
+      <div class="step-ic ${s.status==='run'?'run':s.status==='done'?'done':'pend'}">${icons[s.status]||'○'}</div>
+      <div><div style="color:var(--t1)">${s.l}</div>${s.status!=='pending'?`<div style="font-size:11px;color:var(--t3);margin-top:1px">${s.r}</div>`:''}</div>
+    </div>`).join('');
+  }
+
+  const tbody=document.getElementById('ai-term-body');
+  for(let i=0;i<steps.length;i++){
+    steps[i].status='run'; renderSteps();
+    await sleep(700+Math.random()*300);
+    steps[i].status='done'; renderSteps();
+    if(tbody&&sc.termLines[i]){ appendTerm(tbody,sc.termLines[i]); }
+    addAudit(dev.name,steps[i].l,steps[i].r,true);
+    addActionLog(i===steps.length-1?'✅':'⚡',`${dev.name}: ${steps[i].l}`,i===steps.length-1?'var(--em)':'var(--cy)');
+    actionCount++; document.getElementById('st-ai').textContent=actionCount;
+  }
+  if(tbody&&sc.termLines) sc.termLines.forEach(l=>{ if(!tbody.querySelector(`[data-v="${l.v}"]`)) appendTerm(tbody,l); });
+
+  sc.fix(dev);
+  inc.resolved=true; inc.status='done';
+  updateTopStats(); renderIncidents(); renderDashDevs(); renderFullDevs(); renderSidebarDevs();
+  const sub=document.querySelector('#ai-activity .b.ai');
+  if(sub) sub.outerHTML=`<span class="b done"><span class="bdot up"></span>Concluído</span>`;
+}
+
+function appendTerm(el,line){
+  const d=document.createElement('div');
+  d.className=line.t||''; d.textContent=line.v;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+
+function addAudit(dev,action,result,ok){
+  const e={time:new Date().toLocaleTimeString('pt-BR'),dev,action,result,ok};
+  auditLog.unshift(e);
+  const el=document.getElementById('audit-list');
+  if(!el) return;
+  if(auditLog.length===1) el.innerHTML='';
+  el.innerHTML=auditLog.slice(0,60).map(a=>`<div class="arow">
+    <div class="atime">${a.time}</div>
+    <div class="adev">${a.dev}</div>
+    <div class="aact">${a.action}</div>
+    <span class="b ${a.ok?'done':'down'}">${a.ok?'✓':'✗'}</span>
+  </div>`).join('');
+}
+
+function addActionLog(icon,text,color){
+  actionLog.unshift({icon,text,color,time:new Date().toLocaleTimeString('pt-BR')});
+  if(actionLog.length>8) actionLog.pop();
+  const el=document.getElementById('action-log');
+  if(!el) return;
+  el.innerHTML=actionLog.map(a=>`<div style="display:flex;gap:7px;padding:5px 0;border-bottom:1px solid var(--b2)">
+    <span>${a.icon}</span>
+    <div style="flex:1;min-width:0"><div style="font-size:12px;color:${a.color};line-height:1.3">${a.text}</div>
+    <div style="font-size:10px;color:var(--t4);font-family:var(--mono)">${a.time}</div></div>
+  </div>`).join('');
+}
+
+function renderIncidents(){
+  const el=document.getElementById('inc-list');
+  if(!el) return;
+  if(!incidents.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🎉</div><div style="color:var(--t3)">Nenhum incidente. Clique em Simular.</div></div>'; return; }
+  const active=incidents.filter(i=>!i.resolved);
+  document.getElementById('nb-inc').textContent=active.length;
+  document.getElementById('inc-subtitle').textContent=`${active.length} ativo${active.length!==1?'s':''} · ${incidents.filter(i=>i.resolved).length} resolvido${incidents.filter(i=>i.resolved).length!==1?'s':''}`;
+  el.innerHTML=incidents.map(inc=>`<div class="inc-item">
+    <div class="inc-sev ${inc.sev}"></div>
+    <div style="flex:1;min-width:0">
+      <div class="inc-msg">${inc.title}</div>
+      <div class="inc-meta"><span>📍 ${inc.devName}</span><span>🕐 ${inc.time}</span></div>
+      <div class="inc-actions-row">
+        <span class="b ${inc.resolved?'done':inc.status==='analyzing'?'ai':'crit'}"><span class="bdot ${inc.resolved?'up':inc.status==='analyzing'?'ai':'crit'}"></span>${inc.resolved?'Resolvido pela IA':'IA analisando...'}</span>
+        ${!inc.resolved?`<button class="btn gh" style="padding:3px 9px;font-size:11px" onclick="navToTerminal(${inc.devId})">💻 Abrir SSH</button>`:''}
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+function updateTopStats(){
+  const active=incidents.filter(i=>!i.resolved).length;
+  document.getElementById('st-inc').textContent=active;
+  document.getElementById('nb-inc').textContent=active;
+  document.getElementById('st-up').textContent=DEVS.length;
+}
+
+// ════════════════════════════════════════
+// PLAYBOOKS
+// ════════════════════════════════════════
+const PBs=[
+  {icon:'🔥',name:'FortiGate: Memória Crítica',desc:'Conecta via SSH, lista processos, identifica não-vitais com maior consumo e encerra com segurança.',trigger:'mem > 85%',tags:['fortios','ssh','auto-kill'],risk:'med',on:true},
+  {icon:'🌐',name:'Switch: Broadcast Storm',desc:'Detecta CPU alta em switches. Analisa portas com storm e aplica rate-limiting via SSH.',trigger:'cpu > 85%',tags:['switch','ssh','storm-control'],risk:'med',on:true},
+  {icon:'📡',name:'Antena: Sinal Degradado',desc:'Quando SNR < 15dB, faz scan de espectro e migra para canal com menor interferência via SNMP SET.',trigger:'snr < 15',tags:['ubnt','snmp','channel'],risk:'low',on:true},
+  {icon:'🖥️',name:'Servidor: Memory Leak',desc:'Detecta crescimento linear de memória, identifica processo ofensor e faz restart seguro via systemctl.',trigger:'mem > 90%',tags:['linux','ssh','restart'],risk:'med',on:true},
+  {icon:'🔐',name:'FortiGate: Sessões Anômalas',desc:'Detecta flood de sessões. Analisa top IPs e cria policy de bloqueio automático.',trigger:'sessions > 50000',tags:['fortios','ddos','policy'],risk:'hi',on:false},
+];
+
+function renderPlaybooks(){
+  const el=document.getElementById('pb-list');
+  if(!el) return;
+  const riskLabel={low:'Baixo',med:'Médio',hi:'Alto'};
+  el.innerHTML=PBs.map((p,i)=>`<div class="pb">
+    <div class="pb-icon">${p.icon}</div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
+        <div class="pb-name">${p.name}</div>
+        <span class="risk ${p.risk}">Risco ${riskLabel[p.risk]}</span>
+      </div>
+      <div class="pb-desc">${p.desc}</div>
+      <div class="pb-tags">
+        <span class="tag">trigger: ${p.trigger}</span>
+        ${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}
+      </div>
+    </div>
+    <div class="toggle ${p.on?'on':''}" onclick="PBs[${i}].on=!PBs[${i}].on;this.classList.toggle('on')"></div>
+  </div>`).join('');
+}
+
+// ════════════════════════════════════════
+// METRIC JITTER (live feel)
+// ════════════════════════════════════════
+setInterval(()=>{
+  DEVS.forEach(d=>{
+    if(d.metrics.mem!==undefined) d.metrics.mem=Math.max(20,Math.min(99,jitter(d.metrics.mem,2)));
+    if(d.metrics.cpu!==undefined) d.metrics.cpu=Math.max(2,Math.min(99,jitter(d.metrics.cpu,5)));
+    if(d.metrics.snr!==undefined) d.metrics.snr=Math.max(5,jitter(d.metrics.snr,3));
+    if(d.metrics.signal!==undefined) d.metrics.signal=Math.min(-40,jitter(Math.abs(d.metrics.signal),2))*-1;
+  });
+  renderDashDevs();
+  if(document.getElementById('pg-devices').classList.contains('active')) renderFullDevs();
+},4000);
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+renderDashDevs();
+renderSidebarDevs();
+renderPlaybooks();
+
+setTimeout(()=>{
+  const h=document.createElement('div');
+  h.style.cssText='position:fixed;bottom:18px;right:18px;background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;padding:9px 15px;border-radius:10px;font-size:12px;z-index:50;animation:fi .3s';
+  h.innerHTML='🧠 Primeiro incidente será simulado em instantes...';
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),4000);
+},500);
+
+setTimeout(()=>triggerScenario(),7000);
+setInterval(()=>{ if(incidents.filter(i=>!i.resolved).length<2) triggerScenario(); },32000);
+</script>
+</body>
+</html>
