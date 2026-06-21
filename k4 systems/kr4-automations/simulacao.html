@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KR4 Automations – NOC Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg-0:#030810; --bg-1:#050e1a; --bg-2:#081426;
+  --card:#0a1830; --card-h:#0e2040;
+  --blue:#0077ff; --elec:#00aaff; --deep:#0044cc;
+  --silver:#a8b8d8; --silverl:#c8d8f0;
+  --white:#fff; --muted:#6a7f9c; --body:#8fa0bc;
+  --green:#00d4aa; --yellow:#ffb800; --red:#ff4757; --purple:#b06aff; --orange:#ff7a00;
+  --border:rgba(0,119,255,.15); --border-h:rgba(0,119,255,.4);
+  --r:12px; --rs:8px;
+  --fm:'Inter',sans-serif; --fd:'Rajdhani',sans-serif; --fmono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg-0);color:var(--white);font-family:var(--fm);overflow:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--deep);border-radius:2px}
+
+/* ─── TOP BAR ─── */
+.topbar{height:54px;background:var(--bg-1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:18px;flex-shrink:0}
+.t-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.t-logo-txt{font-family:var(--fd);font-size:1.05rem;font-weight:700;color:var(--silverl);letter-spacing:.05em}
+.t-logo-sub{display:block;font-size:.52rem;font-weight:500;color:var(--elec);letter-spacing:.2em;margin-top:1px}
+.t-title{font-family:var(--fd);font-size:.85rem;font-weight:600;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;border-left:1px solid var(--border);padding-left:18px}
+.t-spacer{flex:1}
+.t-live{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--green);font-weight:600}
+.t-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pdot 2s ease-in-out infinite}
+@keyframes pdot{0%,100%{box-shadow:0 0 0 0 rgba(0,212,170,.5)}50%{box-shadow:0 0 0 5px rgba(0,212,170,0)}}
+.t-clock{font-family:var(--fmono);font-size:.75rem;color:var(--muted);background:rgba(255,255,255,.04);padding:3px 11px;border-radius:6px;border:1px solid var(--border)}
+
+/* ─── FLOW BAR ─── */
+.flowbar{height:38px;background:var(--bg-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:0;flex-shrink:0;overflow:hidden}
+.fb-node{display:flex;align-items:center;gap:6px;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:0 14px;white-space:nowrap}
+.fb-node.snmp{color:var(--orange)}
+.fb-node.ticket{color:var(--yellow)}
+.fb-node.hub{color:var(--elec);background:rgba(0,170,255,.1);border:1px solid rgba(0,170,255,.25);border-radius:5px;padding:4px 12px}
+.fb-node.config{color:#4dffb8}
+.fb-node.tshoot{color:var(--purple)}
+.fb-node.out-ok{color:var(--green)}
+.fb-node.out-field{color:var(--red)}
+.fb-node.out-op{color:var(--purple)}
+.fb-arrow{color:var(--border-h);font-size:.7rem;padding:0 2px}
+
+/* ─── STATS BAR ─── */
+.statsbar{height:42px;background:var(--bg-1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;flex-shrink:0}
+.st{display:flex;align-items:center;gap:6px;padding:0 16px;border-right:1px solid var(--border);font-size:.72rem}
+.st:first-child{padding-left:0}
+.stl{color:var(--muted)}
+.stv{font-family:var(--fd);font-size:.92rem;font-weight:700;color:var(--white)}
+.stv.b{color:var(--elec)}.stv.g{color:var(--green)}.stv.y{color:var(--yellow)}.stv.r{color:var(--red)}.stv.p{color:var(--purple)}
+
+/* ─── LAYOUT ─── */
+.app{display:flex;flex-direction:column;height:100vh}
+.main{display:grid;grid-template-columns:256px 1fr 316px;flex:1;overflow:hidden;min-height:0}
+.panel{display:flex;flex-direction:column;overflow:hidden}
+.p-left{background:var(--bg-1);border-right:1px solid var(--border)}
+.p-center{background:var(--bg-0)}
+.p-right{background:var(--bg-1);border-left:1px solid var(--border)}
+.ph{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ph-t{font-family:var(--fd);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--silver)}
+.ph-b{font-size:.62rem;font-weight:600;background:rgba(0,119,255,.15);color:var(--elec);padding:2px 8px;border-radius:100px;border:1px solid rgba(0,119,255,.25)}
+.pscroll{flex:1;overflow-y:auto}
+
+/* ─── EQUIPMENT ─── */
+.eq-wrap{padding:9px}
+.eq{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:9px 11px;margin-bottom:6px;transition:border-color .3s,background .3s;cursor:default}
+.eq:hover{border-color:var(--border-h);background:var(--card-h)}
+.eq.warn{border-color:rgba(255,184,0,.35);background:rgba(255,184,0,.04)}
+.eq.offline{border-color:rgba(255,71,87,.35);background:rgba(255,71,87,.05)}
+.eq.alert{border-color:rgba(255,71,87,.5);background:rgba(255,71,87,.08);animation:ealert 1.8s ease-in-out infinite}
+@keyframes ealert{0%,100%{border-color:rgba(255,71,87,.4)}50%{border-color:rgba(255,71,87,.9);box-shadow:0 0 14px rgba(255,71,87,.2)}}
+.eq-hdr{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.d-on{background:var(--green)}
+.d-warn{background:var(--yellow);animation:dw 1.5s ease-in-out infinite}
+.d-off{background:var(--red)}
+.d-alert{background:var(--red);animation:da 1s ease-in-out infinite}
+@keyframes dw{0%,100%{box-shadow:0 0 0 0 rgba(255,184,0,.6)}50%{box-shadow:0 0 0 4px rgba(255,184,0,0)}}
+@keyframes da{0%,100%{box-shadow:0 0 0 0 rgba(255,71,87,.7)}50%{box-shadow:0 0 0 5px rgba(255,71,87,0)}}
+.eq-name{font-family:var(--fmono);font-size:.68rem;font-weight:500;color:var(--white);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eq-type{font-size:.6rem;color:var(--muted);margin-bottom:5px}
+.eq-mets{display:flex;gap:9px;flex-wrap:wrap}
+.eq-m{display:flex;flex-direction:column;gap:1px}
+.eq-ml{font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.eq-mv{font-family:var(--fmono);font-size:.64rem;color:var(--silver)}
+.eq-mv.hi{color:var(--yellow)}.eq-mv.crit{color:var(--red)}.eq-mv.ok{color:var(--green)}
+.eq-alrt{margin-top:6px;font-size:.6rem;color:var(--red);background:rgba(255,71,87,.1);padding:3px 7px;border-radius:3px;border-left:2px solid var(--red)}
+.eq-info{margin-top:6px;font-size:.6rem;color:var(--green);background:rgba(0,212,170,.08);padding:3px 7px;border-radius:3px;border-left:2px solid var(--green)}
+
+/* ─── TICKETS HEADER ─── */
+.ch{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--bg-1);flex-wrap:wrap}
+.ch-filters{display:flex;gap:5px}
+.cf{font-size:.65rem;font-weight:600;padding:3px 10px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s}
+.cf.active,.cf:hover{background:rgba(0,119,255,.15);border-color:rgba(0,119,255,.4);color:var(--elec)}
+.btn-manual{position:relative;margin-left:auto;display:flex;align-items:center;gap:5px;font-size:.68rem;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid rgba(0,212,170,.4);background:rgba(0,212,170,.1);color:var(--green);cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-manual:hover{background:rgba(0,212,170,.2);border-color:rgba(0,212,170,.6)}
+.tlist{flex:1;overflow-y:auto;padding:12px}
+
+/* ─── TICKET CARD ─── */
+.tc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px;margin-bottom:9px;transition:border-color .3s,transform .2s;animation:tci .35s ease both}
+@keyframes tci{from{opacity:0;transform:translateY(-7px)}to{opacity:1;transform:translateY(0)}}
+.tc:hover{border-color:var(--border-h);transform:translateX(2px)}
+.tc.p-h{border-left:3px solid var(--red)}.tc.p-m{border-left:3px solid var(--yellow)}.tc.p-l{border-left:3px solid var(--green)}
+.tc-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
+.tc-id{font-family:var(--fmono);font-size:.6rem;color:var(--muted);background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:2px}
+.tc-title{font-family:var(--fd);font-size:.88rem;font-weight:600;color:var(--white);flex:1;line-height:1.3}
+.tc-st{flex-shrink:0;font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.05em;text-transform:uppercase}
+.s-open{background:rgba(255,184,0,.15);color:var(--yellow);border:1px solid rgba(255,184,0,.3)}
+.s-ai{background:rgba(0,119,255,.15);color:var(--elec);border:1px solid rgba(0,119,255,.35);animation:aip 1.5s ease-in-out infinite}
+@keyframes aip{0%,100%{box-shadow:0 0 0 0 rgba(0,170,255,.3)}50%{box-shadow:0 0 0 4px rgba(0,170,255,0)}}
+.s-resolved{background:rgba(0,212,170,.15);color:var(--green);border:1px solid rgba(0,212,170,.3)}
+.s-esc-field{background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3)}
+.s-esc-op{background:rgba(176,106,255,.15);color:var(--purple);border:1px solid rgba(176,106,255,.3)}
+/* fluxo path */
+.tc-flow{display:flex;align-items:center;gap:4px;margin-bottom:7px;flex-wrap:wrap}
+.tc-fp{font-size:.58rem;font-weight:600;padding:2px 7px;border-radius:100px;letter-spacing:.04em;text-transform:uppercase}
+.fp-snmp{background:rgba(255,122,0,.12);color:var(--orange);border:1px solid rgba(255,122,0,.25)}
+.fp-manual{background:rgba(255,255,255,.07);color:var(--silver);border:1px solid rgba(255,255,255,.12)}
+.fp-ticket{background:rgba(255,184,0,.1);color:var(--yellow);border:1px solid rgba(255,184,0,.2)}
+.fp-hub{background:rgba(0,170,255,.12);color:var(--elec);border:1px solid rgba(0,170,255,.25)}
+.fp-config{background:rgba(77,255,184,.1);color:#4dffb8;border:1px solid rgba(77,255,184,.25)}
+.fp-tshoot{background:rgba(176,106,255,.1);color:var(--purple);border:1px solid rgba(176,106,255,.25)}
+.fp-mac{background:rgba(255,122,0,.1);color:#ff9a45;border:1px solid rgba(255,122,0,.25)}
+.fp-op{background:rgba(176,106,255,.1);color:var(--purple);border:1px solid rgba(176,106,255,.2)}
+.fp-field{background:rgba(255,71,87,.1);color:var(--red);border:1px solid rgba(255,71,87,.2)}
+.fp-ok{background:rgba(0,212,170,.1);color:var(--green);border:1px solid rgba(0,212,170,.2)}
+.fp-arr{color:var(--muted);font-size:.6rem}
+.tc-meta{display:flex;gap:12px;margin-bottom:8px;font-size:.66rem;color:var(--muted);flex-wrap:wrap}
+.tc-m{display:flex;align-items:center;gap:3px}
+.tc-steps{display:flex;gap:3px;margin-bottom:2px}
+.ts{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.08);transition:background .5s}
+.ts.done{background:var(--green)}.ts.active{background:var(--blue);animation:sblink 1s ease-in-out infinite}.ts.esc{background:var(--red)}
+@keyframes sblink{0%,100%{opacity:.65}50%{opacity:1}}
+.tc-act{margin-top:6px;font-size:.66rem;color:var(--elec);display:flex;align-items:center;gap:5px}
+.sp{width:9px;height:9px;border:2px solid rgba(0,170,255,.3);border-top-color:var(--elec);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tc-res{margin-top:7px;font-size:.66rem;padding:5px 9px;border-radius:5px;display:flex;align-items:flex-start;gap:5px;line-height:1.5}
+.tc-res.ok{background:rgba(0,212,170,.09);color:var(--green);border:1px solid rgba(0,212,170,.2)}
+.tc-res.field{background:rgba(255,71,87,.07);color:#ff8c96;border:1px solid rgba(255,71,87,.18)}
+.tc-res.op{background:rgba(176,106,255,.07);color:var(--purple);border:1px solid rgba(176,106,255,.2)}
+
+/* ─── LOG ─── */
+.log-wrap{flex:1;overflow-y:auto;padding:5px}
+.log-inner{display:flex;flex-direction:column;gap:1px}
+.le{display:flex;gap:5px;padding:3px 5px;border-radius:3px;font-family:var(--fmono);font-size:.61rem;line-height:1.5;animation:lfade .22s ease}
+@keyframes lfade{from{opacity:0;transform:translateX(4px)}to{opacity:1;transform:translateX(0)}}
+.le:hover{background:rgba(255,255,255,.025)}
+.lt{color:var(--muted);flex-shrink:0;width:52px}
+.lk{flex-shrink:0;width:46px;font-weight:600;text-align:right}
+.lk.info{color:var(--elec)}.lk.ok{color:var(--green)}.lk.warn{color:var(--yellow)}.lk.err{color:var(--red)}.lk.ai{color:var(--purple)}.lk.snmp{color:var(--orange)}.lk.cfg{color:#4dffb8}
+.lm{color:var(--silver);word-break:break-word}
+.lm .h{color:var(--white);font-weight:600}.lm .cmd{color:#aaffaa}.lm .ip{color:var(--elec)}.lm .mac{color:var(--orange)}
+
+/* ─── MODAL ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(3,8,16,.85);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-card{background:var(--bg-2);border:1px solid var(--border-h);border-radius:var(--r);padding:28px;width:420px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-title{font-family:var(--fd);font-size:1.3rem;font-weight:700;color:var(--white);margin-bottom:6px}
+.modal-sub{font-size:.78rem;color:var(--body);margin-bottom:22px}
+.modal-opts{display:flex;flex-direction:column;gap:9px}
+.mopt{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:13px 15px;cursor:pointer;transition:all .2s;text-align:left;width:100%}
+.mopt:hover{border-color:var(--border-h);background:var(--card-h);transform:translateX(3px)}
+.mopt-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mopt-title{font-family:var(--fd);font-size:.88rem;font-weight:700;color:var(--white);margin-bottom:2px}
+.mopt-desc{font-size:.68rem;color:var(--body)}
+.modal-close{margin-top:16px;width:100%;padding:9px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.78rem;cursor:pointer;transition:all .2s}
+.modal-close:hover{border-color:var(--border-h);color:var(--white)}
+
+/* ─── TOAST ─── */
+.toast-wrap{position:fixed;top:64px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px}
+.tn{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;max-width:290px;display:flex;align-items:flex-start;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.45);animation:tin .3s ease;transition:opacity .25s,transform .25s}
+@keyframes tin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.tn.out{opacity:0;transform:translateX(16px)}
+.tn.danger{border-color:rgba(255,71,87,.4)}.tn.success{border-color:rgba(0,212,170,.4)}.tn.info{border-color:rgba(0,119,255,.4)}.tn.warning{border-color:rgba(255,184,0,.4)}.tn.purple{border-color:rgba(176,106,255,.4)}
+.tn-t{font-family:var(--fd);font-size:.78rem;font-weight:700;color:var(--white);margin-bottom:1px}
+.tn-d{font-size:.66rem;color:var(--body)}
+
+/* ─── BELL (Sino de Notificação) ─── */
+.bell-wrap{position:relative}
+.bell-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--silver);transition:all .2s;position:relative}
+.bell-btn:hover{border-color:var(--border-h);background:rgba(0,119,255,.1);color:var(--white)}
+.bell-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;background:var(--red);color:#fff;font-size:.55rem;font-weight:700;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg-1);animation:bbounce .4s ease;display:none}
+.bell-badge.show{display:flex}
+@keyframes bbounce{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.bell-drop{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:var(--bg-2);border:1px solid var(--border-h);border-radius:var(--r);box-shadow:0 16px 48px rgba(0,0,0,.6);z-index:500;display:none;flex-direction:column;overflow:hidden}
+.bell-drop.open{display:flex}
+.bell-drop-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.bell-drop-title{font-family:var(--fd);font-size:.78rem;font-weight:700;color:var(--white);letter-spacing:.06em;text-transform:uppercase}
+.bell-clear{font-size:.62rem;color:var(--muted);cursor:pointer;transition:color .2s}
+.bell-clear:hover{color:var(--elec)}
+.bell-list{max-height:340px;overflow-y:auto}
+.bell-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);transition:background .2s;animation:tci .3s ease}
+.bell-item:hover{background:rgba(255,255,255,.03)}
+.bell-item:last-child{border-bottom:none}
+.bell-item.unread{background:rgba(0,119,255,.04)}
+.bi-type{flex-shrink:0;font-size:.55rem;font-weight:700;padding:2px 6px;border-radius:100px;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.bi-proativo{background:rgba(0,212,170,.15);color:var(--green);border:1px solid rgba(0,212,170,.3)}
+.bi-reativo{background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3)}
+.bi-seguranca{background:rgba(176,106,255,.15);color:var(--purple);border:1px solid rgba(176,106,255,.3)}
+.bi-config{background:rgba(77,255,184,.12);color:#4dffb8;border:1px solid rgba(77,255,184,.25)}
+.bi-info{background:rgba(0,119,255,.15);color:var(--elec);border:1px solid rgba(0,119,255,.3)}
+.bi-body{flex:1}
+.bi-msg{font-size:.68rem;color:var(--silver);line-height:1.45;margin-bottom:2px}
+.bi-time{font-family:var(--fmono);font-size:.58rem;color:var(--muted)}
+.bell-empty{padding:24px;text-align:center;font-size:.72rem;color:var(--muted)}
+
+/* ─── CENTER TABS ─── */
+.ctabs{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg-2)}
+.ctab{font-family:var(--fd);font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:10px 18px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;border:none;background:transparent}
+.ctab:hover{color:var(--silver)}
+.ctab.active{color:var(--elec);border-bottom:2px solid var(--elec)}
+.tab-pane{display:none;flex:1;overflow:hidden;flex-direction:column}
+.tab-pane.active{display:flex}
+
+/* ─── INVENTÁRIO TABLE ─── */
+.inv-wrap{flex:1;overflow-y:auto;padding:14px}
+.inv-table{width:100%;border-collapse:collapse}
+.inv-table th{font-family:var(--fd);font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+.inv-table td{font-size:.68rem;padding:7px 10px;border-bottom:1px solid rgba(0,119,255,.07);color:var(--silver);vertical-align:middle}
+.inv-table tr:hover td{background:rgba(0,119,255,.04)}
+.inv-table tr.new-row td{animation:rowflash .8s ease}
+@keyframes rowflash{0%,100%{background:transparent}40%{background:rgba(0,212,170,.12)}}
+.inv-st{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;font-weight:600;padding:2px 7px;border-radius:100px}
+.inv-st.on{background:rgba(0,212,170,.12);color:var(--green);border:1px solid rgba(0,212,170,.25)}
+.inv-st.off{background:rgba(255,71,87,.12);color:var(--red);border:1px solid rgba(255,71,87,.25)}
+.inv-st.warn{background:rgba(255,184,0,.12);color:var(--yellow);border:1px solid rgba(255,184,0,.25)}
+.inv-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.inv-mono{font-family:var(--fmono);font-size:.62rem}
+
+/* ─── IMPLANTAÇÃO / STAGE ─── */
+.stage-wrap{flex:1;overflow-y:auto;padding:14px}
+.stage-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stage-hdr-title{font-family:var(--fd);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--silver)}
+.stage-badge{font-size:.62rem;font-weight:600;background:rgba(77,255,184,.12);color:#4dffb8;padding:2px 8px;border-radius:100px;border:1px solid rgba(77,255,184,.25)}
+.stage-empty{text-align:center;color:var(--muted);padding:50px 20px;font-size:.78rem}
+.stage-empty svg{opacity:.2;margin-bottom:10px}
+.stage-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;animation:tci .35s ease both}
+.stage-item.done{border-color:rgba(0,212,170,.3)}
+.stage-item.active{border-color:rgba(0,119,255,.4);box-shadow:0 0 12px rgba(0,119,255,.1)}
+.si-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.si-name{font-family:var(--fd);font-size:.9rem;font-weight:700;color:var(--white);flex:1}
+.si-status{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:100px;text-transform:uppercase;letter-spacing:.05em}
+.si-status.staging{background:rgba(255,184,0,.15);color:var(--yellow);border:1px solid rgba(255,184,0,.3)}
+.si-status.importing{background:rgba(0,119,255,.15);color:var(--elec);border:1px solid rgba(0,119,255,.3);animation:aip 1.5s ease-in-out infinite}
+.si-status.imported{background:rgba(0,212,170,.15);color:var(--green);border:1px solid rgba(0,212,170,.3)}
+.si-meta{display:flex;gap:14px;font-size:.65rem;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+.si-steps{display:flex;gap:8px}
+.si-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.si-step-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;transition:all .4s}
+.si-step-dot.done{background:var(--green);border-color:var(--green);color:var(--bg-0)}
+.si-step-dot.active{background:rgba(0,119,255,.2);border-color:var(--blue);color:var(--elec);animation:aip 1.5s ease-in-out infinite}
+.si-step-dot.pending{color:var(--muted)}
+.si-step-lbl{font-size:.55rem;color:var(--muted);text-align:center;letter-spacing:.03em}
+.si-step-connector{position:absolute;top:10px;left:calc(50% + 11px);right:calc(-50% + 11px);height:2px;background:var(--border)}
+
+/* scanlines */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,119,255,.011) 2px,rgba(0,119,255,.011) 4px);pointer-events:none;z-index:9997}
+
+/* ─── VIEW TOGGLE (Lista / Topologia) ─── */
+.view-toggle{display:flex;gap:0;padding:6px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg-2)}
+.vt-btn{flex:1;font-family:var(--fd);font-size:.63rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s}
+.vt-btn:first-child{border-radius:4px 0 0 4px}
+.vt-btn:last-child{border-radius:0 4px 4px 0;border-left:none}
+.vt-btn.active{background:rgba(0,119,255,.18);border-color:rgba(0,119,255,.45);color:var(--elec)}
+.vt-btn:hover:not(.active){background:rgba(255,255,255,.04);color:var(--silver)}
+.topo-outer{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px 6px 4px}
+.topo-legend{display:flex;gap:12px;justify-content:center;padding:4px 0 0;flex-shrink:0}
+.topo-leg-item{display:flex;align-items:center;gap:4px;font-size:.58rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ TOP BAR ═══ -->
+<header class="topbar">
+  <a class="t-logo" href="../index.html">
+    <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="19" stroke="#0077ff" stroke-width="1.5" opacity=".5"/>
+      <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Rajdhani" font-weight="700" font-size="13" fill="url(#lg)">KR4</text>
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#a8b8d8"/><stop offset="100%" stop-color="#fff"/></linearGradient></defs>
+    </svg>
+    <span class="t-logo-txt">KR4 <span class="t-logo-sub">AUTOMATIONS</span></span>
+  </a>
+  <span class="t-title">NOC — Sistema de Chamados Inteligente</span>
+  <div class="t-spacer"></div>
+  <div class="t-live"><div class="t-dot"></div>SISTEMA OPERACIONAL</div>
+  <!-- Sino de Notificação -->
+  <div class="bell-wrap" id="bell-wrap">
+    <button class="bell-btn" id="bell-btn" title="Sino de Notificação">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="bell-badge" id="bell-badge">0</span>
+    </button>
+    <div class="bell-drop" id="bell-drop">
+      <div class="bell-drop-hdr">
+        <span class="bell-drop-title">Notificações</span>
+        <span class="bell-clear" onclick="clearBell()">Limpar todas</span>
+      </div>
+      <div class="bell-list" id="bell-list">
+        <div class="bell-empty">Nenhuma notificação</div>
+      </div>
+    </div>
+  </div>
+  <div class="t-clock" id="clock">00:00:00</div>
+</header>
+
+<!-- ═══ FLOW BAR ═══ -->
+<div class="flowbar">
+  <div class="fb-node snmp">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    SNMP / Monitor
+  </div>
+  <span class="fb-arrow">→</span>
+  <div class="fb-node ticket">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    CHAMADO ABERTO
+  </div>
+  <span class="fb-arrow">→</span>
+  <div class="fb-node hub">⬡ HUB AI</div>
+  <span class="fb-arrow">→</span>
+  <div class="fb-node config">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Config de Porta
+  </div>
+  <span class="fb-arrow" style="opacity:.4">|</span>
+  <div class="fb-node tshoot">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Tshoot / Operadora / Buscar MAC
+  </div>
+  <span class="fb-arrow">→</span>
+  <div class="fb-node out-ok">✓ Resolvido</div>
+  <span class="fb-arrow" style="opacity:.4">|</span>
+  <div class="fb-node out-field">→ Field</div>
+  <span class="fb-arrow" style="opacity:.4">|</span>
+  <div class="fb-node out-op">→ Operadora</div>
+</div>
+
+<!-- ═══ STATS BAR ═══ -->
+<div class="statsbar">
+  <div class="st"><span class="stl">Abertos</span><span class="stv y" id="s-open">0</span></div>
+  <div class="st"><span class="stl">IA Atuando</span><span class="stv b" id="s-ai">0</span></div>
+  <div class="st"><span class="stl">Resolvidos</span><span class="stv g" id="s-res">0</span></div>
+  <div class="st"><span class="stl">Escalados</span><span class="stv r" id="s-esc">0</span></div>
+  <div class="st"><span class="stl">Online</span><span class="stv g" id="s-eq">10/10</span></div>
+  <div class="st"><span class="stl">Alertas SNMP</span><span class="stv y" id="s-snmp">0</span></div>
+  <div class="st"><span class="stl">Automações hoje</span><span class="stv p" id="s-auto">0</span></div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- LEFT: INVENTÁRIO / SNMP -->
+  <aside class="panel p-left">
+    <div class="ph"><span class="ph-t">Inventário / SNMP</span><span class="ph-b" id="eq-cnt">10 ativos</span></div>
+    <div class="view-toggle">
+      <button class="vt-btn active" onclick="setView('list')">Lista</button>
+      <button class="vt-btn" onclick="setView('topo')">Topologia</button>
+    </div>
+    <!-- LIST VIEW -->
+    <div id="view-list" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+      <div class="pscroll"><div class="eq-wrap" id="eq-list"></div></div>
+    </div>
+    <!-- TOPOLOGY VIEW -->
+    <div id="view-topo" class="topo-outer" style="display:none">
+      <svg id="topo-svg" viewBox="0 0 230 385" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;flex:1">
+        <!-- Lines (drawn first so nodes appear on top) -->
+        <line id="tl-internet-link" x1="115" y1="31"  x2="115" y2="49"  stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-link-fw"       x1="115" y1="71"  x2="115" y2="94"  stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-fw-rt"         x1="115" y1="110" x2="115" y2="132" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-rt-core"       x1="115" y1="154" x2="115" y2="172" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-core-dist"     x1="115" y1="194" x2="115" y2="214" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-dist-ac1"      x1="115" y1="236" x2="38"  y2="280" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-dist-ac2"      x1="115" y1="236" x2="115" y2="280" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-dist-ac3"      x1="115" y1="236" x2="192" y2="280" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-ac1-ap1"       x1="38"  y1="300" x2="38"  y2="347" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-ac2-ap2"       x1="115" y1="300" x2="115" y2="347" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+
+        <!-- INTERNET (cloud) -->
+        <g id="tn-internet">
+          <ellipse cx="115" cy="18" rx="32" ry="13" fill="rgba(0,119,255,.08)" stroke="rgba(0,119,255,.3)" stroke-width="1.5" stroke-dasharray="5,2"/>
+          <text x="115" y="22" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="#4a5f7a" text-anchor="middle" font-weight="600">INTERNET</text>
+        </g>
+
+        <!-- LINK-OP-01 -->
+        <g id="tn-LINK-OP-01">
+          <circle cx="115" cy="60" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="64" font-family="'JetBrains Mono',monospace" font-size="6" fill="#fff" text-anchor="middle" font-weight="600">WAN</text>
+          <text x="115" y="79" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">LINK-OP</text>
+        </g>
+
+        <!-- FW-01 (rectangle = firewall) -->
+        <g id="tn-FW-01">
+          <rect x="104" y="94" width="22" height="16" rx="3" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="106" font-family="'JetBrains Mono',monospace" font-size="6" fill="#fff" text-anchor="middle" font-weight="600">FW</text>
+          <text x="115" y="122" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">FW-01</text>
+        </g>
+
+        <!-- RT-BORDA-01 -->
+        <g id="tn-RT-BORDA-01">
+          <circle cx="115" cy="143" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="147" font-family="'JetBrains Mono',monospace" font-size="5.5" fill="#fff" text-anchor="middle" font-weight="600">BORDA</text>
+          <text x="115" y="162" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">RT-BORDA</text>
+        </g>
+
+        <!-- SW-CORE-01 -->
+        <g id="tn-SW-CORE-01">
+          <circle cx="115" cy="183" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="187" font-family="'JetBrains Mono',monospace" font-size="5.5" fill="#fff" text-anchor="middle" font-weight="600">CORE</text>
+          <text x="115" y="202" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">SW-CORE</text>
+        </g>
+
+        <!-- SW-DIST-01 -->
+        <g id="tn-SW-DIST-01">
+          <circle cx="115" cy="225" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="229" font-family="'JetBrains Mono',monospace" font-size="5.5" fill="#fff" text-anchor="middle" font-weight="600">DIST</text>
+          <text x="115" y="244" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">SW-DIST</text>
+        </g>
+
+        <!-- SW-ACESSO-01 -->
+        <g id="tn-SW-ACESSO-01">
+          <circle cx="38" cy="290" r="10" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="38" y="294" font-family="'JetBrains Mono',monospace" font-size="5" fill="#fff" text-anchor="middle" font-weight="600">ACC</text>
+          <text x="38" y="309" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">ACC-01</text>
+        </g>
+
+        <!-- SW-ACESSO-02 -->
+        <g id="tn-SW-ACESSO-02">
+          <circle cx="115" cy="290" r="10" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="294" font-family="'JetBrains Mono',monospace" font-size="5" fill="#fff" text-anchor="middle" font-weight="600">ACC</text>
+          <text x="115" y="309" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">ACC-02</text>
+        </g>
+
+        <!-- SW-ACESSO-03 -->
+        <g id="tn-SW-ACESSO-03">
+          <circle cx="192" cy="290" r="10" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="192" y="294" font-family="'JetBrains Mono',monospace" font-size="5" fill="#fff" text-anchor="middle" font-weight="600">ACC</text>
+          <text x="192" y="309" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">ACC-03</text>
+        </g>
+
+        <!-- AP-TERREO-01 -->
+        <g id="tn-AP-TERREO-01">
+          <circle cx="38" cy="355" r="8" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="38" y="359" font-family="'JetBrains Mono',monospace" font-size="4.5" fill="#fff" text-anchor="middle" font-weight="600">AP</text>
+          <text x="38" y="371" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">AP-T1</text>
+        </g>
+
+        <!-- AP-2ANDAR-01 -->
+        <g id="tn-AP-2ANDAR-01">
+          <circle cx="115" cy="355" r="8" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="359" font-family="'JetBrains Mono',monospace" font-size="4.5" fill="#fff" text-anchor="middle" font-weight="600">AP</text>
+          <text x="115" y="371" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">AP-A1</text>
+        </g>
+      </svg>
+      <!-- Legend -->
+      <div class="topo-legend">
+        <span class="topo-leg-item">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="rgba(0,212,170,.2)" stroke="rgba(0,212,170,.8)" stroke-width="1.2"/></svg>Online
+        </span>
+        <span class="topo-leg-item">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="rgba(255,184,0,.2)" stroke="rgba(255,184,0,.8)" stroke-width="1.2"/></svg>Alerta
+        </span>
+        <span class="topo-leg-item">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="rgba(255,71,87,.15)" stroke="rgba(255,71,87,.75)" stroke-width="1.2"/></svg>Offline
+        </span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER: TABS -->
+  <main class="panel p-center">
+    <!-- Tab buttons -->
+    <div class="ctabs">
+      <button class="ctab active" data-tab="chamados">Chamados</button>
+      <button class="ctab" data-tab="inventario">Inventário</button>
+      <button class="ctab" data-tab="implantacao">Implantação / Stage</button>
+    </div>
+
+    <!-- TAB: CHAMADOS -->
+    <div class="tab-pane active" id="tab-chamados">
+      <div class="ch">
+        <div class="ch-filters">
+          <button class="cf active" data-f="all">Todos</button>
+          <button class="cf" data-f="open">Abertos</button>
+          <button class="cf" data-f="ai">IA Atuando</button>
+          <button class="cf" data-f="resolved">Concluídos</button>
+        </div>
+        <button class="btn-manual" id="btn-manual">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Chamado Manual
+        </button>
+      </div>
+      <div class="tlist pscroll" id="tickets"></div>
+    </div>
+
+    <!-- TAB: INVENTÁRIO -->
+    <div class="tab-pane" id="tab-inventario">
+      <div class="inv-wrap">
+        <table class="inv-table" id="inv-table">
+          <thead>
+            <tr>
+              <th>Equipamento</th>
+              <th>Tipo</th>
+              <th>IP</th>
+              <th>Status</th>
+              <th>CPU</th>
+              <th>MEM</th>
+              <th>Uptime</th>
+              <th>Cadastro</th>
+            </tr>
+          </thead>
+          <tbody id="inv-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: IMPLANTAÇÃO / STAGE -->
+    <div class="tab-pane" id="tab-implantacao">
+      <div class="stage-wrap">
+        <div class="stage-hdr">
+          <span class="stage-hdr-title">Fila de Implantação / Stage</span>
+          <span class="stage-badge" id="stage-badge">0 em stage</span>
+        </div>
+        <div id="stage-list">
+          <div class="stage-empty">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <div>Aguardando detecção de novos dispositivos...</div>
+            <div style="margin-top:6px;font-size:.65rem;opacity:.6">O HUB AI detecta novos MACs automaticamente via SNMP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT: LOG IA -->
+  <aside class="panel p-right">
+    <div class="ph"><span class="ph-t">Log IA — Tempo Real</span><span class="ph-b" id="log-cnt">0 eventos</span></div>
+    <div class="log-wrap pscroll"><div class="log-inner" id="log-inner"></div></div>
+  </aside>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ MODAL CHAMADO MANUAL ═══ -->
+<div class="modal-bg" id="modal">
+  <div class="modal-card">
+    <div class="modal-title">Novo Chamado Manual</div>
+    <div class="modal-sub">Selecione o tipo de incidente ou requisição. O HUB IA será acionado automaticamente.</div>
+    <div class="modal-opts">
+      <button class="mopt" onclick="triggerManual('slow-internet')">
+        <div class="mopt-ico" style="background:rgba(255,184,0,.15);color:var(--yellow)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="mopt-title">Internet lenta / instável</div><div class="mopt-desc">IA faz diagnóstico de latência, QoS, rota e BW</div></div>
+      </button>
+      <button class="mopt" onclick="triggerManual('find-mac')">
+        <div class="mopt-ico" style="background:rgba(255,122,0,.15);color:var(--orange)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <div><div class="mopt-title">Localizar dispositivo na rede</div><div class="mopt-desc">Busca MAC em todos os switches — retorna porta e VLAN</div></div>
+      </button>
+      <button class="mopt" onclick="triggerManual('port-config')">
+        <div class="mopt-ico" style="background:rgba(77,255,184,.12);color:#4dffb8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <div><div class="mopt-title">Configurar porta — novo equipamento</div><div class="mopt-desc">IA configura VLAN, PoE e speed automaticamente</div></div>
+      </button>
+      <button class="mopt" onclick="triggerManual('voip')">
+        <div class="mopt-ico" style="background:rgba(176,106,255,.15);color:var(--purple)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.35 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.72 16z"/></svg></div>
+        <div><div class="mopt-title">Ramal VoIP sem funcionamento</div><div class="mopt-desc">IA verifica VLAN de voz, QoS DSCP e LLDP/CDP</div></div>
+      </button>
+    </div>
+    <button class="modal-close" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   KR4 NOC SIMULATION ENGINE  v2
+   Cenários cobertos (diagrama + descrição do usuário):
+
+   AUTO (Monitoramento):
+   1. Loop STP          → Tshoot → err-disable → field/resolve
+   2. Link WAN Down     → Tshoot → Tratativa Operadora
+   3. Equip. Inacessível→ Tshoot → Recuperação/Backup → field
+   4. Alerta Pró-ativo  → Tshoot → resolve antes de parar
+   5. Segurança/MAC flood→ Tshoot → Monit. Segurança → quarentena
+   6. Novo dispositivo  → CONFIG → Config Porta → Inventário
+
+   MANUAL (Incidentes/Requisições):
+   1. Internet lenta    → Tshoot → QoS/rota → op/resolve
+   2. Buscar MAC        → Tshoot → Buscar MAC Ambiente → resolve
+   3. Config de Porta   → CONFIG → Config Switch → resolve
+   4. VoIP sem função   → Tshoot → VLAN Voz/DSCP → field/resolve
+═══════════════════════════════════════════════════════ */
+
+const S = {
+  tickets:[], tctr:1001, logCtr:0, snmpAlerts:0,
+  autoCount:0, running:false,
+  eqs:[
+    {id:'SW-CORE-01',   type:'Core Switch',         ip:'10.0.0.1',   s:'online', cpu:22, mem:45, up:'847d'},
+    {id:'SW-DIST-01',   type:'Dist Switch',          ip:'10.0.0.2',   s:'online', cpu:18, mem:38, up:'847d'},
+    {id:'SW-ACESSO-01', type:'Access Switch',        ip:'10.0.1.1',   s:'online', cpu:12, mem:30, up:'210d'},
+    {id:'SW-ACESSO-02', type:'Access Switch',        ip:'10.0.1.2',   s:'online', cpu: 9, mem:28, up:'210d'},
+    {id:'SW-ACESSO-03', type:'Access Switch',        ip:'10.0.1.3',   s:'online', cpu:15, mem:32, up:'195d'},
+    {id:'RT-BORDA-01',  type:'Border Router',        ip:'10.0.0.254', s:'online', cpu:35, mem:55, up:'410d'},
+    {id:'FW-01',        type:'Firewall',             ip:'10.0.0.253', s:'online', cpu:28, mem:62, up:'400d'},
+    {id:'AP-TERREO-01', type:'Access Point (PoE)',   ip:'10.0.2.1',   s:'online', cpu: 5, mem:20, up:'90d'},
+    {id:'AP-2ANDAR-01', type:'Access Point (PoE)',   ip:'10.0.2.2',   s:'online', cpu: 7, mem:22, up:'90d'},
+    {id:'LINK-OP-01',   type:'Link WAN / Operadora', ip:'200.1.1.1',  s:'online', cpu: 0, mem: 0, up:'30d', bw:'45%'},
+  ]
+};
+
+/* ── Helpers ── */
+const delay = ms => new Promise(r => setTimeout(r, ms));
+const now   = () => new Date().toLocaleTimeString('pt-BR',{hour12:false});
+const rand  = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+
+/* ── Clock ── */
+setInterval(()=>{ document.getElementById('clock').textContent = now(); }, 1000);
+document.getElementById('clock').textContent = now();
+
+/* ── Log ── */
+function log(kind, msg) {
+  const inner = document.getElementById('log-inner');
+  const el = document.createElement('div');
+  el.className = 'le';
+  el.innerHTML = `<span class="lt">${now()}</span><span class="lk ${kind}">[${kind.toUpperCase()}]</span><span class="lm">${msg}</span>`;
+  inner.appendChild(el);
+  while (inner.children.length > 400) inner.removeChild(inner.firstChild);
+  S.logCtr++;
+  document.getElementById('log-cnt').textContent = `${S.logCtr} eventos`;
+  const w = inner.parentElement; w.scrollTop = w.scrollHeight;
+}
+
+/* ── Toast (base renderer — bell wrapper added later) ── */
+const TI = {
+  danger:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  success:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
+  info:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+  warning:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffb800" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>`,
+  purple:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b06aff" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+};
+function _showToast(type, title, desc) {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `tn ${type}`;
+  el.innerHTML = `${TI[type]||TI.info}<div><div class="tn-t">${title}</div><div class="tn-d">${desc}</div></div>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),280); }, 5500);
+}
+// toast() is defined later after bell is set up, so all calls use the enriched version
+
+/* ── Stats ── */
+function updateStats() {
+  document.getElementById('s-open').textContent  = S.tickets.filter(t=>t.s==='open').length;
+  document.getElementById('s-ai').textContent    = S.tickets.filter(t=>t.s==='ai').length;
+  document.getElementById('s-res').textContent   = S.tickets.filter(t=>t.s==='resolved').length;
+  document.getElementById('s-esc').textContent   = S.tickets.filter(t=>t.s==='esc-field'||t.s==='esc-op').length;
+  document.getElementById('s-snmp').textContent  = S.snmpAlerts;
+  document.getElementById('s-auto').textContent  = S.autoCount;
+}
+
+/* ── Render Equipment ── */
+function renderEq() {
+  let on=0;
+  document.getElementById('eq-list').innerHTML = S.eqs.map(e=>{
+    if(e.s==='online') on++;
+    const dc = e.s==='warn'?'d-warn':e.s==='offline'?'d-off':e.s==='alert'?'d-alert':'d-on';
+    const cc = e.s==='warn'?'warn':e.s==='offline'?'offline':e.s==='alert'?'alert':'';
+    const cv = e.cpu>80?'crit':e.cpu>60?'hi':'ok';
+    const mv = e.mem>85?'crit':e.mem>70?'hi':'ok';
+    return `<div class="eq ${cc}">
+      <div class="eq-hdr"><div class="dot ${dc}"></div><span class="eq-name">${e.id}</span></div>
+      <div class="eq-type">${e.type} &middot; ${e.ip}</div>
+      <div class="eq-mets">
+        <div class="eq-m"><span class="eq-ml">CPU</span><span class="eq-mv ${cv}">${e.cpu}%</span></div>
+        <div class="eq-m"><span class="eq-ml">MEM</span><span class="eq-mv ${mv}">${e.mem}%</span></div>
+        <div class="eq-m"><span class="eq-ml">UPTIME</span><span class="eq-mv">${e.up}</span></div>
+        ${e.bw?`<div class="eq-m"><span class="eq-ml">BW</span><span class="eq-mv ${parseInt(e.bw)>80?'hi':''}">${e.bw}</span></div>`:''}
+      </div>
+      ${e.alert?`<div class="eq-alrt">⚠ ${e.alert}</div>`:''}
+      ${e.info?`<div class="eq-info">✓ ${e.info}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('eq-cnt').textContent = `${S.eqs.length} ativos`;
+  document.getElementById('s-eq').textContent = `${on}/${S.eqs.length}`;
+  if (typeof currentView !== 'undefined' && currentView === 'topo') renderTopology();
+}
+
+/* ── Render Tickets ── */
+const SL  = {open:'Aberto',ai:'IA Atuando',resolved:'Resolvido','esc-field':'→ Field','esc-op':'→ Operadora'};
+const PL  = {h:'Alta',m:'Média',l:'Baixa'};
+const PC  = {h:'var(--red)',m:'var(--yellow)',l:'var(--green)'};
+
+function flowHtml(t) {
+  const src = t.src==='auto'
+    ? `<span class="tc-fp fp-snmp">SNMP Monitor</span>`
+    : `<span class="tc-fp fp-manual">Manual</span>`;
+  const atype = t.atype==='config'
+    ? `<span class="tc-fp fp-config">Config de Porta</span>`
+    : t.atype==='mac'
+    ? `<span class="tc-fp fp-mac">Buscar MAC</span>`
+    : `<span class="tc-fp fp-tshoot">Tshoot</span>`;
+  let out = '';
+  if (t.s==='resolved')    out = `<span class="fp-arr">→</span><span class="tc-fp fp-ok">Resolvido</span>`;
+  else if (t.s==='esc-field') out = `<span class="fp-arr">→</span><span class="tc-fp fp-field">Escalado Field</span>`;
+  else if (t.s==='esc-op') out = `<span class="fp-arr">→</span><span class="tc-fp fp-op">Escalado Operadora</span>`;
+  return `<div class="tc-flow">${src}<span class="fp-arr">→</span><span class="tc-fp fp-ticket">Chamado</span><span class="fp-arr">→</span><span class="tc-fp fp-hub">HUB AI</span><span class="fp-arr">→</span>${atype}${out}</div>`;
+}
+
+function renderTickets() {
+  const af = document.querySelector('.cf.active')?.dataset.f||'all';
+  let list = [...S.tickets];
+  if(af==='open')     list=list.filter(t=>t.s==='open');
+  else if(af==='ai')  list=list.filter(t=>t.s==='ai');
+  else if(af==='resolved') list=list.filter(t=>t.s==='resolved'||t.s==='esc-field'||t.s==='esc-op');
+  const el=document.getElementById('tickets');
+  if(!list.length){
+    el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:50px 20px;font-size:.8rem"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="margin-bottom:10px;opacity:.25"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><div>Nenhum chamado neste filtro</div></div>`;
+    return;
+  }
+  const isActive = t => t.s==='open'||t.s==='ai';
+  el.innerHTML=[...list].reverse().map(t=>{
+    const stH = t.steps.map((_,i)=>{
+      let c='';
+      if(i<t.step) c='done';
+      else if(i===t.step&&isActive(t)) c='active';
+      else if((t.s==='esc-field'||t.s==='esc-op')&&i===t.steps.length-1) c='esc';
+      return `<div class="ts ${c}"></div>`;
+    }).join('');
+    const actH = t.s==='ai'?`<div class="tc-act"><div class="sp"></div>${t.action||'IA analisando...'}</div>`:'';
+    let resH='';
+    if(t.s==='resolved') resH=`<div class="tc-res ok"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${t.res}</div>`;
+    else if(t.s==='esc-field') resH=`<div class="tc-res field"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>${t.res}</div>`;
+    else if(t.s==='esc-op')  resH=`<div class="tc-res op"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>${t.res}</div>`;
+    const srcIco = t.src==='auto'
+      ?`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
+      :`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    return `<div class="tc p-${t.p}">
+      <div class="tc-top">
+        <span class="tc-id">#${t.id}</span>
+        <span class="tc-title">${t.title}</span>
+        <span class="tc-st s-${t.s}">${SL[t.s]||t.s}</span>
+      </div>
+      ${flowHtml(t)}
+      <div class="tc-meta">
+        <span class="tc-m">${srcIco} ${t.src==='auto'?'Automático':'Manual'}</span>
+        <span class="tc-m"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> ${t.dev}</span>
+        <span class="tc-m"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${t.at}</span>
+        <span class="tc-m" style="margin-left:auto;color:${PC[t.p]}">● ${PL[t.p]}</span>
+      </div>
+      <div class="tc-steps">${stH}</div>
+      ${actH}${resH}
+    </div>`;
+  }).join('');
+}
+
+/* ── Ticket Factory ── */
+function mkT(title,dev,p,src,atype,steps){
+  const t={id:S.tctr++,title,dev,p,src,atype,steps,s:'open',step:0,action:'',at:now(),res:''};
+  S.tickets.push(t); return t;
+}
+
+/* ── Flow Runner ── */
+async function runFlow(ticket, actions, outcome) {
+  await delay(1300);
+  ticket.s='ai'; renderTickets(); updateStats();
+  S.autoCount++; updateStats();
+
+  for(let i=0;i<actions.length;i++){
+    const a=actions[i];
+    ticket.step=i; ticket.action=a.lbl; renderTickets();
+    log(a.k||'ai', a.msg);
+    await delay(a.ms||2000);
+  }
+  ticket.step=actions.length; ticket.action='';
+  ticket.s = outcome.esc||'resolved';
+  ticket.res = outcome.msg;
+  renderTickets(); updateStats();
+
+  if(outcome.esc){
+    const isOp = outcome.esc==='esc-op';
+    toast(isOp?'purple':'warning', isOp?'📡 Escalado → Operadora':'🔧 Escalado → Field', outcome.msg);
+    log('warn',`Ticket #${ticket.id} escalado — ${outcome.msg}`);
+  } else {
+    toast('success','✅ Chamado Resolvido', outcome.msg);
+    log('ok',`Ticket #${ticket.id} RESOLVIDO — ${outcome.msg}`);
+  }
+  renderEq();
+}
+
+/* ══════════════════════════════════════════════════
+   CENÁRIO 1 — LOOP STP
+   Monitoramento Reativo → Tshoot → err-disable → field/resolve
+══════════════════════════════════════════════════ */
+async function cLoopSTP(){
+  const sw=S.eqs.find(e=>e.id==='SW-ACESSO-01');
+  const port='Gi0/5';
+  sw.s='alert'; sw.cpu=78; sw.alert=`Loop STP detectado · porta ${port}`;
+  S.snmpAlerts++; renderEq(); updateStats();
+
+  log('snmp',`TRAP recebido — <span class="h">SW-ACESSO-01</span> · OID 1.3.6.1.2.1.17 · STP topology-change`);
+  log('warn',`LOOP STP confirmado em <span class="h">SW-ACESSO-01 ${port}</span> — abrindo chamado automático`);
+  toast('danger','🔁 Loop STP Detectado',`SW-ACESSO-01 · porta ${port} · Chamado automático`);
+
+  const t=mkT(`Loop STP — SW-ACESSO-01 porta ${port}`,'SW-ACESSO-01','h','auto','tshoot',
+    ['Detecção SNMP','Análise IA','SSH Switch','Diagnóstico STP','Ação Corretiva','Verificação']);
+  renderTickets(); updateStats();
+
+  const ok=Math.random()>.45;
+  await runFlow(t,[
+    {lbl:'Analisando SNMP trap...',         k:'snmp', msg:`Coletando bridge-MIB · ifIndex:5 · <span class="ip">10.0.1.1</span>`},
+    {lbl:'IA correlacionando eventos',       k:'ai',   msg:`Correlacionando com histórico STP — BPDU storm confirmado`,ms:2200},
+    {lbl:`SSH → 10.0.1.1`,                  k:'ai',   msg:`Autenticado em <span class="ip">10.0.1.1</span> (credencial vault)`      ,ms:1500},
+    {lbl:'Executando show spanning-tree',    k:'ai',   msg:`<span class="cmd">show spanning-tree detail</span> → BPDU flood em ${port}`,ms:2000},
+    {lbl:`Desativando porta ${port}`,        k:'ai',   msg:`<span class="cmd">interface ${port} · errdisable</span> aplicado com sucesso`,ms:1800},
+    {lbl:'Verificando convergência STP',     k:'ai',   msg:`Aguardando convergência · BPDU flood cessado · topologia estável`,ms:2500},
+  ], ok
+    ?{msg:`IA desativou ${port} (err-disable) · loop eliminado · topologia estabilizada`}
+    :{esc:'esc-field',msg:`${port} em err-disable · loop persiste além da porta · escalado Field com análise completa`}
+  );
+  sw.s=ok?'online':'warn'; sw.cpu=ok?14:28;
+  sw.alert=ok?'':`Porta ${port} err-disable — aguardando Field`;
+  if(ok) S.snmpAlerts=Math.max(0,S.snmpAlerts-1);
+  renderEq(); updateStats();
+}
+
+/* ══════════════════════════════════════════════════
+   CENÁRIO 2 — LINK WAN DOWN
+   Monitoramento Reativo → Tshoot → Tratativa Operadora
+══════════════════════════════════════════════════ */
+async function cLinkDown(){
+  const lk=S.eqs.find(e=>e.id==='LINK-OP-01');
+  const rt=S.eqs.find(e=>e.id==='RT-BORDA-01');
+  lk.s='offline'; lk.alert='ifOperStatus DOWN — sem resposta SNMP';
+  rt.s='warn';    rt.alert='Rota default BGP indisponível';
+  S.snmpAlerts+=2; renderEq(); updateStats();
+
+  log('snmp',`ifOperStatus DOWN — <span class="h">LINK-OP-01</span> · GigabitEthernet0/0 · <span class="ip">200.1.1.1</span>`);
+  log('warn',`Link WAN DOWN — perda de conectividade externa · abrindo chamado`);
+  toast('danger','📡 Link WAN Caiu','LINK-OP-01 offline · IA abre chamado na operadora');
+
+  const opId=`INC-OP-${rand(10000,99999)}`;
+  const t=mkT('Link WAN offline — LINK-OP-01','LINK-OP-01','h','auto','tshoot',
+    ['Detecção SNMP','Verificação BGP','Diagnóstico Rota','Abertura Operadora','Acompanhamento']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:'Polling SNMP — timeout',           k:'snmp', msg:`<span class="ip">200.1.1.1</span> · 3 timeouts consecutivos · down confirmado`},
+    {lbl:'Testando BGP session',              k:'ai',   msg:`<span class="cmd">ping 200.1.1.2 source lo0</span> → 100% packet loss`,ms:1800},
+    {lbl:'Verificando tabela de rotas',       k:'ai',   msg:`<span class="cmd">show ip route 0.0.0.0</span> → rota default BGP removida`,ms:1600},
+    {lbl:'Abrindo chamado na operadora...',   k:'ai',   msg:`API Operadora → POST /incidents · circuit-id:BR-SP-0042 · prioridade:P1`,ms:2500},
+    {lbl:'Registrando protocolo operadora',   k:'info', msg:`Protocolo <span class="h">${opId}</span> confirmado · técnico despachado ao PoP`,ms:2000},
+  ],{esc:'esc-op',msg:`Protocolo ${opId} aberto na operadora · previsão de restauração: 45 min`});
+
+  // Restauração automática após 28s
+  setTimeout(async()=>{
+    log('ok',`Operadora confirmou restauração do link — aguardando BGP convergir`);
+    await delay(3500);
+    lk.s='online'; lk.alert=''; lk.info='Link restaurado · BGP ativo';
+    rt.s='online'; rt.alert='';
+    S.snmpAlerts=Math.max(0,S.snmpAlerts-2);
+    log('ok',`<span class="h">LINK-OP-01</span> ONLINE · BGP Established · prefixes:847`);
+    toast('success','🟢 Link Restaurado','LINK-OP-01 online · BGP reconvergido');
+    setTimeout(()=>{lk.info=''; renderEq();},8000);
+    renderEq(); updateStats();
+  },28000);
+}
+
+/* ══════════════════════════════════════════════════
+   CENÁRIO 3 — EQUIPAMENTO INACESSÍVEL (Recuperação)
+   Monitoramento → Recuperação de Equipamento → Backup/Restore → field
+══════════════════════════════════════════════════ */
+async function cRecovery(){
+  const sw=S.eqs.find(e=>e.id==='SW-ACESSO-02');
+  sw.s='offline'; sw.alert='SNMP timeout · 5 tentativas · inacessível';
+  S.snmpAlerts++; renderEq(); updateStats();
+
+  log('snmp',`<span class="h">SW-ACESSO-02</span> · SNMP timeout · 5 tentativas consecutivas · inacessível`);
+  log('warn',`Equipamento inacessível — iniciando procedimento de Recuperação de Equipamento`);
+  toast('danger','⚠ Equip. Inacessível','SW-ACESSO-02 sem resposta · IA iniciando recuperação');
+
+  const ok=Math.random()>.5;
+  const t=mkT('Equipamento inacessível — SW-ACESSO-02','SW-ACESSO-02','h','auto','tshoot',
+    ['Detecção SNMP','Diagnóstico ICMP','Tentativa SSH','Acesso Console','Restaurar Backup','Verificação']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:'Verificando ICMP...',                k:'snmp', msg:`Ping <span class="ip">10.0.1.2</span> → 100% loss · ICMP inacessível`},
+    {lbl:'Tentando SSH no equipamento',         k:'ai',   msg:`SSH <span class="ip">10.0.1.2</span> → connection refused · serviço não responde`,ms:2000},
+    {lbl:'Verificando vizinhança LLDP/CDP',     k:'ai',   msg:`SW-CORE-01 detecta SW-ACESSO-02 em CDP · link físico ativo`,ms:1800},
+    {lbl:ok?'Recuperando via reload OOB':'Acessando via console OOB',
+                                                k:'ai',   msg:ok?`OOB: <span class="cmd">reload in 1</span> → aguardando boot`:`Console conectado — equipamento em crash loop`,ms:3000},
+    {lbl:ok?'Restaurando backup de config':'Preparando análise field',
+                                                k:ok?'cfg':'warn',
+                                                msg:ok?`<span class="cmd">copy tftp://10.0.0.1/backup/SW-ACESSO-02.cfg running-config</span> aplicado`
+                                                      :`Equipamento com falha de hardware · backup disponível para Field`,ms:2500},
+    {lbl:ok?'Verificando conectividade':'Documentando para Field',
+                                                k:ok?'ok':'info',
+                                                msg:ok?`<span class="h">SW-ACESSO-02</span> online · config restaurada · 24 portas ativas`:`Relatório técnico gerado · backup ${rand(1,99)}h atrás disponível`,ms:2000},
+  ],ok
+    ?{msg:`SW-ACESSO-02 recuperado · config restaurada do backup · uptime reiniciado`}
+    :{esc:'esc-field',msg:`Falha de hardware confirmada · Field deve substituir equipamento · backup disponível`}
+  );
+  if(ok){
+    sw.s='online'; sw.alert=''; sw.info='Recuperado via backup de config'; sw.cpu=10; sw.mem=28;
+    S.snmpAlerts=Math.max(0,S.snmpAlerts-1);
+    setTimeout(()=>{sw.info=''; renderEq();},10000);
+  } else {
+    sw.s='offline'; sw.alert='Falha de hardware — aguardando Field';
+  }
+  renderEq(); updateStats();
+}
+
+/* ══════════════════════════════════════════════════
+   CENÁRIO 4 — MONITORAMENTO PRÓ-ATIVO
+   IA detecta problema crescente ANTES de virar incidente
+══════════════════════════════════════════════════ */
+async function cProativo(){
+  const sw=S.eqs.find(e=>e.id==='SW-CORE-01');
+  sw.cpu=87; sw.s='warn'; sw.alert='CPU alta · threshold pró-ativo atingido (85%)';
+  S.snmpAlerts++; renderEq(); updateStats();
+
+  log('snmp',`<span class="h">SW-CORE-01</span> · CPU: 87% · threshold pró-ativo atingido (85%) · abrindo chamado`);
+  log('ai',`Monitoramento PRÓ-ATIVO acionado — analisando causa raiz antes de indisponibilidade`);
+  toast('warning','📊 Alerta Pró-ativo','SW-CORE-01 CPU 87% · IA investiga antes de parar');
+
+  const t=mkT('Alerta Pró-ativo — CPU alta SW-CORE-01 (87%)','SW-CORE-01','m','auto','tshoot',
+    ['Threshold SNMP','Análise Processos','Identificação Causa','Ação Corretiva','Validação']);
+  renderTickets(); updateStats();
+
+  const ok=Math.random()>.3;
+  await runFlow(t,[
+    {lbl:'Coletando CPU/MIB do switch...',     k:'snmp', msg:`sysDescr · cpmCPUTotalTable · <span class="ip">10.0.0.1</span> · CPU 1min: 87%`},
+    {lbl:'Analisando processos ativos',         k:'ai',   msg:`<span class="cmd">show processes cpu sorted</span> → "IP Input" 62% · broadcast excessivo`,ms:2200},
+    {lbl:'Identificando origem do tráfego',     k:'ai',   msg:`Broadcast storm nascente em VLAN 10 · origem: SW-ACESSO-03 porta Gi0/8`,ms:2000},
+    {lbl:'Aplicando filtro de broadcast',       k:'ai',   msg:`<span class="cmd">storm-control broadcast level 20 10</span> em SW-ACESSO-03 Gi0/8`,ms:2000},
+    {lbl:'Validando CPU após correção',         k:ok?'ok':'warn',
+                                               msg:ok?`CPU normalizada: 24% · broadcast dentro do limite · problema resolvido preventivamente`
+                                                     :`CPU ainda em 71% · broadcast controlado mas causa raiz em análise · Field acionado`,ms:2500},
+  ],ok
+    ?{msg:`Broadcast storm bloqueado proativamente · CPU normalizada para 24% · sem impacto ao usuário`}
+    :{esc:'esc-field',msg:`CPU reduzida para 71% mas instável · causa raiz requer inspeção física do segmento`}
+  );
+  sw.s=ok?'online':'warn'; sw.cpu=ok?24:71;
+  sw.alert=ok?'':sw.alert='CPU ainda elevada — Field em análise';
+  if(ok) S.snmpAlerts=Math.max(0,S.snmpAlerts-1);
+  renderEq(); updateStats();
+}
+
+/* ══════════════════════════════════════════════════
+   CENÁRIO 5 — SEGURANÇA (Monitoramento de Segurança)
+   MAC flood → port security → VLAN quarentena → SIEM
+══════════════════════════════════════════════════ */
+async function cSecurity(){
+  const sw=S.eqs.find(e=>e.id==='SW-ACESSO-03');
+  sw.s='alert'; sw.cpu=88; sw.alert='MAC flood · possível ataque CAM table overflow';
+  S.snmpAlerts++; renderEq(); updateStats();
+
+  log('warn',`<span class="h">ALERTA SEGURANÇA</span> — MAC flood em SW-ACESSO-03 · 8.400 MACs/s · CAM overflow`);
+  toast('danger','🔒 Monitoramento Segurança','MAC flood SW-ACESSO-03 · IA isolando host');
+
+  const mac=`${rand(10,99).toString(16).padStart(2,'0')}:${rand(10,99).toString(16).padStart(2,'0')}:${rand(10,99).toString(16).padStart(2,'0')}:${rand(10,99).toString(16).padStart(2,'0')}:${rand(10,99).toString(16).padStart(2,'0')}:${rand(10,99).toString(16).padStart(2,'0')}`;
+  const t=mkT('Alerta Segurança — MAC flood SW-ACESSO-03','SW-ACESSO-03','h','auto','tshoot',
+    ['Detecção','Análise CAM','Identificação Host','Port Security','Quarentena','SIEM']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:'Analisando CAM table...',             k:'warn', msg:`CAM overflow confirmado · 8.192 entradas · flooding ativo em todas as portas`},
+    {lbl:'Identificando porta de origem',       k:'ai',   msg:`<span class="cmd">show mac address-table count</span> → Gi0/12: 4.200 MACs únicos`,ms:1800},
+    {lbl:'Isolando host suspeito',              k:'ai',   msg:`Host <span class="mac">${mac}</span> identificado como origem do flood · Gi0/12`,ms:2000},
+    {lbl:'Aplicando Port Security',             k:'ai',   msg:`<span class="cmd">port-security max 5 · violation shutdown</span> → Gi0/12 desativada`,ms:1800},
+    {lbl:'Movendo para VLAN Quarentena',        k:'ai',   msg:`<span class="mac">${mac}</span> → VLAN 999 (quarentena) · acesso bloqueado`,ms:2000},
+    {lbl:'Notificando SIEM...',                 k:'ai',   msg:`Evento enviado ao SIEM · severidade: CRÍTICA · incidente registrado`,ms:1500},
+  ],{msg:`Host <span class="mac">${mac}</span> isolado · port security ativo · incidente registrado no SIEM`});
+
+  sw.s='warn'; sw.cpu=18; sw.alert='Gi0/12 em quarentena · host isolado · SIEM notificado';
+  S.snmpAlerts=Math.max(0,S.snmpAlerts-1);
+  renderEq(); updateStats();
+}
+
+/* ══════════════════════════════════════════════════
+   CENÁRIO 6 — NOVO DISPOSITIVO / IMPLANTAÇÃO
+   Automação de Config → Config Porta Switch → Inventário
+══════════════════════════════════════════════════ */
+async function cNewDevice(){
+  const sw=S.eqs.find(e=>e.id==='SW-ACESSO-02');
+  const port='Gi0/22';
+  sw.s='warn'; sw.alert=`Novo MAC detectado em ${port} · porta não configurada`;
+  S.snmpAlerts++; renderEq(); updateStats();
+
+  log('snmp',`<span class="h">SW-ACESSO-02</span> · novo MAC em ${port} · sem configuração de VLAN · abrindo chamado`);
+  log('cfg', `Automação de Implantação acionada — configurando porta ${port} automaticamente`);
+  toast('info','🔌 Novo Dispositivo Detectado',`SW-ACESSO-02 · porta ${port} · config automática`);
+
+  const newMac=`aa:bb:${rand(10,99).toString(16)}:${rand(10,99).toString(16)}:${rand(10,99).toString(16)}:${rand(10,99).toString(16)}`;
+  const t=mkT(`Novo dispositivo — SW-ACESSO-02 porta ${port}`,'SW-ACESSO-02','l','auto','config',
+    ['Detecção SNMP','Identificação OUI','Config VLAN','Config PoE','Inventário','Validação']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:`Analisando MAC ${newMac}`,            k:'snmp', msg:`OUI lookup: <span class="mac">${newMac}</span> → fabricante: Cisco Systems · tipo: IP Phone`,ms:2000},
+    {lbl:'Determinando configuração correta',   k:'cfg',  msg:`Dispositivo VoIP detectado → VLAN 20 (Voz) · PoE habilitado · QoS DSCP EF`,ms:2200},
+    {lbl:`Configurando porta ${port}`,          k:'cfg',  msg:`<span class="cmd">switchport access vlan 20 · switchport voice vlan 30 · spanning-tree portfast</span>`,ms:2000},
+    {lbl:'Habilitando PoE (802.3af)',           k:'cfg',  msg:`<span class="cmd">power inline auto · max 15400 mW</span> → 12.3W negociado com o telefone`,ms:1800},
+    {lbl:'Registrando no Inventário',           k:'cfg',  msg:`Inventário atualizado: <span class="mac">${newMac}</span> → SW-ACESSO-02 ${port} · VLAN 20 · ativo`,ms:1500},
+    {lbl:'Validando conectividade',             k:'ok',   msg:`Telefone registrado no CUCM · ramal 2245 · ping OK · PoE ativo`,ms:2000},
+  ],{msg:`Porta ${port} configurada automaticamente · IP Phone ativo · inventário atualizado · ramal 2245 online`});
+
+  sw.s='online'; sw.alert=''; sw.info=`Porta ${port} configurada · IP Phone ativo`;
+  S.snmpAlerts=Math.max(0,S.snmpAlerts-1);
+  setTimeout(()=>{sw.info=''; renderEq();},12000);
+  renderEq(); updateStats();
+}
+
+/* ══════════════════════════════════════════════════
+   MANUAL 1 — INTERNET LENTA
+   Manual → Tshoot → QoS/Rota → resolve/operadora
+══════════════════════════════════════════════════ */
+async function mSlowInternet(){
+  const sw=S.eqs.find(e=>e.id==='SW-ACESSO-02');
+  sw.s='warn'; sw.alert='Chamado manual — internet lenta em aberto';
+  renderEq();
+
+  log('info',`Chamado MANUAL — <span class="h">Internet lenta / Setor Financeiro</span>`);
+  toast('warning','📋 Chamado Manual','Internet lenta · Setor Financeiro · IA iniciando diagnóstico');
+
+  const ok=Math.random()>.35;
+  const t=mkT('Internet lenta — Setor Financeiro','SW-ACESSO-02','m','manual','tshoot',
+    ['Análise SNMP','Latência/Jitter','Inspeção QoS','Tabela de Rotas','Buscar MAC','Correção']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:'Coletando métricas SNMP',             k:'snmp', msg:`ifInOctets/ifOutOctets · SW-ACESSO-02 e RT-BORDA-01 · BW: 88% utilizado`,ms:2000},
+    {lbl:'Testando latência e jitter',          k:'ai',   msg:`Ping 8.8.8.8 contínuo → latência: 185ms · jitter: 42ms · acima do SLA`,ms:2200},
+    {lbl:'Inspecionando filas QoS',             k:'ai',   msg:`<span class="cmd">show policy-map int Gi0/1</span> → classe BULK saturada 100% · drops: 14%`,ms:1800},
+    {lbl:'Verificando rota para internet',      k:'ai',   msg:`<span class="cmd">show ip route 0.0.0.0</span> → BGP ativo · next-hop: <span class="ip">200.1.1.2</span>`,ms:1600},
+    {lbl:'Buscando MAC dos afetados',           k:'ai',   msg:`<span class="cmd">show mac address-table vlan 10</span> → 247 hosts · sem flood`,ms:1500},
+    {lbl:ok?'Corrigindo política QoS':'Analisando BW contratado',
+                                                k:ok?'cfg':'warn',
+                                                msg:ok?`<span class="cmd">policy-map KR4-QOS → class BULK → bandwidth percent 10</span> aplicado`
+                                                      :`BW contratado: 50Mbps · utilização atual: 48.9Mbps · circuito saturado · escalando`,ms:2200},
+  ],ok
+    ?{msg:`QoS reconfigurado · latência normalizada para 12ms · Setor Financeiro com acesso pleno`}
+    :{esc:'esc-op',msg:`Link WAN saturado (98% BW) · IA abriu chamado operadora para upgrade de circuito`}
+  );
+  sw.s=ok?'online':'warn'; sw.alert=ok?'':sw.alert='Aguardando upgrade de circuito — operadora';
+  renderEq();
+}
+
+/* ══════════════════════════════════════════════════
+   MANUAL 2 — BUSCAR MAC NO AMBIENTE
+   Manual → Tshoot → Buscar MAC Ambiente → resolve
+══════════════════════════════════════════════════ */
+async function mFindMac(){
+  const mac=`c8:${rand(10,99).toString(16)}:19:${rand(10,99).toString(16)}:${rand(10,99).toString(16)}:${rand(10,99).toString(16)}`;
+  const foundSw='SW-ACESSO-01';
+  const foundPort='Gi0/14';
+  const foundVlan=rand(10,50);
+
+  log('info',`Chamado MANUAL — <span class="h">Localizar dispositivo na rede</span>`);
+  toast('info','🔍 Buscar MAC no Ambiente',`Consultando todos os switches em busca do dispositivo`);
+
+  const t=mkT(`Buscar dispositivo na rede — ${mac}`,'SW-CORE-01','l','manual','mac',
+    ['Consulta ARP','Varredura SW-CORE','Varredura SW-DIST','Varredura Access','Localização','Relatório']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:'Consultando tabela ARP...',           k:'snmp', msg:`ARP table RT-BORDA-01 · <span class="mac">${mac}</span> → <span class="ip">10.0.${rand(1,5)}.${rand(10,250)}</span>`,ms:1800},
+    {lbl:'Varrendo SW-CORE-01',                 k:'ai',   msg:`<span class="cmd">show mac add table | inc ${mac.split(':').slice(3).join(':')}</span> → não encontrado`,ms:1600},
+    {lbl:'Varrendo SW-DIST-01',                 k:'ai',   msg:`<span class="cmd">show mac add table | inc ${mac.split(':').slice(3).join(':')}</span> → não encontrado`,ms:1600},
+    {lbl:`Varrendo Access Switches`,            k:'ai',   msg:`Varredura em SW-ACESSO-01, 02, 03 via SNMP · dot1dTpFdbTable`,ms:2000},
+    {lbl:`MAC localizado em ${foundSw}`,        k:'ok',   msg:`<span class="mac">${mac}</span> → <span class="h">${foundSw}</span> · porta <span class="h">${foundPort}</span> · VLAN ${foundVlan}`,ms:1500},
+    {lbl:'Gerando relatório de localização',    k:'info', msg:`Relatório: IP · switch · porta · VLAN · tempo online registrados no chamado`,ms:1200},
+  ],{msg:`Dispositivo localizado: ${foundSw} porta ${foundPort} · VLAN ${foundVlan} · relatório anexado ao chamado`});
+}
+
+/* ══════════════════════════════════════════════════
+   MANUAL 3 — CONFIG DE PORTA (Requisição)
+   Manual → Automação Config → Config Switch → resolve
+══════════════════════════════════════════════════ */
+async function mPortConfig(){
+  const sw=S.eqs.find(e=>e.id==='SW-ACESSO-03');
+  const port=`Gi0/${rand(1,24)}`;
+  const vlan=rand(10,50);
+
+  log('info',`Chamado MANUAL — <span class="h">Configurar porta ${port} · novo equipamento</span>`);
+  toast('info','🔧 Config de Porta Solicitada',`SW-ACESSO-03 · ${port} · IA configurando automaticamente`);
+
+  const t=mkT(`Req. Configuração de Porta — SW-ACESSO-03 ${port}`,'SW-ACESSO-03','l','manual','config',
+    ['Análise Requisição','Verificação Porta','Config VLAN','Config Segurança','Inventário','Validação']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:'Analisando requisição...',            k:'ai',   msg:`Tipo: PC corporativo · VLAN ${vlan} (Dados) · sem necessidade de PoE`,ms:1800},
+    {lbl:`Verificando porta ${port}`,           k:'snmp', msg:`<span class="cmd">show int ${port}</span> → link down · sem MAC · porta livre`,ms:1600},
+    {lbl:`Configurando VLAN ${vlan}`,           k:'cfg',  msg:`<span class="cmd">switchport mode access · vlan ${vlan} · spanning-tree portfast</span>`,ms:2000},
+    {lbl:'Aplicando política de segurança',     k:'cfg',  msg:`<span class="cmd">port-security max 2 · violation restrict · DHCP snooping</span>`,ms:1800},
+    {lbl:'Registrando no Inventário',           k:'cfg',  msg:`Inventário: SW-ACESSO-03 ${port} · VLAN ${vlan} · responsável registrado`,ms:1500},
+    {lbl:'Validando configuração final',        k:'ok',   msg:`Porta ${port} configurada · aguardando conexão do equipamento · config salva`,ms:1200},
+  ],{msg:`Porta ${port} configurada (VLAN ${vlan}) · port-security ativo · inventário atualizado`});
+}
+
+/* ══════════════════════════════════════════════════
+   MANUAL 4 — VOIP SEM FUNCIONAMENTO
+   Manual → Tshoot → VLAN Voz / DSCP / LLDP → resolve/field
+══════════════════════════════════════════════════ */
+async function mVoip(){
+  const sw=S.eqs.find(e=>e.id==='SW-ACESSO-01');
+  const ramal=rand(2000,2999);
+  sw.s='warn'; sw.alert=`Ramal ${ramal} sem registro VoIP`;
+  renderEq();
+
+  log('info',`Chamado MANUAL — <span class="h">Ramal VoIP ${ramal} sem funcionamento</span>`);
+  toast('warning','📞 VoIP sem Funcionamento',`Ramal ${ramal} · IA verificando VLAN Voz, DSCP e LLDP`);
+
+  const ok=Math.random()>.4;
+  const t=mkT(`Ramal VoIP ${ramal} sem funcionamento`,'SW-ACESSO-01','m','manual','tshoot',
+    ['Detecção LLDP','VLAN Voz','QoS DSCP','Registro CUCM','Diagnóstico','Correção']);
+  renderTickets(); updateStats();
+
+  await runFlow(t,[
+    {lbl:'Verificando LLDP/CDP do ramal',       k:'snmp', msg:`LLDP neighbor: IP Phone 8865 · <span class="mac">00:11:22:33:44:55</span> · SW-ACESSO-01 Gi0/7`,ms:2000},
+    {lbl:'Verificando VLAN de Voz',             k:'ai',   msg:`<span class="cmd">show int Gi0/7</span> → voice vlan: ${ok?'30 (correto)':'ausente (erro!)'}`,ms:1800},
+    {lbl:'Verificando QoS DSCP',               k:'ai',   msg:`<span class="cmd">show mls qos int Gi0/7</span> → DSCP ${ok?'46 (EF ✓)':'0 (não classificado)'}`,ms:1800},
+    {lbl:'Consultando registro no CUCM',        k:'ai',   msg:`API CUCM → ramal ${ramal} → status: ${ok?'Registered':'Unregistered · TFTP error'}`,ms:2000},
+    {lbl:ok?'Validando chamada de teste':'Corrigindo configuração de porta',
+                                                k:ok?'ok':'cfg',
+                                                msg:ok?`Chamada de teste ramal ${ramal} → ${rand(2000,2999)} · áudio OK · DSCP 46 · MOS 4.2`
+                                                      :`<span class="cmd">switchport voice vlan 30 · mls qos trust dscp</span> aplicados em Gi0/7`,ms:2200},
+    {lbl:ok?'Confirmando resolução':'Verificando novo registro',
+                                                k:ok?'ok':'ai',
+                                                msg:ok?`Ramal ${ramal} registrado · chamadas OK · QoS DSCP EF ativo`
+                                                      :`Ramal ${ramal} registrando no CUCM · aguardando confirmação final`,ms:1800},
+  ],ok
+    ?{msg:`Ramal ${ramal} funcionando · DSCP correto · CUCM registrado · chamadas testadas`}
+    :{esc:'esc-field',msg:`VLAN Voz reconfigurada mas CUCM não registra · possível falha no IP Phone · Field acionado`}
+  );
+  sw.s='online'; sw.alert=''; renderEq();
+}
+
+/* ── Modal ── */
+function openModal(){
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+}
+async function triggerManual(type){
+  closeModal();
+  if(S.running){ toast('info','IA Ocupada','Aguarde o chamado atual ser processado'); return; }
+  S.running=true;
+  try{
+    if(type==='slow-internet') await mSlowInternet();
+    else if(type==='find-mac') await mFindMac();
+    else if(type==='port-config') await mPortConfig();
+    else if(type==='voip') await mVoip();
+  }catch(e){console.error(e);}
+  S.running=false;
+}
+
+/* ── Auto Scheduler ── */
+const autoQ=[cLoopSTP, cLinkDown, cRecovery, cProativo, cSecurity, cNewDevice];
+let autoIdx=0;
+async function runNext(){
+  if(S.running) return;
+  S.running=true;
+  try{ await autoQ[autoIdx++%autoQ.length](); }catch(e){console.error(e);}
+  S.running=false;
+}
+
+/* ── Metrics Fluctuation ── */
+function fluctuate(){
+  S.eqs.forEach(e=>{
+    if(e.s!=='online') return;
+    e.cpu=Math.round(Math.max(3, Math.min(95, e.cpu+(Math.random()-.5)*8)));
+    e.mem=Math.round(Math.max(15,Math.min(95, e.mem+(Math.random()-.5)*4)));
+  });
+  const lk=S.eqs.find(e=>e.id==='LINK-OP-01');
+  if(lk&&lk.s==='online'){
+    const v=Math.round(Math.max(10,Math.min(98,parseInt(lk.bw)+(Math.random()-.45)*10)));
+    lk.bw=v+'%';
+  }
+  renderEq();
+}
+
+/* ── Filters ── */
+document.querySelectorAll('.cf').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.cf').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); renderTickets();
+  });
+});
+
+/* ── Manual Button ── */
+document.getElementById('btn-manual').addEventListener('click',openModal);
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+/* ── Boot ── */
+function boot(){
+  const msgs=[
+    ['snmp','SNMP engine iniciado — community: kr4-private · porta 161 · 10 dispositivos'],
+    ['info','Polling SNMP ativo — intervalo: 60s · OIDs: ifOperStatus, CPU, MEM, BW'],
+    ['ok',  'Todos os equipamentos respondendo — sistema 100% operacional'],
+    ['ai',  'HUB IA online — modelos de diagnóstico carregados · aguardando eventos'],
+    ['cfg', 'Automações de CONFIG prontas — Config Porta Switch · Automação de Importação'],
+    ['ai',  'Automações de TSHOOT prontas — Tratativa Operadora · Buscar MAC · Recuperação'],
+    ['info','Monitoramento pró-ativo ativo — thresholds CPU:85% · BW:90% · latência:150ms'],
+    ['info','Monitoramento de segurança ativo — MAC flood · port scan · anomalias de tráfego'],
+  ];
+  msgs.forEach((m,i)=>setTimeout(()=>log(m[0],m[1]),i*480));
+}
+
+/* ── TABS ── */
+document.querySelectorAll('.ctab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+    if(tab.dataset.tab==='inventario') renderInventory();
+    if(tab.dataset.tab==='implantacao') renderStaging();
+  });
+});
+
+/* ── BELL (Sino de Notificação) ── */
+let bellUnread=0;
+const bellItems=[];
+
+const BELL_LABELS={proativo:'PRÓ-ATIVO',reativo:'REATIVO',seguranca:'SEGURANÇA',config:'CONFIG',info:'INFO'};
+
+function addBellNotif(type, title, desc){
+  bellItems.unshift({type, title, desc, time:now(), unread:true});
+  if(bellItems.length>25) bellItems.pop();
+  bellUnread++;
+  renderBell();
+}
+
+function renderBell(){
+  const badge=document.getElementById('bell-badge');
+  badge.textContent = bellUnread>9?'9+':bellUnread;
+  badge.classList.toggle('show', bellUnread>0);
+  const list=document.getElementById('bell-list');
+  if(!bellItems.length){ list.innerHTML='<div class="bell-empty">Nenhuma notificação</div>'; return; }
+  list.innerHTML=bellItems.map(b=>`
+    <div class="bell-item ${b.unread?'unread':''}">
+      <span class="bi-type bi-${b.type}">${BELL_LABELS[b.type]||b.type.toUpperCase()}</span>
+      <div class="bi-body"><div class="bi-msg">${b.title} — ${b.desc}</div><div class="bi-time">${b.time}</div></div>
+    </div>`).join('');
+}
+
+function clearBell(){
+  bellItems.length=0; bellUnread=0;
+  renderBell();
+  document.getElementById('bell-drop').classList.remove('open');
+}
+
+document.getElementById('bell-btn').addEventListener('click',e=>{
+  e.stopPropagation();
+  const drop=document.getElementById('bell-drop');
+  drop.classList.toggle('open');
+  if(drop.classList.contains('open')){
+    bellUnread=0;
+    bellItems.forEach(i=>i.unread=false);
+    renderBell();
+  }
+});
+document.addEventListener('click',()=>document.getElementById('bell-drop').classList.remove('open'));
+document.getElementById('bell-drop').addEventListener('click',e=>e.stopPropagation());
+
+/* toast() — enriched: shows popup + rings bell */
+function toast(type,title,desc){
+  _showToast(type,title,desc);
+  const map={danger:'reativo',warning:'proativo',success:'info',info:'info',purple:'seguranca'};
+  const tl=title.toLowerCase();
+  const btype = tl.includes('segur')||tl.includes('flood') ? 'seguranca'
+              : tl.includes('pró-ativo')||tl.includes('proativo') ? 'proativo'
+              : tl.includes('config')||tl.includes('porta')||tl.includes('dispositivo') ? 'config'
+              : map[type]||'info';
+  addBellNotif(btype,title,desc);
+}
+
+/* ── INVENTORY ── */
+function renderInventory(){
+  document.getElementById('inv-body').innerHTML=S.eqs.map(e=>{
+    const sc=e.s==='online'?'on':e.s==='offline'?'off':'warn';
+    const sl=e.s==='online'?'Online':e.s==='offline'?'Offline':'Alerta';
+    const cv=e.cpu>80?'style="color:var(--red)"':e.cpu>60?'style="color:var(--yellow)"':'';
+    const mv=e.mem>85?'style="color:var(--red)"':e.mem>70?'style="color:var(--yellow)"':'';
+    return `<tr>
+      <td class="inv-mono">${e.id}</td>
+      <td style="font-size:.65rem;color:var(--body)">${e.type}</td>
+      <td class="inv-mono" style="color:var(--elec)">${e.ip}</td>
+      <td><span class="inv-st ${sc}"><span class="inv-dot"></span>${sl}</span></td>
+      <td class="inv-mono" ${cv}>${e.cpu}%</td>
+      <td class="inv-mono" ${mv}>${e.mem}%</td>
+      <td class="inv-mono" style="color:var(--muted)">${e.up}</td>
+      <td style="font-size:.6rem;color:var(--muted)">${e.addedBy||'Sistema'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── STAGING / IMPLANTAÇÃO ── */
+const stageItems=[];
+
+async function runStageFlow(item, steps){
+  for(let i=0;i<steps.length;i++){
+    item.currentStep=i;
+    renderStaging();
+    log('cfg',steps[i].msg);
+    await delay(steps[i].ms||1800);
+  }
+  item.done=true;
+  item.currentStep=steps.length;
+  renderStaging();
+}
+
+function renderStaging(){
+  const list=document.getElementById('stage-list');
+  const active=stageItems.filter(i=>!i.done).length;
+  document.getElementById('stage-badge').textContent=`${active} em stage`;
+  if(!stageItems.length){
+    list.innerHTML=`<div class="stage-empty"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><div>Aguardando detecção de novos dispositivos...</div><div style="margin-top:6px;font-size:.65rem;opacity:.6">O HUB AI detecta novos MACs via SNMP e importa automaticamente</div></div>`;
+    return;
+  }
+  list.innerHTML=stageItems.map(item=>{
+    const st=item.done?'imported':item.currentStep>0?'importing':'staging';
+    const stL={staging:'Em Stage',importing:'Importando...',imported:'Importado'}[st];
+    const stepsH=item.stepLabels.map((lbl,i)=>{
+      const dc=item.done||i<item.currentStep?'done':i===item.currentStep&&!item.done?'active':'pending';
+      const ico=dc==='done'?'✓':dc==='active'?'⟳':(i+1);
+      return `<div class="si-step"><div class="si-step-dot ${dc}">${ico}</div><div class="si-step-lbl">${lbl}</div></div>`;
+    }).join('');
+    return `<div class="stage-item ${item.done?'done':item.currentStep>0?'active':''}">
+      <div class="si-top"><span class="si-name">${item.name}</span><span class="si-status ${st}">${stL}</span></div>
+      <div class="si-meta"><span>${item.type}</span><span style="color:var(--elec)">${item.ip}</span><span>${item.time}</span></div>
+      <div class="si-steps">${stepsH}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Hook cNewDevice into staging tab ── */
+const _cNewDevice=cNewDevice;
+async function cNewDevice(){
+  // Add to staging tab as well
+  const stageNames=['IP Phone 8865','Impressora HP','Câmera IP','Notebook Corporativo','AP WAP150'];
+  const stageTypes=['VoIP Device','Impressora','Câmera de Segurança','Endpoint','Access Point'];
+  const idx=stageItems.length%stageNames.length;
+  const item={
+    id:Date.now(),
+    name:stageNames[idx],
+    type:stageTypes[idx],
+    ip:`10.0.${Math.floor(Math.random()*5)+1}.${Math.floor(Math.random()*200)+10}`,
+    time:now(),
+    stepLabels:['Detecção MAC','Identificação OUI','Config Porta','Testes','Inventário'],
+    currentStep:0, done:false
+  };
+  stageItems.unshift(item);
+  renderStaging();
+  // run stage flow in parallel with scenario
+  runStageFlow(item,[
+    {msg:`Novo MAC detectado via SNMP · consulta OUI em andamento`,ms:2200},
+    {msg:`OUI identificado · fabricante reconhecido · perfil de config selecionado`,ms:2000},
+    {msg:`<span class="cmd">VLAN + PoE + spanning-tree portfast</span> aplicados automaticamente`,ms:2000},
+    {msg:`Teste de conectividade · ping OK · DHCP lease obtido`,ms:1800},
+    {msg:`<span class="h">Automação de Importação</span> — dispositivo registrado no inventário`,ms:1500},
+  ]);
+  await _cNewDevice();
+  renderStaging();
+}
+
+/* ── TOPOLOGY VIEW ── */
+let currentView = 'list';
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-list').style.display = v === 'list' ? '' : 'none';
+  document.getElementById('view-topo').style.display = v === 'topo' ? '' : 'none';
+  document.querySelectorAll('.vt-btn').forEach(b => {
+    const match = (v === 'list' && b.textContent === 'Lista') || (v === 'topo' && b.textContent === 'Topologia');
+    b.classList.toggle('active', match);
+  });
+  if (v === 'topo') renderTopology();
+}
+
+function renderTopology() {
+  const C = {
+    online:  { fill:'rgba(0,212,170,.2)',  stroke:'rgba(0,212,170,.85)', lbl:'#7dc8b0' },
+    warn:    { fill:'rgba(255,184,0,.2)',   stroke:'rgba(255,184,0,.9)',  lbl:'#c89810' },
+    offline: { fill:'rgba(255,71,87,.15)',  stroke:'rgba(255,71,87,.8)',  lbl:'#ff4757' },
+    alert:   { fill:'rgba(255,71,87,.28)',  stroke:'rgba(255,71,87,1)',   lbl:'#ff4757' },
+  };
+  const LC = {
+    online:'rgba(0,119,255,.28)', warn:'rgba(255,184,0,.55)', offline:'rgba(255,71,87,.55)', alert:'rgba(255,71,87,.75)'
+  };
+
+  const EQ_IDS = [
+    'LINK-OP-01','FW-01','RT-BORDA-01','SW-CORE-01','SW-DIST-01',
+    'SW-ACESSO-01','SW-ACESSO-02','SW-ACESSO-03','AP-TERREO-01','AP-2ANDAR-01'
+  ];
+  const LINES = {
+    'tl-internet-link':'LINK-OP-01', 'tl-link-fw':'FW-01',
+    'tl-fw-rt':'RT-BORDA-01',        'tl-rt-core':'SW-CORE-01',
+    'tl-core-dist':'SW-DIST-01',     'tl-dist-ac1':'SW-ACESSO-01',
+    'tl-dist-ac2':'SW-ACESSO-02',    'tl-dist-ac3':'SW-ACESSO-03',
+    'tl-ac1-ap1':'AP-TERREO-01',     'tl-ac2-ap2':'AP-2ANDAR-01',
+  };
+
+  EQ_IDS.forEach(id => {
+    const eq = S.eqs.find(e => e.id === id);
+    const st = eq ? eq.s : 'online';
+    const c = C[st] || C.online;
+    const node = document.getElementById('tn-' + id);
+    if (!node) return;
+    const shape = node.querySelector('.tn-shape');
+    if (shape) { shape.setAttribute('fill', c.fill); shape.setAttribute('stroke', c.stroke); }
+    const lbl = node.querySelectorAll('text');
+    if (lbl.length > 1) lbl[lbl.length - 1].setAttribute('fill', c.lbl);
+  });
+
+  for (const [lid, downId] of Object.entries(LINES)) {
+    const eq = S.eqs.find(e => e.id === downId);
+    const st = eq ? eq.s : 'online';
+    const line = document.getElementById(lid);
+    if (!line) continue;
+    line.setAttribute('stroke', LC[st] || LC.online);
+    if (st === 'offline' || st === 'alert') line.setAttribute('stroke-dasharray', '4,3');
+    else line.removeAttribute('stroke-dasharray');
+  }
+}
+
+setInterval(() => { if (currentView === 'topo') renderTopology(); }, 2500);
+
+renderEq(); renderTickets(); renderInventory(); updateStats(); boot();
+setTimeout(()=>runNext(), 7000);
+setInterval(()=>{ if(!S.running) runNext(); }, 40000);
+setInterval(()=>{ fluctuate(); renderInventory(); }, 9000);
+</script>
+</body>
+</html>
