@@ -260,6 +260,17 @@ html,body{height:100%;background:var(--bg-0);color:var(--white);font-family:var(
 
 /* scanlines */
 body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,119,255,.011) 2px,rgba(0,119,255,.011) 4px);pointer-events:none;z-index:9997}
+
+/* ─── VIEW TOGGLE (Lista / Topologia) ─── */
+.view-toggle{display:flex;gap:0;padding:6px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg-2)}
+.vt-btn{flex:1;font-family:var(--fd);font-size:.63rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s}
+.vt-btn:first-child{border-radius:4px 0 0 4px}
+.vt-btn:last-child{border-radius:0 4px 4px 0;border-left:none}
+.vt-btn.active{background:rgba(0,119,255,.18);border-color:rgba(0,119,255,.45);color:var(--elec)}
+.vt-btn:hover:not(.active){background:rgba(255,255,255,.04);color:var(--silver)}
+.topo-outer{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px 6px 4px}
+.topo-legend{display:flex;gap:12px;justify-content:center;padding:4px 0 0;flex-shrink:0}
+.topo-leg-item{display:flex;align-items:center;gap:4px;font-size:.58rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -345,7 +356,118 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <!-- LEFT: INVENTÁRIO / SNMP -->
   <aside class="panel p-left">
     <div class="ph"><span class="ph-t">Inventário / SNMP</span><span class="ph-b" id="eq-cnt">10 ativos</span></div>
-    <div class="pscroll"><div class="eq-wrap" id="eq-list"></div></div>
+    <div class="view-toggle">
+      <button class="vt-btn active" onclick="setView('list')">Lista</button>
+      <button class="vt-btn" onclick="setView('topo')">Topologia</button>
+    </div>
+    <!-- LIST VIEW -->
+    <div id="view-list" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+      <div class="pscroll"><div class="eq-wrap" id="eq-list"></div></div>
+    </div>
+    <!-- TOPOLOGY VIEW -->
+    <div id="view-topo" class="topo-outer" style="display:none">
+      <svg id="topo-svg" viewBox="0 0 230 385" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;flex:1">
+        <!-- Lines (drawn first so nodes appear on top) -->
+        <line id="tl-internet-link" x1="115" y1="31"  x2="115" y2="49"  stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-link-fw"       x1="115" y1="71"  x2="115" y2="94"  stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-fw-rt"         x1="115" y1="110" x2="115" y2="132" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-rt-core"       x1="115" y1="154" x2="115" y2="172" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-core-dist"     x1="115" y1="194" x2="115" y2="214" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-dist-ac1"      x1="115" y1="236" x2="38"  y2="280" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-dist-ac2"      x1="115" y1="236" x2="115" y2="280" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-dist-ac3"      x1="115" y1="236" x2="192" y2="280" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-ac1-ap1"       x1="38"  y1="300" x2="38"  y2="347" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+        <line id="tl-ac2-ap2"       x1="115" y1="300" x2="115" y2="347" stroke="rgba(0,119,255,.28)" stroke-width="1.5"/>
+
+        <!-- INTERNET (cloud) -->
+        <g id="tn-internet">
+          <ellipse cx="115" cy="18" rx="32" ry="13" fill="rgba(0,119,255,.08)" stroke="rgba(0,119,255,.3)" stroke-width="1.5" stroke-dasharray="5,2"/>
+          <text x="115" y="22" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="#4a5f7a" text-anchor="middle" font-weight="600">INTERNET</text>
+        </g>
+
+        <!-- LINK-OP-01 -->
+        <g id="tn-LINK-OP-01">
+          <circle cx="115" cy="60" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="64" font-family="'JetBrains Mono',monospace" font-size="6" fill="#fff" text-anchor="middle" font-weight="600">WAN</text>
+          <text x="115" y="79" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">LINK-OP</text>
+        </g>
+
+        <!-- FW-01 (rectangle = firewall) -->
+        <g id="tn-FW-01">
+          <rect x="104" y="94" width="22" height="16" rx="3" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="106" font-family="'JetBrains Mono',monospace" font-size="6" fill="#fff" text-anchor="middle" font-weight="600">FW</text>
+          <text x="115" y="122" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">FW-01</text>
+        </g>
+
+        <!-- RT-BORDA-01 -->
+        <g id="tn-RT-BORDA-01">
+          <circle cx="115" cy="143" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="147" font-family="'JetBrains Mono',monospace" font-size="5.5" fill="#fff" text-anchor="middle" font-weight="600">BORDA</text>
+          <text x="115" y="162" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">RT-BORDA</text>
+        </g>
+
+        <!-- SW-CORE-01 -->
+        <g id="tn-SW-CORE-01">
+          <circle cx="115" cy="183" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="187" font-family="'JetBrains Mono',monospace" font-size="5.5" fill="#fff" text-anchor="middle" font-weight="600">CORE</text>
+          <text x="115" y="202" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">SW-CORE</text>
+        </g>
+
+        <!-- SW-DIST-01 -->
+        <g id="tn-SW-DIST-01">
+          <circle cx="115" cy="225" r="11" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="229" font-family="'JetBrains Mono',monospace" font-size="5.5" fill="#fff" text-anchor="middle" font-weight="600">DIST</text>
+          <text x="115" y="244" font-family="'JetBrains Mono',monospace" font-size="7" fill="#8fa0bc" text-anchor="middle">SW-DIST</text>
+        </g>
+
+        <!-- SW-ACESSO-01 -->
+        <g id="tn-SW-ACESSO-01">
+          <circle cx="38" cy="290" r="10" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="38" y="294" font-family="'JetBrains Mono',monospace" font-size="5" fill="#fff" text-anchor="middle" font-weight="600">ACC</text>
+          <text x="38" y="309" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">ACC-01</text>
+        </g>
+
+        <!-- SW-ACESSO-02 -->
+        <g id="tn-SW-ACESSO-02">
+          <circle cx="115" cy="290" r="10" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="294" font-family="'JetBrains Mono',monospace" font-size="5" fill="#fff" text-anchor="middle" font-weight="600">ACC</text>
+          <text x="115" y="309" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">ACC-02</text>
+        </g>
+
+        <!-- SW-ACESSO-03 -->
+        <g id="tn-SW-ACESSO-03">
+          <circle cx="192" cy="290" r="10" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="192" y="294" font-family="'JetBrains Mono',monospace" font-size="5" fill="#fff" text-anchor="middle" font-weight="600">ACC</text>
+          <text x="192" y="309" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">ACC-03</text>
+        </g>
+
+        <!-- AP-TERREO-01 -->
+        <g id="tn-AP-TERREO-01">
+          <circle cx="38" cy="355" r="8" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="38" y="359" font-family="'JetBrains Mono',monospace" font-size="4.5" fill="#fff" text-anchor="middle" font-weight="600">AP</text>
+          <text x="38" y="371" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">AP-T1</text>
+        </g>
+
+        <!-- AP-2ANDAR-01 -->
+        <g id="tn-AP-2ANDAR-01">
+          <circle cx="115" cy="355" r="8" class="tn-shape" fill="rgba(0,212,170,.18)" stroke="rgba(0,212,170,.8)" stroke-width="1.5"/>
+          <text x="115" y="359" font-family="'JetBrains Mono',monospace" font-size="4.5" fill="#fff" text-anchor="middle" font-weight="600">AP</text>
+          <text x="115" y="371" font-family="'JetBrains Mono',monospace" font-size="6.5" fill="#8fa0bc" text-anchor="middle">AP-A1</text>
+        </g>
+      </svg>
+      <!-- Legend -->
+      <div class="topo-legend">
+        <span class="topo-leg-item">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="rgba(0,212,170,.2)" stroke="rgba(0,212,170,.8)" stroke-width="1.2"/></svg>Online
+        </span>
+        <span class="topo-leg-item">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="rgba(255,184,0,.2)" stroke="rgba(255,184,0,.8)" stroke-width="1.2"/></svg>Alerta
+        </span>
+        <span class="topo-leg-item">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="rgba(255,71,87,.15)" stroke="rgba(255,71,87,.75)" stroke-width="1.2"/></svg>Offline
+        </span>
+      </div>
+    </div>
   </aside>
 
   <!-- CENTER: TABS -->
@@ -563,6 +685,7 @@ function renderEq() {
   }).join('');
   document.getElementById('eq-cnt').textContent = `${S.eqs.length} ativos`;
   document.getElementById('s-eq').textContent = `${on}/${S.eqs.length}`;
+  if (typeof currentView !== 'undefined' && currentView === 'topo') renderTopology();
 }
 
 /* ── Render Tickets ── */
@@ -1246,6 +1369,68 @@ async function cNewDevice(){
   await _cNewDevice();
   renderStaging();
 }
+
+/* ── TOPOLOGY VIEW ── */
+let currentView = 'list';
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-list').style.display = v === 'list' ? '' : 'none';
+  document.getElementById('view-topo').style.display = v === 'topo' ? '' : 'none';
+  document.querySelectorAll('.vt-btn').forEach(b => {
+    const match = (v === 'list' && b.textContent === 'Lista') || (v === 'topo' && b.textContent === 'Topologia');
+    b.classList.toggle('active', match);
+  });
+  if (v === 'topo') renderTopology();
+}
+
+function renderTopology() {
+  const C = {
+    online:  { fill:'rgba(0,212,170,.2)',  stroke:'rgba(0,212,170,.85)', lbl:'#7dc8b0' },
+    warn:    { fill:'rgba(255,184,0,.2)',   stroke:'rgba(255,184,0,.9)',  lbl:'#c89810' },
+    offline: { fill:'rgba(255,71,87,.15)',  stroke:'rgba(255,71,87,.8)',  lbl:'#ff4757' },
+    alert:   { fill:'rgba(255,71,87,.28)',  stroke:'rgba(255,71,87,1)',   lbl:'#ff4757' },
+  };
+  const LC = {
+    online:'rgba(0,119,255,.28)', warn:'rgba(255,184,0,.55)', offline:'rgba(255,71,87,.55)', alert:'rgba(255,71,87,.75)'
+  };
+
+  const EQ_IDS = [
+    'LINK-OP-01','FW-01','RT-BORDA-01','SW-CORE-01','SW-DIST-01',
+    'SW-ACESSO-01','SW-ACESSO-02','SW-ACESSO-03','AP-TERREO-01','AP-2ANDAR-01'
+  ];
+  const LINES = {
+    'tl-internet-link':'LINK-OP-01', 'tl-link-fw':'FW-01',
+    'tl-fw-rt':'RT-BORDA-01',        'tl-rt-core':'SW-CORE-01',
+    'tl-core-dist':'SW-DIST-01',     'tl-dist-ac1':'SW-ACESSO-01',
+    'tl-dist-ac2':'SW-ACESSO-02',    'tl-dist-ac3':'SW-ACESSO-03',
+    'tl-ac1-ap1':'AP-TERREO-01',     'tl-ac2-ap2':'AP-2ANDAR-01',
+  };
+
+  EQ_IDS.forEach(id => {
+    const eq = S.eqs.find(e => e.id === id);
+    const st = eq ? eq.s : 'online';
+    const c = C[st] || C.online;
+    const node = document.getElementById('tn-' + id);
+    if (!node) return;
+    const shape = node.querySelector('.tn-shape');
+    if (shape) { shape.setAttribute('fill', c.fill); shape.setAttribute('stroke', c.stroke); }
+    const lbl = node.querySelectorAll('text');
+    if (lbl.length > 1) lbl[lbl.length - 1].setAttribute('fill', c.lbl);
+  });
+
+  for (const [lid, downId] of Object.entries(LINES)) {
+    const eq = S.eqs.find(e => e.id === downId);
+    const st = eq ? eq.s : 'online';
+    const line = document.getElementById(lid);
+    if (!line) continue;
+    line.setAttribute('stroke', LC[st] || LC.online);
+    if (st === 'offline' || st === 'alert') line.setAttribute('stroke-dasharray', '4,3');
+    else line.removeAttribute('stroke-dasharray');
+  }
+}
+
+setInterval(() => { if (currentView === 'topo') renderTopology(); }, 2500);
 
 renderEq(); renderTickets(); renderInventory(); updateStats(); boot();
 setTimeout(()=>runNext(), 7000);
